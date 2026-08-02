@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version
+
 from exactcis import Design, InferenceResult, __version__, compute_or_with_policy
 
 
@@ -18,7 +20,7 @@ def main() -> int:
     assert result.lower <= result.point <= result.upper
     assert result.design is Design.CASE_CONTROL_FIXED_MARGIN
     assert result.method == "conditional"
-    assert __version__ == "1.0.0rc1"
+    assert __version__ == version("exactcis")
     print(f"OK: exactcis {__version__} installed-package smoke")
     return 0
 

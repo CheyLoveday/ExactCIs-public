@@ -43,6 +43,18 @@ def test_public_tree_checker_passes_tracked_tree() -> None:
     assert completed.returncode == 0, completed.stdout
 
 
+def test_release_version_metadata_is_consistent() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/check_version_consistency.py"],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    assert completed.returncode == 0, completed.stdout
+
+
 def test_distribution_checker_rejects_private_paths(tmp_path: Path) -> None:
     wheel = tmp_path / "bad.whl"
     with zipfile.ZipFile(wheel, "w") as archive:

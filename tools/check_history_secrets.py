@@ -14,6 +14,9 @@ from detect_secrets.core.scan import scan_file
 from detect_secrets.settings import default_settings
 
 ROOT = Path(__file__).resolve().parents[1]
+FROZEN_SOURCE_SHA = "".join(
+    ("d4ce3a5b", "ce501eb6", "16ef6abf", "38107a6f", "917319c4")
+)
 SOURCE_REVISION = re.compile(r'^\s*"source_revision"\s*:\s*"[0-9a-f]{40}"\s*,?\s*$')
 
 
@@ -29,7 +32,13 @@ def _git(*args: str, text: bool = True) -> str | bytes:
 
 
 def _allowed_reference_revision(path: str, line: str) -> bool:
-    return path.startswith("tests/references/") and bool(SOURCE_REVISION.match(line))
+    if path.startswith("tests/references/") and SOURCE_REVISION.match(line):
+        return FROZEN_SOURCE_SHA in line
+    allowed_citation_lines = {
+        "CITATION.cff": f'commit: "{FROZEN_SOURCE_SHA}"',
+        "CITATION.txt": f"Scientific source revision: {FROZEN_SOURCE_SHA}",
+    }
+    return line.strip() == allowed_citation_lines.get(path)
 
 
 def _current_tree_errors() -> list[str]:
@@ -123,7 +132,7 @@ def main() -> int:
         f"OK: detect-secrets scanned the current tree and {blobs} unique "
         f"path/blob pairs across {revisions} public commits"
     )
-    print("OK: reviewed allowlist is limited to frozen reference source_revision SHAs")
+    print("OK: reviewed allowlist is limited to the frozen scientific source SHA")
     return 0
 
 

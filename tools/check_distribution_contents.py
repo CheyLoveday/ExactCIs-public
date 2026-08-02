@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import email.parser
 import re
 import tarfile
@@ -56,6 +57,25 @@ class Member:
 
     name: str
     data: bytes | None
+
+
+def _package_version() -> str:
+    about = Path(__file__).resolve().parents[1] / "src/exactcis/__about__.py"
+    tree = ast.parse(about.read_text(encoding="utf-8"), filename=str(about))
+    versions = [
+        node.value.value
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "__version__"
+            for target in node.targets
+        )
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, str)
+    ]
+    if len(versions) != 1:
+        raise ValueError(f"expected one package version assignment; got {versions}")
+    return versions[0]
 
 
 def _members(path: Path) -> list[Member]:
@@ -145,7 +165,7 @@ def inspect_distribution(path: Path) -> list[str]:
             message = email.parser.BytesParser().parsebytes(metadata_data)
             expected_fields = {
                 "Name": "exactcis",
-                "Version": "1.0.0rc1",
+                "Version": _package_version(),
                 "License-Expression": "MIT",
             }
             for field, expected in expected_fields.items():

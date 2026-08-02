@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "Cite this unreleased candidate by version and exact source revision."
+title: "ExactCIs"
+type: software
+authors:
+  - family-names: "Loveday"
+    given-names: "Chey"
+version: "1.0.0rc1"
+commit: "d4ce3a5bce501eb616ef6abf38107a6f917319c4"
+abstract: >-
+  Design-aware confidence intervals and related inference for sparse 2 by 2
+  tables, with explicit sampling assumptions and fail-closed numerical
+  behaviour.
+keywords:
+  - statistics
+  - exact inference
+  - confidence intervals
+  - contingency tables
+  - biostatistics
+license: MIT

@@ -27,6 +27,7 @@ build:
 
 check: lint typecheck test coverage docs build
 	uv run python tools/check_public_tree.py
+	uv run python tools/check_version_consistency.py
 	uv run python tools/run_readme_examples.py --source README.md
 
 audit:
