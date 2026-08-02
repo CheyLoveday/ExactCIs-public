@@ -19,8 +19,7 @@ def require_fixed_margin_design(design: Design | None) -> Design:
     """Require the single-table conditional sampling design."""
     if design is not Design.CASE_CONTROL_FIXED_MARGIN:
         raise DesignError(
-            "conditional odds-ratio inference requires "
-            "Design.CASE_CONTROL_FIXED_MARGIN"
+            "conditional odds-ratio inference requires Design.CASE_CONTROL_FIXED_MARGIN"
         )
     return design
 

@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "source_implementation": "R PropCIs",
+    "source_version": "0.3-0 under R 4.3.1",
+    "function": "PropCIs::riskscoreci",
+    "exact_options": {"conf.level": 0.95, "continuity_correction": false},
+    "input_orientation": "a/(a+b) divided by c/(c+d), with independent binomial rows",
+    "method_definition": "Koopman-Nam score inversion without an N/(N-1) variance multiplier",
+    "tolerance": "3e-8 absolute for regular cases; 1e-4 relative at complete-success search boundaries",
+    "generation_script": "R PropCIs::riskscoreci calls retained in PR 37 test_rr_score_release.py",
+    "source_revision": "d4ce3a5bce501eb616ef6abf38107a6f917319c4"
+  },
+  "cases": [
+    {"table": [0, 10, 5, 15], "interval": [0.0, 1.2466905050857653], "boundary": true},
+    {"table": [5, 15, 0, 10], "interval": [0.8021236994431066, "Infinity"], "boundary": true},
+    {"table": [0, 10, 0, 10], "interval": [0.0, "Infinity"], "boundary": true},
+    {"table": [5, 0, 7, 0], "interval": [0.5655175352168254, 1.548779831527732], "boundary": true},
+    {"table": [5, 0, 3, 4], "interval": [1.062922540864245, 6.32031926973154], "boundary": true},
+    {"table": [0, 5, 7, 0], "interval": [0.0, 0.4345002480386965], "boundary": true},
+    {"table": [12, 5, 8, 10], "interval": [0.8875615820370518, 3.03126661270728], "boundary": false},
+    {"table": [8, 2, 15, 20], "interval": [1.040426545357521, 3.028514077720316], "boundary": false},
+    {"table": [2, 18, 1, 19], "interval": [0.2805682734032466, 14.659738430737518], "boundary": false},
+    {"table": [45, 55, 35, 65], "interval": [0.9147218841666847, 1.820268999483147], "boundary": false},
+    {"table": [28, 72, 15, 85], "interval": [1.077663176362723, 3.275077736669173], "boundary": false},
+    {"table": [0, 50, 5, 95], "interval": [0.0, 1.471829566821382], "boundary": false},
+    {"table": [180, 320, 120, 380], "interval": [1.235917473997294, 1.824361556208993], "boundary": false},
+    {"table": [45, 455, 15, 485], "interval": [1.711148290887254, 5.27945676171744], "boundary": false},
+    {"table": [150, 50, 25, 275], "interval": [6.185950598530885, 13.242000182474248], "boundary": false}
+  ]
+}

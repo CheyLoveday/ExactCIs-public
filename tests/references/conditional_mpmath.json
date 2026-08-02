@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "source_implementation": "independent arbitrary-precision finite-support FNCH summation",
+    "source_package": "mpmath",
+    "source_version": "1.3.0",
+    "function": "mpmath.binomial with 80-decimal log-odds bisection",
+    "exact_options": {
+      "alpha": 0.05,
+      "decimal_precision": 80,
+      "tail": "inclusive for central; half observed mass for Mid-P"
+    },
+    "input_orientation": "[[a, b], [c, d]]; rows are exposed/unexposed and columns are outcome positive/negative",
+    "method_definition": "Fisher noncentral hypergeometric equal-tail inversion conditional on both margins",
+    "tolerance": "2e-9 relative or absolute on finite endpoints",
+    "generation_script": "tests/references/generate_conditional_mpmath.py",
+    "source_revision": "d4ce3a5bce501eb616ef6abf38107a6f917319c4"
+  },
+  "cases": [
+    {"table": [12, 5, 8, 10], "conditional": [0.6136398517102634, 15.476180485927342], "midp": [0.7165484662137177, 12.82208772997458]},
+    {"table": [3, 1, 1, 3], "conditional": [0.21173559544657857, 626.243530588814], "midp": [0.31005488171907964, 308.5567715811548]},
+    {"table": [7, 9, 8, 6], "conditional": [0.108132232480596, 3.0836441265610983], "midp": [0.13046293015929142, 2.5960753006317883]},
+    {"table": [1, 9, 11, 3], "conditional": [0.000636002948875107, 0.4258664756963739], "midp": [0.0012742629425322375, 0.33512702428182034]},
+    {"table": [0, 5, 5, 5], "conditional": [0.0, 1.8778260264622972], "midp": [0.0, 1.3369349560820776]},
+    {"table": [10, 0, 0, 10], "conditional": [11.135840592560429, "Infinity"], "midp": [15.742893247601508, "Infinity"]},
+    {"table": [99, 1, 50, 50], "conditional": [15.685602587078666, 4026.315634116483], "midp": [18.05188465226573, 2034.346830175687]},
+    {"table": [50, 950, 25, 975], "conditional": [1.2340027858985507, 3.4916152156215375], "midp": [1.2660144697517084, 3.389183472831042]},
+    {"table": [20, 80, 40, 60], "conditional": [0.18821032310641322, 0.7365619621835769], "midp": [0.19722658933095102, 0.7064909004899223]}
+  ]
+}
