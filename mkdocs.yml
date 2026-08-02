@@ -1,0 +1,20 @@
+site_name: ExactCIs
+site_description: Design-aware inference for sparse 2x2 tables in Python
+docs_dir: docs_md
+site_dir: site
+strict: true
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Supported methods: methods.md
+  - API contract: api.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true

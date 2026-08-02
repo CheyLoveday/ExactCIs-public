@@ -148,7 +148,10 @@ _METHODS: tuple[MethodSpec, ...] = (
             Estimand.RR,
             method,
             construction,
-            point,
+            point.replace(
+                "risk/prevalence",
+                "risk" if design is Design.COHORT_BINOMIAL else "prevalence",
+            ),
             interval_type,
             calibration,
             limitations,
@@ -159,7 +162,7 @@ _METHODS: tuple[MethodSpec, ...] = (
             (
                 "score_rr",
                 "Koopman-Nam inversion of the independent-binomial score statistic",
-                "sample risk or prevalence ratio",
+                "sample risk/prevalence ratio",
                 "score confidence interval",
                 "Score-test inversion for two independent binomial groups.",
                 "Requires non-empty groups; discreteness is not modelled as an exact conditional law.",
@@ -168,7 +171,7 @@ _METHODS: tuple[MethodSpec, ...] = (
             (
                 "wald_rr",
                 "Log-Wald interval for two independent binomial risks",
-                "sample ratio with zero-triggered correction for finite-side calculation",
+                "sample risk/prevalence ratio with zero-triggered correction for finite-side calculation",
                 "asymptotic confidence interval",
                 "First-order normal approximation on the log-ratio scale.",
                 "Can be inaccurate for sparse data; structural zero and infinity endpoints are retained.",
