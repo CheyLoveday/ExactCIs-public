@@ -10,7 +10,7 @@ clinical validation, or formal verification.
 
 ## Installation
 
-ExactCIs requires Python 3.11 or newer. Until a release is authorised, install
+ExactCIs supports Python 3.11 through 3.13. Until a release is authorised, install
 from a reviewed source checkout or a verified local artefact:
 
 ```bash

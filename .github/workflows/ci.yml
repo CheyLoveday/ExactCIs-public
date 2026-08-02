@@ -1,0 +1,191 @@
+name: Public package CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra dev
+      - run: uv run ruff check src tests examples tools
+      - run: uv run ruff format --check src tests examples tools
+
+  typing:
+    name: Full-package typing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra dev
+      - run: uv run mypy src/exactcis
+
+  test-linux:
+    name: Test Linux / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --frozen --extra dev
+      - run: uv run pytest -m "not slow" --tb=short
+
+  test-platform:
+    name: Test ${{ matrix.os }} / Python 3.11
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra dev
+      - run: uv run pytest -m "not slow" --tb=short
+
+  docs:
+    name: Documentation and examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra docs
+      - run: uv run mkdocs build --strict
+      - run: uv run python tools/check_method_docs.py
+      - run: uv run python tools/run_readme_examples.py --source README.md
+
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra release
+      - run: uv run python -m build
+      - run: uv run python -m twine check dist/*
+      - run: uv run python tools/check_distribution_contents.py dist/*
+      - name: Upload immutable build inputs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  wheel-install:
+    name: Install and smoke-test wheel
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions
+          path: dist
+      - name: Install and exercise outside the checkout
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/exactcis-wheel-venv"
+          wheel_python="$RUNNER_TEMP/exactcis-wheel-venv/bin/python"
+          "$wheel_python" -m pip install --disable-pip-version-check dist/*.whl
+          "$wheel_python" -m pip check
+          smoke_dir="$RUNNER_TEMP/exactcis-wheel-smoke"
+          mkdir "$smoke_dir"
+          cp README.md tools/run_installed_smoke.py tools/run_readme_examples.py "$smoke_dir/"
+          cd "$smoke_dir"
+          "$wheel_python" run_installed_smoke.py
+          "$wheel_python" run_readme_examples.py --source README.md
+
+  sdist-install:
+    name: Install and smoke-test sdist
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions
+          path: dist
+      - name: Install and exercise outside the checkout
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/exactcis-sdist-venv"
+          sdist_python="$RUNNER_TEMP/exactcis-sdist-venv/bin/python"
+          "$sdist_python" -m pip install --disable-pip-version-check dist/*.tar.gz
+          "$sdist_python" -m pip check
+          smoke_dir="$RUNNER_TEMP/exactcis-sdist-smoke"
+          mkdir "$smoke_dir"
+          cp README.md tools/run_installed_smoke.py tools/run_readme_examples.py "$smoke_dir/"
+          cd "$smoke_dir"
+          "$sdist_python" run_installed_smoke.py
+          "$sdist_python" run_readme_examples.py --source README.md
+
+  dependency-resolution:
+    name: Resolve declared dependencies without uv.lock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - name: Resolve, install, and smoke-test
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/exactcis-resolution-venv"
+          resolved_python="$RUNNER_TEMP/exactcis-resolution-venv/bin/python"
+          "$resolved_python" -m pip install --disable-pip-version-check --no-cache-dir .
+          "$resolved_python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$resolved_python" "$GITHUB_WORKSPACE/tools/run_installed_smoke.py"
+
+  security:
+    name: Blocking dependency and tree checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --extra security
+      - name: Audit minimal runtime dependencies
+        shell: bash
+        run: |
+          uv export --frozen --no-dev --no-emit-project --output-file "$RUNNER_TEMP/core-requirements.txt"
+          uv run pip-audit --strict --requirement "$RUNNER_TEMP/core-requirements.txt"
+      - run: uv run python tools/check_public_tree.py

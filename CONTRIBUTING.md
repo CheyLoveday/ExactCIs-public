@@ -6,7 +6,7 @@ failure policy, and validation source before implementation begins.
 
 ## Development setup
 
-Use Python 3.11 or newer and `uv`:
+Use a supported Python version (3.11 through 3.13) and `uv`:
 
 ```bash
 uv sync --frozen --extra dev --extra docs
