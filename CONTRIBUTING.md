@@ -49,7 +49,7 @@ Never weaken a tolerance or substitute another method to make CI pass.
 
 ## Public boundary
 
-Keep clinical adjudication, private data, manuscript machinery, generated
+Keep clinical adjudication, private data, publication machinery, generated
 research outputs, formalisation sources, and accelerator orchestration outside
 this repository. Add stable methods to the canonical registry and regenerate
 the method documentation in the same focused change.

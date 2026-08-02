@@ -129,8 +129,9 @@ method examples.
 ## Experimental and compatibility methods
 
 This release candidate has no retained experimental or compatibility-only
-method. Historical PS4, unconditional, Bayesian-evidence, plotting, reporting,
-batch, GPU/HPC, and clinical-adjudication routes are not imported or shipped.
+method. Historical evidence-policy, unconditional, Bayesian-evidence, plotting,
+reporting, batch, accelerator, and clinical-adjudication routes are not imported
+or shipped.
 Unknown method keys fail explicitly and do not participate in automatic
 selection.
 

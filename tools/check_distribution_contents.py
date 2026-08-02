@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import email.parser
 import re
 import tarfile
 import zipfile
@@ -105,6 +106,7 @@ def inspect_distribution(path: Path) -> list[str]:
         relative.append((name, member.data))
 
     names = {name for name, _ in relative}
+    metadata_names: list[str]
     if path.suffix == ".whl":
         required = {
             "exactcis/__init__.py",
@@ -118,11 +120,60 @@ def inspect_distribution(path: Path) -> list[str]:
         for name in names:
             if name and not name.startswith(allowed_prefixes):
                 errors.append(f"{path.name}: non-package wheel member {name}")
+        metadata_names = [
+            name for name in names if name.endswith(".dist-info/METADATA")
+        ]
+        if not any(name.endswith(".dist-info/licenses/LICENSE") for name in names):
+            errors.append(f"{path.name}: wheel does not contain the MIT licence file")
     else:
         required = {"LICENSE", "README.md", "pyproject.toml", "src/exactcis/py.typed"}
         missing = sorted(required - names)
         if missing:
             errors.append(f"{path.name}: missing sdist members {missing}")
+        metadata_names = [name for name in names if name == "PKG-INFO"]
+
+    if len(metadata_names) != 1:
+        errors.append(
+            f"{path.name}: expected exactly one core metadata file; "
+            f"got {metadata_names}"
+        )
+    else:
+        metadata_data = dict(relative)[metadata_names[0]]
+        if metadata_data is None:
+            errors.append(f"{path.name}: metadata member is not a regular file")
+        else:
+            message = email.parser.BytesParser().parsebytes(metadata_data)
+            expected_fields = {
+                "Name": "exactcis",
+                "Version": "1.0.0rc1",
+                "License-Expression": "MIT",
+            }
+            for field, expected in expected_fields.items():
+                if message.get(field) != expected:
+                    errors.append(
+                        f"{path.name}: {field} is {message.get(field)!r}, "
+                        f"expected {expected!r}"
+                    )
+            python_specifiers = {
+                item.strip() for item in message.get("Requires-Python", "").split(",")
+            }
+            if python_specifiers != {">=3.11", "<3.14"}:
+                errors.append(
+                    f"{path.name}: Requires-Python is "
+                    f"{message.get('Requires-Python')!r}, expected >=3.11,<3.14"
+                )
+            unconditional = [
+                requirement
+                for requirement in message.get_all("Requires-Dist", [])
+                if "; extra ==" not in requirement
+            ]
+            if unconditional:
+                errors.append(
+                    f"{path.name}: core metadata contains runtime dependencies "
+                    f"{unconditional}"
+                )
+            if "LICENSE" not in message.get_all("License-File", []):
+                errors.append(f"{path.name}: core metadata omits License-File: LICENSE")
 
     for name, data in relative:
         if data is None or PurePosixPath(name).suffix.lower() not in TEXT_SUFFIXES:

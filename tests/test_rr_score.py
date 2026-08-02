@@ -38,7 +38,7 @@ def test_score_statistic_matches_defining_equation() -> None:
     assert expected == pytest.approx(-0.7284411605251533, rel=2e-14)
 
 
-@pytest.mark.parametrize("a,c", itertools.product((0, 1, 4, 5), (0, 1, 6, 7)))
+@pytest.mark.parametrize("a,c", tuple(itertools.product((0, 1, 4, 5), (0, 1, 6, 7))))
 def test_score_boundary_cartesian_product(a, c) -> None:
     table = (a, 5 - a, c, 7 - c)
     lower, upper = ci_score_rr(*table, design=COHORT)

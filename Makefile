@@ -30,8 +30,9 @@ check: lint typecheck test coverage docs build
 	uv run python tools/run_readme_examples.py --source README.md
 
 audit:
-	uv export --frozen --no-dev --no-emit-project --output-file .audit-core.txt
-	uv run --extra security pip-audit --strict --requirement .audit-core.txt
+	uv run --extra security python tools/audit_dependencies.py
+	uv run --extra security python tools/check_history_secrets.py
+	uv run python tools/check_repository_hygiene.py
 
 clean:
 	@echo "Remove generated build, coverage, and documentation outputs explicitly."
