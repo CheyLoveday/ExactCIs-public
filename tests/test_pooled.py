@@ -5,11 +5,11 @@ from __future__ import annotations
 import math
 
 import pytest
-from exactcis.results import PooledORResult
 
 from exactcis.estimands import Design
 from exactcis.estimation import compute_pooled_or
 from exactcis.exceptions import DesignError, NonIdentifiableError, ValidationError
+from exactcis.results import PooledORResult
 from tests.conftest import load_reference
 
 

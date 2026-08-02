@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-from exactcis.results import InferenceResult
 
 from exactcis.estimands import Design, Estimand
 from exactcis.estimation import compute_or_with_policy, compute_rr_with_policy
@@ -14,6 +13,7 @@ from exactcis.exceptions import (
     NonIdentifiableError,
     UnsupportedMethodError,
 )
+from exactcis.results import InferenceResult
 
 
 @pytest.mark.parametrize("method", ("conditional", "midp", "minlike", "blaker"))

@@ -50,7 +50,8 @@ def _ratio_point(a: int, b: int, c: int, d: int) -> float:
     a, b, c, d = validate_independent_groups(a, b, c, d)
     if a == 0 and c == 0:
         raise NonIdentifiableError(
-            "the risk/prevalence ratio is not estimable when both observed risks are zero"
+            "the risk/prevalence ratio is not estimable when both observed "
+            "risks are zero"
         )
     if c == 0:
         return math.inf
@@ -213,7 +214,8 @@ def compute_pooled_or(
     sum_bc = math.fsum(bc_terms)
     if sum_ad <= 0.0 or sum_bc <= 0.0:
         raise NonIdentifiableError(
-            "the Mantel-Haenszel OR requires positive pooled ad/n and bc/n cross-products"
+            "the Mantel-Haenszel OR requires positive pooled ad/n and bc/n "
+            "cross-products"
         )
     point = sum_ad / sum_bc
     variance = 0.5 * (

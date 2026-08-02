@@ -69,7 +69,10 @@ _FIXED_OR = (
         "Equal-tail inversion of the Fisher noncentral hypergeometric law",
         "conditional maximum-likelihood estimate",
         "conditional exact confidence interval",
-        "Tail probabilities are computed under fixed margins; discreteness can make coverage conservative.",
+        (
+            "Tail probabilities are computed under fixed margins; discreteness "
+            "can make coverage conservative."
+        ),
         "Conditions on both margins and does not claim unconditional coverage.",
         "exactcis.exact_ci_conditional",
     ),
@@ -78,7 +81,10 @@ _FIXED_OR = (
         "Mid-P equal-tail inversion of the Fisher noncentral hypergeometric law",
         "conditional maximum-likelihood estimate",
         "conditional mid-P confidence interval",
-        "Mid-P reduces discreteness but is not guaranteed to attain nominal coverage for every parameter value.",
+        (
+            "Mid-P reduces discreteness but is not guaranteed to attain nominal "
+            "coverage for every parameter value."
+        ),
         "Conditions on both margins; mid-P is not a fully exact coverage guarantee.",
         "exactcis.exact_ci_midp",
     ),
@@ -121,14 +127,25 @@ _METHODS: tuple[MethodSpec, ...] = (
             entrypoint,
         )
         for design in (Design.COHORT_BINOMIAL, Design.CROSS_SECTIONAL)
-        for method, construction, point, interval_type, calibration, limitations, entrypoint in (
+        for (
+            method,
+            construction,
+            point,
+            interval_type,
+            calibration,
+            limitations,
+            entrypoint,
+        ) in (
             (
                 "wald",
                 "Log-Wald interval with a 0.5 correction only when any cell is zero",
                 "sample odds ratio, corrected on zero-cell tables",
                 "asymptotic confidence interval",
                 "First-order normal approximation on the log-odds-ratio scale.",
-                "Can be inaccurate for sparse data; the zero-cell correction changes the target estimator.",
+                (
+                    "Can be inaccurate for sparse data; the zero-cell correction "
+                    "changes the target estimator."
+                ),
                 "exactcis.ci_wald",
             ),
             (
@@ -137,7 +154,10 @@ _METHODS: tuple[MethodSpec, ...] = (
                 "Haldane-Anscombe corrected odds ratio",
                 "asymptotic confidence interval",
                 "First-order normal approximation after a fixed continuity correction.",
-                "The correction is applied even without zero cells and can matter in small samples.",
+                (
+                    "The correction is applied even without zero cells and can "
+                    "matter in small samples."
+                ),
                 "exactcis.ci_wald_haldane",
             ),
         )
@@ -158,23 +178,40 @@ _METHODS: tuple[MethodSpec, ...] = (
             entrypoint,
         )
         for design in (Design.COHORT_BINOMIAL, Design.CROSS_SECTIONAL)
-        for method, construction, point, interval_type, calibration, limitations, entrypoint in (
+        for (
+            method,
+            construction,
+            point,
+            interval_type,
+            calibration,
+            limitations,
+            entrypoint,
+        ) in (
             (
                 "score_rr",
                 "Koopman-Nam inversion of the independent-binomial score statistic",
                 "sample risk/prevalence ratio",
                 "score confidence interval",
                 "Score-test inversion for two independent binomial groups.",
-                "Requires non-empty groups; discreteness is not modelled as an exact conditional law.",
+                (
+                    "Requires non-empty groups; discreteness is not modelled as "
+                    "an exact conditional law."
+                ),
                 "exactcis.ci_score_rr",
             ),
             (
                 "wald_rr",
                 "Log-Wald interval for two independent binomial risks",
-                "sample risk/prevalence ratio with zero-triggered correction for finite-side calculation",
+                (
+                    "sample risk/prevalence ratio with zero-triggered correction "
+                    "for finite-side calculation"
+                ),
                 "asymptotic confidence interval",
                 "First-order normal approximation on the log-ratio scale.",
-                "Can be inaccurate for sparse data; structural zero and infinity endpoints are retained.",
+                (
+                    "Can be inaccurate for sparse data; structural zero and "
+                    "infinity endpoints are retained."
+                ),
                 "exactcis.ci_wald_rr",
             ),
         )
@@ -188,7 +225,10 @@ _METHODS: tuple[MethodSpec, ...] = (
             "Mantel-Haenszel common odds ratio",
             "asymptotic stratified confidence interval",
             "Large-sample normal approximation for prespecified independent strata.",
-            "Requires positive pooled cross-products and a defensible common-effect model.",
+            (
+                "Requires positive pooled cross-products and a defensible "
+                "common-effect model."
+            ),
             "exactcis.compute_pooled_or",
         )
         for design in (Design.STRATIFIED_CASE_CONTROL, Design.STRATIFIED_COHORT)

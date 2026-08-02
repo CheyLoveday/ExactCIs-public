@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import math
 
+import pytest
+
 import exactcis._numerics as numerics
 import exactcis.inference.odds_ratio._common as common
-import pytest
 from exactcis._numerics import ordered_p_value
-
 from exactcis.estimands import Design
 from exactcis.exceptions import DesignError, NumericalError, ValidationError
 from exactcis.inference.odds_ratio import (
