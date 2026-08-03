@@ -97,8 +97,11 @@ union or dependence information is outside this release.
 ## Statistical conventions and assumptions
 
 `alpha` is the two-sided significance level, so `alpha=0.05` requests a 95%
-confidence set. Conditional methods use Fisher's noncentral-hypergeometric law
-and condition on both margins. `conditional` inverts inclusive equal tails;
+confidence set. The numerically certified domain is the open interval
+`1e-12 < alpha < 1 - 1e-12`; unsupported extremes raise `ValidationError`
+before quantile evaluation or inversion. Conditional methods use Fisher's
+noncentral-hypergeometric law and condition on both margins. `conditional`
+inverts inclusive equal tails;
 `midp` uses half the observed mass in each tail; `minlike` uses inclusive
 probability-mass ordering; and `blaker` uses the smaller inclusive tail as its
 acceptability ordering.
@@ -120,6 +123,8 @@ are not expected to agree by construction.
   `ci_wald_haldane` always applies that correction.
 - Numerical inversion is bracketed and checked. Failure raises
   `NumericalError`; ExactCIs never returns another method as a fallback.
+- A finite configured search-domain limit is never reported as an inferential
+  endpoint. Unsupported significance levels fail validation instead.
 - Algorithms sum the complete conditional support. Runtime grows with support
   width, so very large margins can be slower than asymptotic methods.
 

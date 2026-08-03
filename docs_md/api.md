@@ -9,9 +9,11 @@ exposed -        c           d
 ```
 
 Counts are finite non-negative integers. `alpha` is the two-sided significance
-level and must lie strictly in `(0, 1)`. Extended endpoints are Python `0.0`
-and `math.inf`. Invalid values raise `ValidationError`; incoherent designs
-raise `DesignError`; unidentified point estimates raise
+level and must satisfy the certified numerical contract
+`1e-12 < alpha < 1 - 1e-12`. Values outside this open interval raise
+`ValidationError` before quantile evaluation or inversion. Extended endpoints
+are Python `0.0` and `math.inf`. Incoherent designs raise `DesignError`;
+unidentified point estimates raise
 `NonIdentifiableError`; unsupported method keys raise
 `UnsupportedMethodError`; and failed numerical certification raises
 `NumericalError`.
@@ -54,6 +56,8 @@ Accepts an iterable of prespecified independent `(a, b, c, d)` strata, a
 stratified design, and `alpha`. It returns `PooledORResult` from the
 Mantel-Haenszel estimator and Robins-Breslow-Greenland variance. Empty strata,
 zero pooled cross-products, and unsupported designs fail explicitly.
+The private source profile-likelihood inverter is not shipped or reachable;
+this public route is the registry-declared Mantel-Haenszel replacement.
 
 ```python
 from exactcis import Design, compute_pooled_or
