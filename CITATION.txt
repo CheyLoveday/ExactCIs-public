@@ -1,7 +1,7 @@
 ExactCIs
 Author: Chey Loveday
 Version: 1.0.0rc1 (unreleased release candidate)
-Scientific source revision: d4ce3a5bce501eb616ef6abf38107a6f917319c4
+Scientific source revision: ba6717167fe81d929b02a9580d0fcc7bc86b830c
 
 No DOI, archive identifier, publication date, or release tag has been assigned.
 Once an authorised public release exists, cite its exact tagged revision.

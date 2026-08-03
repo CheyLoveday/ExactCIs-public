@@ -15,8 +15,12 @@ from detect_secrets.settings import default_settings
 
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_SOURCE_SHA = "".join(
+    ("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c")
+)
+PREVIOUS_REVIEWED_SOURCE_SHA = "".join(
     ("d4ce3a5b", "ce501eb6", "16ef6abf", "38107a6f", "917319c4")
 )
+REVIEWED_SOURCE_SHAS = {FROZEN_SOURCE_SHA, PREVIOUS_REVIEWED_SOURCE_SHA}
 SOURCE_REVISION = re.compile(r'^\s*"source_revision"\s*:\s*"[0-9a-f]{40}"\s*,?\s*$')
 
 
@@ -33,12 +37,14 @@ def _git(*args: str, text: bool = True) -> str | bytes:
 
 def _allowed_reference_revision(path: str, line: str) -> bool:
     if path.startswith("tests/references/") and SOURCE_REVISION.match(line):
-        return FROZEN_SOURCE_SHA in line
+        return any(source_sha in line for source_sha in REVIEWED_SOURCE_SHAS)
     allowed_citation_lines = {
-        "CITATION.cff": f'commit: "{FROZEN_SOURCE_SHA}"',
-        "CITATION.txt": f"Scientific source revision: {FROZEN_SOURCE_SHA}",
+        "CITATION.cff": {f'commit: "{sha}"' for sha in REVIEWED_SOURCE_SHAS},
+        "CITATION.txt": {
+            f"Scientific source revision: {sha}" for sha in REVIEWED_SOURCE_SHAS
+        },
     }
-    return line.strip() == allowed_citation_lines.get(path)
+    return line.strip() in allowed_citation_lines.get(path, set())
 
 
 def _current_tree_errors() -> list[str]:
@@ -132,7 +138,7 @@ def main() -> int:
         f"OK: detect-secrets scanned the current tree and {blobs} unique "
         f"path/blob pairs across {revisions} public commits"
     )
-    print("OK: reviewed allowlist is limited to the frozen scientific source SHA")
+    print("OK: reviewed allowlist is limited to frozen scientific source SHAs")
     return 0
 
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ABOUT = ROOT / "src" / "exactcis" / "__about__.py"
-SOURCE_REVISION = "".join(("d4ce3a5b", "ce501eb6", "16ef6abf", "38107a6f", "917319c4"))
+SOURCE_REVISION = "".join(("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c"))
 
 
 def package_version() -> str:

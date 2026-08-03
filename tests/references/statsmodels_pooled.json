@@ -8,7 +8,7 @@
     "method_definition": "Mantel-Haenszel pooled odds ratio and Robins-Breslow-Greenland log-variance interval",
     "tolerance": "2e-12 relative",
     "generation_script": "StratifiedTable(..., shift_zeros=False).oddsratio_pooled and oddsratio_pooled_confint()",
-    "source_revision": "d4ce3a5bce501eb616ef6abf38107a6f917319c4"
+    "source_revision": "ba6717167fe81d929b02a9580d0fcc7bc86b830c"
   },
   "cases": [
     {"strata": [[12, 5, 8, 10], [8, 2, 15, 20]], "point": 3.859649122807018, "interval": [1.3277868331380542, 11.219339565205727]},
