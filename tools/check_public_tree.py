@@ -53,7 +53,11 @@ FORBIDDEN_IMPORTS = (
     "exactcis.compute",
     "exactcis.evidence",
     "exactcis.visualization",
+    "exactcis.estimation.odds_ratio.pooled_cmle",
 )
+FORBIDDEN_SOURCE_PROFILE_PATHS = {
+    "src/exactcis/estimation/odds_ratio/pooled_cmle.py",
+}
 TEXT_PATTERNS = {
     "macOS absolute path": re.compile("/" + r"Users/[^/\s]+/"),
     "Windows user path": re.compile(r"[A-Za-z]:\\" + r"Users\\[^\\\s]+\\"),
@@ -107,6 +111,8 @@ def check_tree() -> list[str]:
     errors: list[str] = []
     for path in paths:
         pure = Path(path)
+        if path in FORBIDDEN_SOURCE_PROFILE_PATHS:
+            errors.append(f"private pooled-profile implementation is retained: {path}")
         if pure.parts[0] not in ALLOWED_TOP_LEVEL:
             errors.append(f"disallowed top-level path: {path}")
         if set(pure.parts) & DENIED_PARTS:
@@ -139,6 +145,18 @@ def check_tree() -> list[str]:
         errors.append(
             f"root namespace differs from __all__: extra={sorted(actual - expected)}, "
             f"missing={sorted(expected - actual)}"
+        )
+    forbidden_profile_exports = {
+        "ci_conditional_profile_or",
+        "cmle_common_beta",
+        "pooled_conditional_or",
+        "profile_likelihood_ci_or",
+    }
+    leaked_profile_exports = actual & forbidden_profile_exports
+    if leaked_profile_exports:
+        errors.append(
+            "private pooled-profile symbols leaked at package root: "
+            f"{sorted(leaked_profile_exports)}"
         )
     return errors
 
