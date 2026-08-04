@@ -1,9 +1,11 @@
 # Changelog
 
-This file records user-facing changes only. `1.0.0rc1` is an unreleased
-candidate for `1.0.0`; no package-index publication or release tag is implied.
+This file records user-facing changes only.
 
-## [1.0.0rc1] - Unreleased
+## [1.0.0rc1] - 2026-08-04
+
+Published to PyPI as `exactcis==1.0.0rc1` and tagged `v1.0.0-rc.1` on the
+public repository. This remains a pre-release candidate for `1.0.0`.
 
 ### Added
 

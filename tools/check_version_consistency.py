@@ -77,13 +77,35 @@ def check(release_tag: str | None = None) -> list[str]:
         )
 
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    expected_heading = f"## [{version}] - Unreleased"
-    if changelog.count(expected_heading) != 1:
+    unreleased_heading = f"## [{version}] - Unreleased"
+    published_heading = re.search(
+        rf"(?m)^## \[{re.escape(version)}\] - (\d{{4}}-\d{{2}}-\d{{2}})$",
+        changelog,
+    )
+    if changelog.count(unreleased_heading) == 1:
+        if "no package-index publication or release tag is implied" not in changelog:
+            errors.append("CHANGELOG does not state the candidate's unreleased status")
+    elif published_heading is not None:
+        if changelog.count(published_heading.group(0)) != 1:
+            errors.append(
+                f"CHANGELOG must contain exactly one dated {version!r} heading"
+            )
+        if (
+            f"`exactcis=={version}`" not in changelog
+            and f"exactcis=={version}" not in changelog
+        ):
+            errors.append(
+                "published CHANGELOG must name the PyPI project version "
+                f"exactcis=={version}"
+            )
+        if tag not in changelog:
+            errors.append(f"published CHANGELOG must name the release tag {tag!r}")
+    else:
         errors.append(
-            f"CHANGELOG must contain exactly one {expected_heading!r} heading"
+            "CHANGELOG must contain exactly one "
+            f"{unreleased_heading!r} heading or a dated "
+            f"'## [{version}] - YYYY-MM-DD' published heading"
         )
-    if "no package-index publication or release tag is implied" not in changelog:
-        errors.append("CHANGELOG does not state the candidate's unreleased status")
 
     cff = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     expected_cff = {
@@ -102,7 +124,22 @@ def check(release_tag: str | None = None) -> list[str]:
         errors.append("CITATION.cff invents a DOI, release date, or public repository")
 
     citation_text = (ROOT / "CITATION.txt").read_text(encoding="utf-8")
-    if f"Version: {version} (unreleased release candidate)" not in citation_text:
+    unreleased_citation = f"Version: {version} (unreleased release candidate)"
+    published_citation = f"Version: {version} (release candidate)"
+    if unreleased_citation in citation_text:
+        unreleased_note = (
+            "No DOI, archive identifier, publication date, or release "
+            "tag has been assigned."
+        )
+        if unreleased_note not in citation_text:
+            errors.append("CITATION.txt unreleased disclaimer differs")
+    elif published_citation in citation_text:
+        pypi_ref = f"exactcis=={version}"
+        has_tag = tag in citation_text or f"tagged {tag}" in citation_text
+        has_pypi = pypi_ref in citation_text or version in citation_text
+        if not has_tag and not has_pypi:
+            errors.append("CITATION.txt published status is incomplete")
+    else:
         errors.append("CITATION.txt version or release status differs")
     if f"Scientific source revision: {SOURCE_REVISION}" not in citation_text:
         errors.append("CITATION.txt source revision differs")

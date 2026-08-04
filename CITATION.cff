@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "Cite this unreleased candidate by version and exact source revision."
+message: "Cite this release candidate by version, public tag, and source revision."
 title: "ExactCIs"
 type: software
 authors:
