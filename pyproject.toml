@@ -92,6 +92,9 @@ include = [
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
+markers = [
+  "slow: end-to-end evidence that is expensive on the current quadratic FNCH evaluator",
+]
 
 [tool.coverage.run]
 branch = true
