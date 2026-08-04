@@ -6,7 +6,7 @@ operation counts, because wall-clock thresholds are too noisy on shared runners.
 This script produces the human-readable evidence that accompanies it.
 
 Usage:
-    python tools/fnch_matrix.py [--max-width 3001] [--json out.json]
+    python benchmarks/fnch_matrix.py [--max-width 3001] [--json out.json]
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def evaluation_matrix(cases, repeats: int = 3):
 def interval_matrix(cases):
     rows = []
     for n1, n0, events in cases:
-        # Build a concrete table with these margins: a = mode-ish, rest derived.
+        # Build a concrete table with these margins.
         a = min(n1, events) // 2
         b = n1 - a
         c = events - a
@@ -125,19 +125,17 @@ def main() -> int:
 
     storage = report["storage"]
     print(f"\nCoefficient storage ({storage['elements']:,} elements)")
-    print(
-        f"  list       {storage['list_seconds'] * 1000:7.2f} ms"
-        f"   {storage['list_bytes'] / 1e6:6.2f} MB"
-    )
-    print(
-        f"  array('d') {storage['array_seconds'] * 1000:7.2f} ms"
-        f"   {storage['array_bytes'] / 1e6:6.2f} MB"
-    )
+    list_ms = storage["list_seconds"] * 1000
+    array_ms = storage["array_seconds"] * 1000
+    list_mb = storage["list_bytes"] / 1e6
+    array_mb = storage["array_bytes"] / 1e6
+    print(f"  list       {list_ms:7.2f} ms   {list_mb:6.2f} MB")
+    print(f"  array('d') {array_ms:7.2f} ms   {array_mb:6.2f} MB")
     ratio = storage["list_bytes"] / storage["array_bytes"]
     slowdown = storage["array_seconds"] / storage["list_seconds"]
     print(
-        f"  array uses {ratio:.1f}x less memory and is"
-        f" {slowdown:.2f}x the list's iteration time"
+        f"  array uses {ratio:.1f}x less memory and is "
+        f"{slowdown:.2f}x the list's iteration time"
     )
 
     if args.json:

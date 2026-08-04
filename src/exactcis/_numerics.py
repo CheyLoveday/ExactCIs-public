@@ -44,17 +44,19 @@ def _log_choose(n: int, k: int) -> float:
     return result
 
 
-def fnch_probabilities(
+def _legacy_fnch_probabilities(
     n1: int,
     n0: int,
     events: int,
     log_odds: float,
 ) -> tuple[tuple[int, ...], tuple[float, ...]]:
-    """Evaluate a Fisher noncentral-hypergeometric probability vector.
+    """Absolute-coefficient FNCH evaluation, retained as a differential oracle.
 
-    The implementation uses a log-sum-exp normalization over the complete
-    finite support. It raises :class:`NumericalError` instead of returning a
-    synthetic distribution when normalization cannot be certified.
+    This is the pre-:class:`PreparedMargins` implementation. It recomputes both
+    log binomial coefficients at every support point on every call, which makes
+    a single evaluation quadratic in support width. It is kept only so the
+    replacement kernel can be checked against it and is not reachable from any
+    public entry point.
     """
     lower, upper = support_bounds(n1, n0, events)
     support = tuple(range(lower, upper + 1))
@@ -96,12 +98,200 @@ def fnch_probabilities(
     return support, probabilities
 
 
+class PreparedMargins:
+    """Parameter-independent FNCH structure for one set of fixed margins.
+
+    The unnormalised weights satisfy an exact ratio identity
+
+        w(k + 1) / w(k) = ((n1 - k) / (k + 1)) * ((m - k) / (n0 - m + k + 1)) * theta
+
+    whose first factor does not depend on the parameter. Preparing those adjacent
+    log-ratios once costs ``O(W)`` and makes every subsequent evaluation ``O(W)``
+    as well, where the absolute-coefficient form cost ``O(W)`` *per support point*
+    and so ``O(W**2)`` per evaluation.
+
+    Evaluation is anchored at the mode of the current parameter, not at any
+    table-level reference point. Because ``r[k] + eta`` is strictly decreasing in
+    ``k`` the mode is a single sign change, locatable by binary search, and
+    reconstructing outward from it keeps every relative log mass small in
+    magnitude. A table-level anchor would instead add a large stored coefficient
+    to a large, oppositely signed ``k * eta`` term, reintroducing the very
+    cancellation that ``_log_choose`` was rewritten to avoid.
+
+    Note that no binomial coefficient is evaluated at all: the normalised
+    probabilities are fully determined by the adjacent ratios.
+
+    Instances are immutable and cheap to hold for the duration of one inversion.
+    Callers create them explicitly; nothing here caches across calls, because an
+    unbounded process-global cache is outside the programme scope.
+    """
+
+    __slots__ = ("_n1", "_n0", "_events", "_lower", "_upper", "_support", "_ratios")
+
+    def __init__(self, n1: int, n0: int, events: int) -> None:
+        lower, upper = support_bounds(n1, n0, events)
+        if upper < lower:
+            raise NumericalError("conditional support is empty", method="FNCH")
+        self._n1 = n1
+        self._n0 = n0
+        self._events = events
+        self._lower = lower
+        self._upper = upper
+        # Preparation allocates two sequences proportional to the support width,
+        # so it can exhaust memory on a table that passes count validation. That
+        # must surface as NumericalError like every other numerical failure, not
+        # as a bare MemoryError: preparation now happens before the solver's own
+        # guarded region, so it carries its own guard.
+        try:
+            self._support = tuple(range(lower, upper + 1))
+            # r[i] is the log ratio from support[i] to support[i + 1] at theta = 1.
+            # Each factor is strictly positive across the valid support: for
+            # lower <= k < upper we have k + 1 >= 1, n1 - k >= 1, events - k >= 1
+            # and n0 - events + k + 1 >= 1, so no term is degenerate.
+            self._ratios = tuple(
+                math.log(n1 - k)
+                - math.log(k + 1)
+                + math.log(events - k)
+                - math.log(n0 - events + k + 1)
+                for k in range(lower, upper)
+            )
+        except (MemoryError, OverflowError, ValueError) as exc:
+            raise NumericalError(
+                "conditional support could not be prepared",
+                method="FNCH",
+                diagnostics={"support_size": upper - lower + 1},
+            ) from exc
+
+    @property
+    def support(self) -> tuple[int, ...]:
+        return self._support
+
+    @property
+    def width(self) -> int:
+        return len(self._support)
+
+    def index_of(self, value: int) -> int:
+        """Return the index of an observed count within the support."""
+        if not self._lower <= value <= self._upper:
+            raise NumericalError("observed count is outside conditional support")
+        return value - self._lower
+
+    def mode_index(self, log_odds: float) -> int:
+        """Return the index of the modal support point at this parameter.
+
+        ``r[i] + log_odds`` is strictly decreasing, so the mode is the first
+        index at which it stops being positive. Binary search costs O(log W).
+        """
+        ratios = self._ratios
+        low, high = 0, len(ratios) - 1
+        while low <= high:
+            middle = (low + high) // 2
+            if ratios[middle] + log_odds > 0.0:
+                low = middle + 1
+            else:
+                high = middle - 1
+        return low
+
+    def _relative_log_masses(self, log_odds: float) -> list[float]:
+        """Return log masses relative to the modal point, which is pinned at zero."""
+        ratios = self._ratios
+        width = len(self._support)
+        masses = [0.0] * width
+        mode = self.mode_index(log_odds)
+
+        running = 0.0
+        for index in range(mode, width - 1):
+            running += ratios[index] + log_odds
+            masses[index + 1] = running
+        running = 0.0
+        for index in range(mode - 1, -1, -1):
+            running -= ratios[index] + log_odds
+            masses[index] = running
+        return masses
+
+    def probabilities(
+        self, log_odds: float
+    ) -> tuple[tuple[int, ...], tuple[float, ...]]:
+        """Return the certified FNCH probability vector at one log odds ratio."""
+        support = self._support
+        if self._lower == self._upper:
+            return support, (1.0,)
+        if log_odds == -math.inf:
+            return support, tuple(1.0 if v == self._lower else 0.0 for v in support)
+        if log_odds == math.inf:
+            return support, tuple(1.0 if v == self._upper else 0.0 for v in support)
+        if not math.isfinite(log_odds):
+            raise NumericalError(
+                "log odds must be finite or an extended endpoint", method="FNCH"
+            )
+
+        masses = self._relative_log_masses(log_odds)
+        # Mode anchoring makes the maximum exactly zero by construction.
+        # Verifying it is cheap and catches a mode-location fault directly.
+        if max(masses) != 0.0:
+            raise NumericalError(
+                "conditional mass anchor is not the modal point", method="FNCH"
+            )
+        scaled = tuple(math.exp(value) for value in masses)
+        total = math.fsum(scaled)
+        if not math.isfinite(total) or total <= 0.0:
+            raise NumericalError("conditional mass normalization failed", method="FNCH")
+        probabilities = tuple(value / total for value in scaled)
+        probability_sum = math.fsum(probabilities)
+        if (
+            any(value < 0.0 or not math.isfinite(value) for value in probabilities)
+            or abs(probability_sum - 1.0) > 2e-13
+        ):
+            raise NumericalError(
+                "conditional probabilities failed certification",
+                method="FNCH",
+                diagnostics={"sum": probability_sum, "support_size": len(support)},
+            )
+        return support, probabilities
+
+    def mean(self, log_odds: float) -> float:
+        """Return the conditional mean of the first-row count."""
+        support, probabilities = self.probabilities(log_odds)
+        return math.fsum(v * p for v, p in zip(support, probabilities))
+
+    def moments(self, log_odds: float) -> tuple[float, float]:
+        """Return conditional mean and variance from a single traversal.
+
+        ``d/d eta E_eta[X] == Var_eta(X)`` for this exponential family, so the
+        variance returned here is the derivative a safeguarded Newton step needs
+        and costs no additional distribution evaluation.
+        """
+        support, probabilities = self.probabilities(log_odds)
+        mean = math.fsum(v * p for v, p in zip(support, probabilities))
+        variance = math.fsum(
+            (v - mean) * (v - mean) * p for v, p in zip(support, probabilities)
+        )
+        return mean, variance
+
+
+def prepare_margins(n1: int, n0: int, events: int) -> PreparedMargins:
+    """Build the parameter-independent structure for one set of fixed margins."""
+    return PreparedMargins(n1, n0, events)
+
+
+def fnch_probabilities(
+    n1: int,
+    n0: int,
+    events: int,
+    log_odds: float,
+) -> tuple[tuple[int, ...], tuple[float, ...]]:
+    """Evaluate a Fisher noncentral-hypergeometric probability vector.
+
+    Convenience wrapper that prepares a single-use :class:`PreparedMargins`.
+    Callers evaluating repeatedly at fixed margins, which is every inversion,
+    should prepare once and reuse instead.
+    """
+    return prepare_margins(n1, n0, events).probabilities(log_odds)
+
+
 def conditional_mean(n1: int, n0: int, events: int, log_odds: float) -> float:
     """Return the first-row conditional mean under one log odds ratio."""
-    support, probabilities = fnch_probabilities(n1, n0, events, log_odds)
-    return math.fsum(
-        value * probability for value, probability in zip(support, probabilities)
-    )
+    return prepare_margins(n1, n0, events).mean(log_odds)
 
 
 def solve_monotone_log_parameter(
@@ -196,8 +386,14 @@ def conditional_mle(
     b: int,
     c: int,
     d: int,
+    *,
+    prepared: PreparedMargins | None = None,
 ) -> float:
-    """Return the conditional MLE under the fixed-margin FNCH model."""
+    """Return the conditional MLE under the fixed-margin FNCH model.
+
+    ``prepared`` lets a caller that already holds the margins structure reuse it
+    rather than rebuilding it; the result is identical either way.
+    """
     n1, n0, events = a + b, c + d, a + c
     lower, upper = support_bounds(n1, n0, events)
     if lower == upper:
@@ -206,8 +402,9 @@ def conditional_mle(
         return 0.0
     if a == upper:
         return math.inf
+    margins = prepared if prepared is not None else prepare_margins(n1, n0, events)
     log_value = solve_monotone_log_parameter(
-        lambda value: conditional_mean(n1, n0, events, value),
+        margins.mean,
         float(a),
         increasing=True,
         method="conditional_mle",
@@ -224,9 +421,15 @@ def ordered_p_value(
     log_odds: float,
     *,
     ordering: str,
+    prepared: PreparedMargins | None = None,
 ) -> float:
-    """Return an inclusive minimum-likelihood or Blaker ordered p-value."""
-    support, probabilities = fnch_probabilities(n1, n0, events, log_odds)
+    """Return an inclusive minimum-likelihood or Blaker ordered p-value.
+
+    ``prepared`` lets an inversion reuse one margins structure across all of its
+    evaluations instead of rebuilding it per call.
+    """
+    margins = prepared if prepared is not None else prepare_margins(n1, n0, events)
+    support, probabilities = margins.probabilities(log_odds)
     try:
         index = support.index(observed)
     except ValueError as exc:
@@ -274,7 +477,11 @@ def ordered_interval(
     if support_lower == support_upper:
         return 0.0, math.inf
 
-    point = conditional_mle(a, b, c, d)
+    # One preparation for the whole inversion: the MLE solve and every
+    # acceptance probe below share these parameter-independent ratios.
+    margins = prepare_margins(n1, n0, events)
+
+    point = conditional_mle(a, b, c, d, prepared=margins)
     if point == 0.0:
         center = -36.0
     elif math.isinf(point):
@@ -292,6 +499,7 @@ def ordered_interval(
                     a,
                     log_odds,
                     ordering=ordering,
+                    prepared=margins,
                 )
                 >= alpha
             )

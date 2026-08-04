@@ -74,29 +74,45 @@ def count_work():
     """
     counter = WorkCounter()
     real_math = numerics.math
-    real_fnch = numerics.fnch_probabilities
-    prepare_name = "prepare_margins"
-    real_prepare = getattr(numerics, prepare_name, None)
+    prepared_class = getattr(numerics, "PreparedMargins", None)
 
-    def counting_fnch(*args, **kwargs):
-        counter.fnch_calls += 1
-        return real_fnch(*args, **kwargs)
+    # Count evaluations and preparations on the class rather than on a module
+    # attribute, so the counts are unaffected by how each call site imported the
+    # names. ``from ... import prepare_margins`` binds at import time and would
+    # otherwise be invisible here.
+    if prepared_class is not None:
+        real_init = prepared_class.__init__
+        real_probabilities = prepared_class.probabilities
 
-    def counting_prepare(*args, **kwargs):
-        counter.prepared += 1
-        return real_prepare(*args, **kwargs)
+        def counting_init(self, *args, **kwargs):
+            counter.prepared += 1
+            return real_init(self, *args, **kwargs)
+
+        def counting_probabilities(self, *args, **kwargs):
+            counter.fnch_calls += 1
+            return real_probabilities(self, *args, **kwargs)
+
+        prepared_class.__init__ = counting_init
+        prepared_class.probabilities = counting_probabilities
+    else:  # pragma: no cover - pre-PreparedMargins fallback
+        real_fnch = numerics.fnch_probabilities
+
+        def counting_fnch(*args, **kwargs):
+            counter.fnch_calls += 1
+            return real_fnch(*args, **kwargs)
+
+        numerics.fnch_probabilities = counting_fnch
 
     numerics.math = _CountingMath(real_math, counter)
-    numerics.fnch_probabilities = counting_fnch
-    if real_prepare is not None:
-        setattr(numerics, prepare_name, counting_prepare)
     try:
         yield counter
     finally:
         numerics.math = real_math
-        numerics.fnch_probabilities = real_fnch
-        if real_prepare is not None:
-            setattr(numerics, prepare_name, real_prepare)
+        if prepared_class is not None:
+            prepared_class.__init__ = real_init
+            prepared_class.probabilities = real_probabilities
+        else:  # pragma: no cover
+            numerics.fnch_probabilities = real_fnch
 
 
 def support(n1: int, n0: int, events: int) -> list[int]:

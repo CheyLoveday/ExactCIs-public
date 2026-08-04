@@ -35,9 +35,7 @@ CONDITIONAL_MLE_LOCK = (1400, 1400, 1120, 1680)
 
 @pytest.mark.xfail(
     strict=True,
-    reason=(
-        "issue #13: score residual scale collapses to 1.0, so the gate stays absolute"
-    ),
+    reason="issue #13: score residual scale collapses to 1.0, gate stays absolute",
 )
 def test_score_inversion_survives_large_denominators() -> None:
     """A well-conditioned root is refused because the residual gate does not scale.
@@ -88,15 +86,14 @@ def test_residual_gate_scales_with_target_magnitude() -> None:
     assert abs(monotone(root) - target) > 2e-10
 
 
-@pytest.mark.slow
 def test_conditional_mle_scale_regression_stays_fixed() -> None:
     """End-to-end lock for the repaired conditional-MLE residual scale.
 
     Before the ``max(1.0, abs(target))`` scaling this balanced table raised
     ``NumericalError`` from the point-estimate path while the interval route
-    succeeded on the identical table. Marked slow because the present quadratic
-    evaluator needs minutes at this support width; it becomes fast once the
-    replacement kernel (issue #11) lands, at which point the marker should go.
+    succeeded on the identical table. Written as ``slow`` against the quadratic
+    evaluator, where it needed about three minutes; the prepared kernel brings
+    it to roughly one second, so the marker is gone.
     """
     a, b, c, d = CONDITIONAL_MLE_LOCK
     lower, upper = exact_ci_blaker(a, b, c, d, 0.05, design=CASE_CONTROL)

@@ -40,25 +40,24 @@ def test_operation_counts_are_deterministic() -> None:
     assert first == second
 
 
-def test_current_kernel_work_is_exactly_quadratic() -> None:
-    """Document the present behaviour: ``work / W**2`` is constant at 0.5.
+def test_legacy_kernel_work_was_exactly_quadratic() -> None:
+    """The behaviour the replacement kernel removed: ``work / W**2`` constant at 0.5.
 
-    This test passes on 1.0.0 and must be deleted by the tranche that lands the
-    replacement kernel, at which point the linear budget test below takes over.
+    Measured against the retained differential oracle rather than the production
+    path, so the historical shape stays documented without keeping the quadratic
+    evaluator reachable.
     """
+    from exactcis._numerics import _legacy_fnch_probabilities
+
     ratios = []
     for n1, n0, events in WIDTH_CASES:
-        work, width = _single_evaluation_work(n1, n0, events)
-        ratios.append(work / (width * width))
+        with count_work() as counter:
+            _legacy_fnch_probabilities(n1, n0, events, 0.3)
+        width = support_width(n1, n0, events)
+        ratios.append(counter.total_work() / (width * width))
     assert all(abs(r - 0.5) < 0.02 for r in ratios), ratios
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "issue #11: repeated _log_choose makes evaluation quadratic in support width"
-    ),
-)
 @pytest.mark.parametrize(("n1", "n0", "events"), WIDTH_CASES)
 def test_evaluation_work_is_linear_in_support_width(
     n1: int, n0: int, events: int
@@ -70,16 +69,8 @@ def test_evaluation_work_is_linear_in_support_width(
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="issue #11: coefficients are rebuilt at every root evaluation",
-)
 def test_margins_are_prepared_once_per_inversion() -> None:
-    """One interval must prepare the parameter-independent coefficients once.
-
-    On 1.0.0 there is no preparation step at all, so the counter stays at zero
-    while the distribution is rebuilt on every evaluation.
-    """
+    """One interval prepares the parameter-independent ratios exactly once."""
     with count_work() as counter:
         exact_ci_conditional(200, 200, 160, 240, 0.05, design=CASE_CONTROL)
     assert counter.fnch_calls > 1, "expected multiple evaluations during inversion"
@@ -89,12 +80,21 @@ def test_margins_are_prepared_once_per_inversion() -> None:
     )
 
 
-def test_total_interval_work_scales_linearly_with_width() -> None:
-    """Evidence-only companion to the gate above, recorded at small widths.
+def test_ordered_inversion_prepares_once_across_both_endpoints() -> None:
+    """The ordered route shares one preparation across the MLE and both transitions."""
+    from exactcis import exact_ci_blaker
 
-    Kept non-blocking because it measures the whole inversion rather than a
-    single evaluation, and the evaluation count itself may legitimately change
-    when safeguarded Newton lands.
+    with count_work() as counter:
+        exact_ci_blaker(30, 20, 15, 35, 0.05, design=CASE_CONTROL)
+    assert counter.fnch_calls > 10
+    assert counter.prepared == 1
+
+
+def test_total_interval_work_scales_linearly_with_width() -> None:
+    """Whole-inversion work must not grow faster than the support width.
+
+    Allows generous headroom because the evaluation count itself varies a little
+    with the table, and may legitimately change when safeguarded Newton lands.
     """
     observations = []
     for n1 in (100, 200, 400):
@@ -102,9 +102,9 @@ def test_total_interval_work_scales_linearly_with_width() -> None:
             exact_ci_conditional(n1, n1, n1, n1, 0.05, design=CASE_CONTROL)
         observations.append((support_width(n1, n1, n1), counter.total_work()))
 
-    growth = observations[-1][1] / observations[0][1]
+    work_growth = observations[-1][1] / observations[0][1]
     width_growth = observations[-1][0] / observations[0][0]
-    assert growth > width_growth, (
-        "current implementation is expected to grow faster than support width; "
+    assert work_growth <= 2.0 * width_growth, (
+        f"work grew {work_growth:.1f}x while support width grew {width_growth:.1f}x; "
         f"observed {observations}"
     )

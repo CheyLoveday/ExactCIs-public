@@ -75,7 +75,7 @@ def test_named_accepted_parameter_lies_inside_returned_interval() -> None:
 def test_no_accepted_probe_lies_outside_returned_interval(
     table, alpha, ordering
 ) -> None:
-    """Search the membership grid for accepted points outside the interval."""
+    """Search the closed-form membership grid for accepted points outside."""
     a, b, c, d = table
     n1, n0, events = a + b, c + d, a + c
     solver = exact_ci_minlike if ordering == "minlike" else exact_ci_blaker
