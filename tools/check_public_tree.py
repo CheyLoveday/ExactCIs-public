@@ -15,6 +15,7 @@ ALLOWED_TOP_LEVEL = {
     ".github",
     ".gitignore",
     ".pre-commit-config.yaml",
+    "AGENTS.md",
     "CHANGELOG.md",
     "CITATION.cff",
     "CITATION.txt",
