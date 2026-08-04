@@ -142,6 +142,10 @@ are not expected to agree by construction.
   minutes on a single core; above roughly `1e7` the solvers typically fail
   closed with `NumericalError` rather than hang forever. Prefer asymptotic
   methods when such scales are expected and exact conditioning is not required.
+- Sparse independent-binomial Wald OR intervals can look successful while
+  empirical coverage and failure rates deviate from the nominal 95%; see the
+  coverage and timing tables in
+  [Supported methods](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/methods.md).
 
 See [API contract](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/api.md)
 for return types, exceptions, and individual method examples.
