@@ -22,6 +22,12 @@ candidate for `1.0.0`; no package-index publication or release tag is implied.
 - Invalid designs, unidentified estimands, unsupported methods, and numerical
   nonconvergence now raise explicit exceptions. No method silently substitutes
   another construction after failure.
+- Significance levels must satisfy the numerically certified open domain
+  `1e-12 < alpha < 1 - 1e-12`; unsupported floating-point extremes fail
+  validation before quantile evaluation or interval inversion.
+- The public pooled route is explicitly the Mantel-Haenszel/RBG construction;
+  the private conditional-profile implementation and its search domain are not
+  shipped or reachable from the public package.
 - The supported interpreter range is Python 3.11 through 3.13.
 - The stable runtime is standard-library-only. Development, documentation,
   release, security, and validation dependencies are isolated in named extras.

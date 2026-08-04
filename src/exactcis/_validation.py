@@ -9,16 +9,22 @@ from typing import Iterable
 from exactcis.exceptions import ValidationError
 
 Table = tuple[int, int, int, int]
+_ALPHA_STABILITY_MARGIN = 1e-12
+_MAXIMUM_CERTIFIED_ALPHA = 1.0 - _ALPHA_STABILITY_MARGIN
 
 
 def validate_alpha(alpha: float) -> float:
-    """Return a finite significance level strictly between zero and one."""
+    """Return a significance level inside the certified numerical domain."""
+    message = "alpha must satisfy 1e-12 < alpha < 1 - 1e-12 for numerical stability"
     try:
         value = float(alpha)
     except (TypeError, ValueError, OverflowError) as exc:
-        raise ValidationError("alpha must be a finite number in (0, 1)") from exc
-    if not math.isfinite(value) or not 0.0 < value < 1.0:
-        raise ValidationError(f"alpha must be a finite number in (0, 1), got {alpha!r}")
+        raise ValidationError(message) from exc
+    if (
+        not math.isfinite(value)
+        or not _ALPHA_STABILITY_MARGIN < value < _MAXIMUM_CERTIFIED_ALPHA
+    ):
+        raise ValidationError(f"{message}, got {alpha!r}")
     return value
 
 

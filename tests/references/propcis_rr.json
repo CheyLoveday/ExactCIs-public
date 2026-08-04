@@ -8,7 +8,7 @@
     "method_definition": "Koopman-Nam score inversion without an N/(N-1) variance multiplier",
     "tolerance": "3e-8 absolute for regular cases; 1e-4 relative at complete-success search boundaries",
     "generation_script": "R PropCIs::riskscoreci calls retained in PR 37 test_rr_score_release.py",
-    "source_revision": "d4ce3a5bce501eb616ef6abf38107a6f917319c4"
+    "source_revision": "ba6717167fe81d929b02a9580d0fcc7bc86b830c"
   },
   "cases": [
     {"table": [0, 10, 5, 15], "interval": [0.0, 1.2466905050857653], "boundary": true},
