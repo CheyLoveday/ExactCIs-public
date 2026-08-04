@@ -22,7 +22,6 @@ keywords = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
@@ -31,6 +30,13 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/CheyLoveday/ExactCIs-public"
+Repository = "https://github.com/CheyLoveday/ExactCIs-public"
+Documentation = "https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/index.md"
+Issues = "https://github.com/CheyLoveday/ExactCIs-public/issues"
+Changelog = "https://github.com/CheyLoveday/ExactCIs-public/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -80,7 +86,6 @@ include = [
   "/pyproject.toml",
   "/src",
   "/tests",
-  "/tools",
   "/uv.lock",
 ]
 

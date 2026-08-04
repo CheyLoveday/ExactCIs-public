@@ -25,9 +25,23 @@ def support_bounds(n1: int, n0: int, events: int) -> tuple[int, int]:
 
 
 def _log_choose(n: int, k: int) -> float:
+    """Return log(C(n, k)) without catastrophic cancellation.
+
+    Small supports use exact ``math.comb``; large supports use an iterative
+    product in log space. The previous three-term ``lgamma`` form can lose
+    precision for large, unbalanced arguments.
+    """
     if k < 0 or k > n:
         return -math.inf
-    return math.lgamma(n + 1.0) - math.lgamma(k + 1.0) - math.lgamma(n - k + 1.0)
+    if k == 0 or k == n:
+        return 0.0
+    k = min(k, n - k)
+    if n <= 10_000:
+        return math.log(math.comb(n, k))
+    result = 0.0
+    for i in range(k):
+        result += math.log(n - i) - math.log(i + 1)
+    return result
 
 
 def fnch_probabilities(
@@ -104,9 +118,9 @@ def solve_monotone_log_parameter(
     try:
         f_left = function(left)
         f_right = function(right)
-    except Exception as exc:
-        if isinstance(exc, NumericalError):
-            raise
+    except NumericalError:
+        raise
+    except (OverflowError, ValueError, ZeroDivisionError, MemoryError) as exc:
         raise NumericalError(
             "endpoint evaluation failed during inversion",
             method=method,
@@ -154,12 +168,13 @@ def solve_monotone_log_parameter(
 
     root = (left + right) / 2.0
     residual = abs(function(root) - target)
-    if residual > 2e-10:
+    scale = max(1.0, abs(target))
+    if residual > 2e-10 * scale:
         raise NumericalError(
             "confidence-limit inversion failed its residual criterion",
             method=method,
             side=side,
-            diagnostics={"residual": residual},
+            diagnostics={"residual": residual, "scale": scale},
         )
     return root
 
@@ -268,19 +283,34 @@ def ordered_interval(
         center = math.log(point)
 
     def accepted(log_odds: float) -> bool:
-        return (
-            ordered_p_value(
-                n1,
-                n0,
-                events,
-                a,
-                log_odds,
-                ordering=ordering,
+        try:
+            return (
+                ordered_p_value(
+                    n1,
+                    n0,
+                    events,
+                    a,
+                    log_odds,
+                    ordering=ordering,
+                )
+                >= alpha
             )
-            >= alpha
-        )
+        except (OverflowError, ValueError, ZeroDivisionError, MemoryError) as exc:
+            raise NumericalError(
+                "ordered conditional p-value evaluation failed",
+                method=ordering,
+            ) from exc
 
-    if not accepted(center):
+    try:
+        center_ok = accepted(center)
+    except NumericalError:
+        raise
+    except (OverflowError, ValueError, ZeroDivisionError, MemoryError) as exc:
+        raise NumericalError(
+            "ordered conditional p-value evaluation failed at the MLE",
+            method=ordering,
+        ) from exc
+    if not center_ok:
         raise NumericalError(
             "ordered conditional p-value is below alpha at its likelihood maximum",
             method=ordering,

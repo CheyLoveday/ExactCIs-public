@@ -12,7 +12,7 @@ from exactcis.exceptions import NumericalError
 _MAX_LOG_RATIO = 709.0
 
 
-def _require_independent_ratio_design(design: Design | None, method: str) -> Design:
+def _require_independent_ratio_design(design: Design, method: str) -> Design:
     if design not in {Design.COHORT_BINOMIAL, Design.CROSS_SECTIONAL}:
         from exactcis.exceptions import DesignError
 
@@ -145,12 +145,13 @@ def _invert_score(
             break
     root = (left + right) / 2.0
     residual = abs(target(root))
-    if not math.isfinite(residual) or residual > 1e-8:
+    scale = max(1.0, abs(f_left), abs(f_right), abs(residual))
+    if not math.isfinite(residual) or residual > 1e-8 * scale:
         raise NumericalError(
             "score inversion failed its residual criterion",
             method="score_rr",
             side=side,
-            diagnostics={"residual": residual},
+            diagnostics={"residual": residual, "scale": scale},
         )
     return math.exp(root)
 
@@ -162,7 +163,7 @@ def ci_score_rr(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return a Koopman-Nam score interval for a risk/prevalence ratio.
 

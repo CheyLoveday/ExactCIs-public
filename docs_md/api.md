@@ -8,15 +8,19 @@ exposed +        a           b
 exposed -        c           d
 ```
 
-Counts are finite non-negative integers. `alpha` is the two-sided significance
-level and must satisfy the certified numerical contract
-`1e-12 < alpha < 1 - 1e-12`. Values outside this open interval raise
-`ValidationError` before quantile evaluation or inversion. Extended endpoints
-are Python `0.0` and `math.inf`. Incoherent designs raise `DesignError`;
-unidentified point estimates raise
-`NonIdentifiableError`; unsupported method keys raise
-`UnsupportedMethodError`; and failed numerical certification raises
-`NumericalError`.
+Counts are finite non-negative integers no larger than `10**12` per cell.
+`alpha` is the two-sided significance level and must satisfy the certified
+numerical contract `1e-12 < alpha < 1 - 1e-12`. Values outside this open
+interval raise `ValidationError` before quantile evaluation or inversion.
+Extended endpoints are Python `0.0` and `math.inf`. Incoherent designs raise
+`DesignError`; unidentified point estimates raise `NonIdentifiableError`;
+unsupported method keys raise `UnsupportedMethodError`; and failed numerical
+certification raises `NumericalError`. All package errors subclass
+`ExactCIsError`. Effect measures use the `Estimand` enum (`OR`, `RR`).
+
+Raw interval functions require a keyword-only `design: Design` argument with
+**no** default. Policy helpers (`compute_*_with_policy`, `compute_pooled_or`)
+likewise require an explicit design.
 
 ## Design-aware policy functions
 
@@ -34,6 +38,7 @@ from exactcis import Design, compute_or_with_policy
 
 result = compute_or_with_policy(12, 5, 8, 10, design=Design.CASE_CONTROL_FIXED_MARGIN)
 assert result.lower <= result.point <= result.upper
+print(result.method, result.point, result.lower, result.upper)
 ```
 
 ### `compute_rr_with_policy`

@@ -119,7 +119,7 @@ def test_confidence_sets_weakly_widen_with_confidence_level(method) -> None:
 
 @pytest.mark.parametrize("method", EXACT_METHODS)
 def test_direct_exact_methods_require_declared_fixed_margin_design(method) -> None:
-    with pytest.raises(DesignError, match="CASE_CONTROL_FIXED_MARGIN"):
+    with pytest.raises(TypeError, match="design"):
         method(12, 5, 8, 10)
     with pytest.raises(DesignError, match="CASE_CONTROL_FIXED_MARGIN"):
         method(12, 5, 8, 10, design=Design.COHORT_BINOMIAL)

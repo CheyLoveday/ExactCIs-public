@@ -14,10 +14,10 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
 - **Fail-closed:** unsupported inputs and numerical failures raise; no method
   silently replaces another.
 - Python **3.11–3.13**. Runtime: **standard library only**.
-- Current release candidate: `exactcis==1.0.0rc1`.
+- Current release candidate: `exactcis==1.0.0rc2`.
 
 ```bash
-pip install exactcis==1.0.0rc1
+pip install exactcis==1.0.0rc2
 ```
 
 ---
@@ -30,7 +30,7 @@ exposed +        a           b
 exposed -        c           d
 ```
 
-- Counts are finite non-negative integers.
+- Counts are finite non-negative integers no larger than `10**12` per cell.
 - Swapping rows or columns reciprocates ratio estimands.
 - **Never relabel cells between related calls.**
 

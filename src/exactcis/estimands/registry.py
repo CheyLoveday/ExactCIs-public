@@ -265,7 +265,7 @@ def get_method_spec(design: Design, estimand: Estimand, method: str) -> MethodSp
     if not isinstance(method, str) or not method:
         raise UnsupportedMethodError("method must be a non-empty public method key")
     try:
-        return _INDEX[(design, estimand, method)]
+        spec = _INDEX[(design, estimand, method)]
     except KeyError as exc:
         available = methods_for(design, estimand)
         if not available:
@@ -276,6 +276,12 @@ def get_method_spec(design: Design, estimand: Estimand, method: str) -> MethodSp
             f"method {method!r} is not shipped for {design.value}/{estimand.value}; "
             f"available methods: {', '.join(available)}"
         ) from exc
+    if spec.status != "stable":
+        raise UnsupportedMethodError(
+            f"method {method!r} is not a stable public method for "
+            f"{design.value}/{estimand.value} (status={spec.status!r})"
+        )
+    return spec
 
 
 def _require_enums(design: Design, estimand: Estimand) -> None:

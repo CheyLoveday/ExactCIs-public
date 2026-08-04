@@ -27,3 +27,6 @@ site/
 .idea/
 .vscode/
 *.swp
+
+# Local agent skills — not part of public tree (denied by check_public_tree)
+.grok/

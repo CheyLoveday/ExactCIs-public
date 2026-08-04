@@ -17,7 +17,7 @@ def exact_ci_minlike(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Invert the inclusive Fisher-Irwin minimum-likelihood ordering."""
     require_fixed_margin_design(design)
@@ -32,7 +32,7 @@ def exact_ci_blaker(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Invert Blaker's inclusive acceptability ordering.
 
