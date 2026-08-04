@@ -2,6 +2,24 @@
 
 This file records user-facing changes only.
 
+## [1.0.0rc2] - 2026-08-04
+
+Published packaging and numerical hardening release candidate (`exactcis==1.0.0rc2`,
+tag `v1.0.0-rc.2`).
+
+### Fixed
+
+- Published README install path and project URLs for PyPI long description.
+- Absolute documentation links; sdist no longer ships `tools/`.
+- Cancellation-resistant log-binomial coefficients; scale-aware inversion residual gates.
+- Log-space Wald OR point and non-finite endpoint rejection.
+- Required `design` on raw interval routes; falsy `method` no longer selects defaults.
+- Count bound `1e12`; tighter `NumericalError` wrapping; examples print results.
+
+### Changed
+
+- Release-tool tests skip when `tools/` or `.git` are absent (sdist-friendly).
+
 ## [1.0.0rc1] - 2026-08-04
 
 Published to PyPI as `exactcis==1.0.0rc1` and tagged `v1.0.0-rc.1` on the

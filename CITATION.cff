@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Loveday"
     given-names: "Chey"
-version: "1.0.0rc1"
+version: "1.0.0rc2"
 commit: "ba6717167fe81d929b02a9580d0fcc7bc86b830c"
 abstract: >-
   Design-aware confidence intervals and related inference for sparse 2 by 2

@@ -38,11 +38,9 @@ CONTENT_PATTERNS = {
     "OpenAI-style token": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}"),
     "AWS access key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     "Slack token": re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}"),
+    # Private monorepo only. The public export is CheyLoveday/ExactCIs-public.
     "private source repository": re.compile(
-        r"github\.com/Chey"
-        r"Loveday/ExactCIs|"
-        r"\bChey"
-        r"Loveday\b(?!@users\.noreply\.github\.com)",
+        r"github\.com/CheyLoveday/ExactCIs(?!-public)(?:[\"'\s/#?]|$)",
         re.IGNORECASE,
     ),
 }

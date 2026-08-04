@@ -7,7 +7,7 @@ import math
 from exactcis._numerics import normal_quantile
 from exactcis._validation import validate_alpha, validate_independent_groups
 from exactcis.estimands import Design, Estimand, get_method_spec
-from exactcis.exceptions import NonIdentifiableError
+from exactcis.exceptions import DesignError, NonIdentifiableError, NumericalError
 
 
 def _wald_interval(
@@ -27,19 +27,18 @@ def _wald_interval(
         )
     correction = 0.5 if always_correct or 0 in table else 0.0
     a_f, b_f, c_f, d_f = (value + correction for value in table)
-    log_point = math.log((a_f * d_f) / (b_f * c_f))
+    log_point = math.log(a_f) + math.log(d_f) - math.log(b_f) - math.log(c_f)
     standard_error = math.sqrt(1.0 / a_f + 1.0 / b_f + 1.0 / c_f + 1.0 / d_f)
     critical = normal_quantile(1.0 - alpha / 2.0)
-    return (
-        math.exp(log_point - critical * standard_error),
-        math.exp(log_point + critical * standard_error),
-    )
+    lower = math.exp(log_point - critical * standard_error)
+    upper = math.exp(log_point + critical * standard_error)
+    if not (math.isfinite(lower) and math.isfinite(upper)):
+        raise NumericalError("Wald interval produced non-finite endpoints")
+    return lower, upper
 
 
-def _require_product_binomial_or(design: Design | None, method: str) -> Design:
+def _require_product_binomial_or(design: Design, method: str) -> Design:
     if design not in {Design.COHORT_BINOMIAL, Design.CROSS_SECTIONAL}:
-        from exactcis.exceptions import DesignError
-
         raise DesignError(
             "Wald odds-ratio inference requires Design.COHORT_BINOMIAL or "
             "Design.CROSS_SECTIONAL"
@@ -55,7 +54,7 @@ def ci_wald(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return a log-Wald OR interval, correcting only zero-cell tables.
 
@@ -76,7 +75,7 @@ def ci_wald_haldane(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return a log-Wald OR interval after adding 0.5 to every cell."""
     _require_product_binomial_or(design, "wald_haldane")

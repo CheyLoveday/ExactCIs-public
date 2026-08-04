@@ -17,7 +17,7 @@ def exact_ci_midp(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return a fixed-margin Mid-P confidence interval for an odds ratio.
 

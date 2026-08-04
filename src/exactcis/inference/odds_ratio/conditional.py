@@ -17,7 +17,7 @@ def exact_ci_conditional(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return a central conditional confidence interval for an odds ratio.
 

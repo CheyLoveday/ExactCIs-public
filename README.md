@@ -4,20 +4,25 @@ ExactCIs provides design-aware inference for sparse 2 × 2 tables in Python,
 with explicit sampling assumptions, documented interval constructions, and
 fail-closed numerical behaviour.
 
-The `1.0.0rc1` source tree is an unpublished release candidate. It does not
-claim universal exactness, unconditional coverage for conditional procedures,
-clinical validation, or formal verification.
+Version **1.0.0rc2** is a release candidate for 1.0.0. It does not claim universal
+exactness, unconditional coverage for conditional procedures, clinical
+validation, or formal verification.
 
 ## Installation
 
-ExactCIs supports Python 3.11 through 3.13. Until a release is authorised, install
-from a reviewed source checkout or a verified local artefact:
+ExactCIs supports Python 3.11 through 3.13 and has zero runtime dependencies.
 
 ```bash
-python -m pip install .
+python -m pip install exactcis
 ```
 
-For development and documentation checks:
+For a specific release candidate:
+
+```bash
+python -m pip install exactcis==1.0.0rc2
+```
+
+For development and documentation checks (from a source checkout):
 
 ```bash
 uv sync --frozen --extra dev --extra docs
@@ -49,6 +54,10 @@ result = compute_or_with_policy(
 )
 
 assert result.lower <= result.point <= result.upper
+print(
+    f"{result.method} ({result.construction}): "
+    f"point={result.point:.6g}  ({result.lower:.6g}, {result.upper:.6g})"
+)
 ```
 <!-- exactcis-example:end -->
 
@@ -70,16 +79,17 @@ exposed -        c           d
 - The cohort risk ratio is `[a / (a + b)] / [c / (c + d)]`, where identified.
 - Cross-sectional use of the same row-proportion ratio is a prevalence ratio.
 
-Counts must be finite, non-negative integers. Rows identify the two comparison
-groups; columns identify outcome status. Swapping either pair reciprocates the
-corresponding ratio and transforms finite interval endpoints accordingly.
+Counts must be finite, non-negative integers no larger than `10**12` per cell.
+Rows identify the two comparison groups; columns identify outcome status.
+Swapping either pair reciprocates the corresponding ratio and transforms finite
+interval endpoints accordingly.
 
 ## Supported designs, estimands, and methods
 
 The machine-readable source of truth is
 `exactcis.estimands.method_registry()`. The complete generated table, including
 construction, calibration statement, and limitations, is in
-[Supported methods](docs_md/methods.md).
+[Supported methods](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/methods.md).
 
 | Design | Effect measure | Stable method keys | Default policy method |
 |---|---|---|---|
@@ -93,6 +103,8 @@ construction, calibration statement, and limitations, is in
 Risk or prevalence ratios are not identified from fixed-margin retrospective
 case-control sampling. Same-study marginal pooling without participant-level
 union or dependence information is outside this release.
+`compute_pooled_or` accepts one or more strata; a single stratum is valid
+mathematically but is usually a modelling mistake when “pooled” was intended.
 
 ## Statistical conventions and assumptions
 
@@ -126,10 +138,13 @@ are not expected to agree by construction.
 - A finite configured search-domain limit is never reported as an inferential
   endpoint. Unsupported significance levels fail validation instead.
 - Algorithms sum the complete conditional support. Runtime grows with support
-  width, so very large margins can be slower than asymptotic methods.
+  width: tables with margins around `1e5`–`1e6` can take tens of seconds to
+  minutes on a single core; above roughly `1e7` the solvers typically fail
+  closed with `NumericalError` rather than hang forever. Prefer asymptotic
+  methods when such scales are expected and exact conditioning is not required.
 
-See [API contract](docs_md/api.md) for return types, exceptions, and individual
-method examples.
+See [API contract](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/api.md)
+for return types, exceptions, and individual method examples.
 
 ## Experimental and compatibility methods
 
@@ -142,10 +157,13 @@ selection.
 
 ## API documentation
 
-The stable root API is listed in [API contract](docs_md/api.md). Lower-level
-registry inspection is available from `exactcis.estimands`; implementation
-helpers beginning with an underscore are internal and have no stability
-promise.
+The stable root API is listed in
+[API contract](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/api.md).
+Only the package root exports (see `exactcis.__all__`) and
+`exactcis.estimands` are stable public surfaces. Other non-underscore
+implementation packages under `exactcis.*` have no compatibility promise.
+Lower-level registry inspection is available from `exactcis.estimands`;
+helpers beginning with an underscore are internal.
 
 ## Validation and reproducibility
 
@@ -164,16 +182,18 @@ workflow also executes this README example against source, wheel, and sdist.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Statistical changes require a stated
-mathematical definition, an independent oracle, focused boundary tests, and a
-separate explanation of any changed outputs.
+See [CONTRIBUTING.md](https://github.com/CheyLoveday/ExactCIs-public/blob/main/CONTRIBUTING.md).
+Statistical changes require a stated mathematical definition, an independent
+oracle, focused boundary tests, and a separate explanation of any changed
+outputs.
 
 ## Citation
 
-See [CITATION.cff](CITATION.cff) and [CITATION.txt](CITATION.txt). Before an
-archive or DOI exists, cite the exact Git revision analysed. No DOI or release
-tag is implied by this candidate.
+See [CITATION.cff](https://github.com/CheyLoveday/ExactCIs-public/blob/main/CITATION.cff)
+and [CITATION.txt](https://github.com/CheyLoveday/ExactCIs-public/blob/main/CITATION.txt).
+Cite the exact version and Git revision analysed. No DOI is assigned yet.
 
 ## Licence
 
-ExactCIs is distributed under the [MIT License](LICENSE).
+ExactCIs is distributed under the
+[MIT License](https://github.com/CheyLoveday/ExactCIs-public/blob/main/LICENSE).

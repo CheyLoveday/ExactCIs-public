@@ -28,6 +28,10 @@ pooled_result = compute_pooled_or(
 
 for result in (or_result, rr_result, pooled_result):
     assert result.lower <= result.point <= result.upper
+    print(
+        f"{result.method}: point={result.point:.6g} "
+        f"({result.lower:.6g}, {result.upper:.6g})"
+    )
 
 for method in (
     exact_ci_conditional,
@@ -37,11 +41,14 @@ for method in (
 ):
     lower, upper = method(*table, design=fixed)
     assert 0.0 <= lower <= upper
+    print(f"{method.__name__}: ({lower:.6g}, {upper:.6g})")
 
 for method in (ci_wald, ci_wald_haldane):
     lower, upper = method(*table, design=cohort)
     assert 0.0 < lower <= upper
+    print(f"{method.__name__}: ({lower:.6g}, {upper:.6g})")
 
 for method in (ci_score_rr, ci_wald_rr):
     lower, upper = method(*table, design=cohort)
     assert 0.0 < lower <= upper
+    print(f"{method.__name__}: ({lower:.6g}, {upper:.6g})")

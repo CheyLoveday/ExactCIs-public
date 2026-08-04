@@ -15,7 +15,7 @@ from exactcis.estimands import Design
 from exactcis.exceptions import DesignError, NumericalError
 
 
-def require_fixed_margin_design(design: Design | None) -> Design:
+def require_fixed_margin_design(design: Design) -> Design:
     """Require the single-table conditional sampling design."""
     if design is not Design.CASE_CONTROL_FIXED_MARGIN:
         raise DesignError(

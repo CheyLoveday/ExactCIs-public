@@ -11,3 +11,7 @@ result = compute_or_with_policy(
 )
 
 assert result.lower <= result.point <= result.upper
+print(
+    f"{result.method} ({result.construction}): "
+    f"point={result.point:.6g}  ({result.lower:.6g}, {result.upper:.6g})"
+)

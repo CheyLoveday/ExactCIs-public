@@ -78,7 +78,7 @@ def compute_or_with_policy(
     """
     alpha = validate_alpha(alpha)
     if design is Design.CASE_CONTROL_FIXED_MARGIN:
-        selected = method or "conditional"
+        selected = "conditional" if method is None else method
         spec = get_method_spec(design, Estimand.OR, selected)
         intervals = {
             "conditional": exact_ci_conditional,
@@ -94,7 +94,7 @@ def compute_or_with_policy(
                 "confidence set is full but no unique point estimate exists"
             )
     elif design in {Design.COHORT_BINOMIAL, Design.CROSS_SECTIONAL}:
-        selected = method or "wald"
+        selected = "wald" if method is None else method
         spec = get_method_spec(design, Estimand.OR, selected)
         if selected == "wald":
             lower, upper = ci_wald(a, b, c, d, alpha, design=design)
@@ -109,6 +109,11 @@ def compute_or_with_policy(
     else:
         raise DesignError("design must be an exactcis.Design value")
 
+    if any(math.isnan(value) for value in (lower, upper, point)):
+        raise NumericalError(
+            "the selected odds-ratio result contained a non-number",
+            method=selected,
+        )
     if lower > upper or not lower <= point <= upper:
         raise NumericalError(
             "the selected odds-ratio result failed interval containment",
@@ -123,6 +128,7 @@ def compute_or_with_policy(
         estimand=Estimand.OR,
         method=selected,
         construction=spec.construction,
+        status=spec.status,
     )
 
 
@@ -150,7 +156,7 @@ def compute_rr_with_policy(
         raise DesignError(
             f"{Estimand.RR.value} is not shipped for design {design.value!r}"
         )
-    selected = method or "score_rr"
+    selected = "score_rr" if method is None else method
     spec = get_method_spec(design, Estimand.RR, selected)
     point = _ratio_point(a, b, c, d)
     if selected == "score_rr":
@@ -159,6 +165,11 @@ def compute_rr_with_policy(
         lower, upper = ci_wald_rr(a, b, c, d, alpha, design=design)
     else:
         raise RuntimeError(f"unwired stable ratio method {selected!r}")
+    if any(math.isnan(value) for value in (lower, upper, point)):
+        raise NumericalError(
+            "the selected risk/prevalence-ratio result contained a non-number",
+            method=selected,
+        )
     if lower > upper or not lower <= point <= upper:
         raise NumericalError(
             "the selected risk/prevalence-ratio result failed interval containment",
@@ -173,6 +184,7 @@ def compute_rr_with_policy(
         estimand=Estimand.RR,
         method=selected,
         construction=spec.construction,
+        status=spec.status,
     )
 
 
@@ -218,14 +230,16 @@ def compute_pooled_or(
             "cross-products"
         )
     point = sum_ad / sum_bc
+    sum_ad_sq = sum_ad * sum_ad
+    sum_bc_sq = sum_bc * sum_bc
     variance = 0.5 * (
-        math.fsum(p * ad for p, ad in zip(apd_terms, ad_terms)) / sum_ad**2
+        math.fsum(p * ad for p, ad in zip(apd_terms, ad_terms)) / sum_ad_sq
         + math.fsum(
             p * bc + q * ad
             for p, q, ad, bc in zip(apd_terms, bpc_terms, ad_terms, bc_terms)
         )
         / (sum_ad * sum_bc)
-        + math.fsum(q * bc for q, bc in zip(bpc_terms, bc_terms)) / sum_bc**2
+        + math.fsum(q * bc for q, bc in zip(bpc_terms, bc_terms)) / sum_bc_sq
     )
     if not math.isfinite(variance) or variance <= 0.0:
         raise NumericalError(
@@ -236,6 +250,11 @@ def compute_pooled_or(
     half_width = critical * math.sqrt(variance)
     lower = math.exp(math.log(point) - half_width)
     upper = math.exp(math.log(point) + half_width)
+    if not (math.isfinite(point) and math.isfinite(lower) and math.isfinite(upper)):
+        raise NumericalError(
+            "the stratified odds-ratio result contained a non-finite value",
+            method="mantel_haenszel",
+        )
     return PooledORResult(
         point=point,
         lower=lower,
@@ -245,6 +264,7 @@ def compute_pooled_or(
         method="mantel_haenszel",
         construction=spec.construction,
         strata=len(tables),
+        status=spec.status,
     )
 
 

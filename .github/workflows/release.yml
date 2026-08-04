@@ -6,10 +6,10 @@ on:
       candidate_tag:
         description: Existing candidate tag to verify and release
         required: true
-        default: v1.0.0-rc.1
+        default: v1.0.0-rc.2
         type: string
       release_authorisation:
-        description: Type release-v1.0.0-rc.1-through-testpypi
+        description: Type release-v1.0.0-rc.2-through-testpypi
         required: true
         type: string
 
@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$ENABLED" = "true"
-          test "$AUTHORISATION" = "release-v1.0.0-rc.1-through-testpypi"
+          test "$AUTHORISATION" = "release-v1.0.0-rc.2-through-testpypi"
       - name: Check out the requested tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

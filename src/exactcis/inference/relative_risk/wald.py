@@ -17,7 +17,7 @@ def ci_wald_rr(
     d: int,
     alpha: float = 0.05,
     *,
-    design: Design | None = None,
+    design: Design,
 ) -> tuple[float, float]:
     """Return an asymptotic log-Wald risk/prevalence-ratio interval.
 
