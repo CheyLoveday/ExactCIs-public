@@ -49,7 +49,9 @@ def validate_table(a: int, b: int, c: int, d: int) -> Table:
     try:
         total = sum(counts)
         if total > 4 * _MAXIMUM_CELL_COUNT or not math.isfinite(float(total)):
-            raise ValidationError("table totals must be finite and within certified bounds")
+            raise ValidationError(
+                "table totals must be finite and within certified bounds"
+            )
     except OverflowError as exc:
         raise ValidationError("table totals must be finite") from exc
     return counts  # type: ignore[return-value]
