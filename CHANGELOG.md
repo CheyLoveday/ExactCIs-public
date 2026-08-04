@@ -2,6 +2,23 @@
 
 This file records user-facing changes only.
 
+## [1.0.0] - 2026-08-04
+
+First stable release (`exactcis==1.0.0`, tag `v1.0.0`).
+
+### Added
+
+- Production install path: `pip install exactcis`.
+- Project URLs, absolute documentation links, and published-state README.
+- Hardened public numerical and API surface carried forward from the 1.0.0rc2
+  candidate (required `design`, cancellation-safe log-choose, scale-aware
+  residuals, log-space Wald, 1e12 count bound, sdist without `tools/`).
+
+### Changed
+
+- Development Status classifier is Production/Stable.
+- Pre-release install caveats removed from the primary Installation section.
+
 ## [1.0.0rc2] - 2026-08-04
 
 Published packaging and numerical hardening release candidate (`exactcis==1.0.0rc2`,

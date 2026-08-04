@@ -14,12 +14,11 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
 - **Fail-closed:** unsupported inputs and numerical failures raise; no method
   silently replaces another.
 - Python **3.11–3.13**. Runtime: **standard library only**.
-- Current release candidate: `exactcis==1.0.0rc2` (prefer a pin or `--pre`
-  until final `1.0.0`).
+- Current release: `exactcis==1.0.0`.
 
 ```bash
-pip install "exactcis==1.0.0rc2"
-# or: pip install --pre exactcis
+pip install exactcis
+# or: pip install exactcis==1.0.0
 ```
 
 ---

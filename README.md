@@ -4,29 +4,22 @@ ExactCIs provides design-aware inference for sparse 2 × 2 tables in Python,
 with explicit sampling assumptions, documented interval constructions, and
 fail-closed numerical behaviour.
 
-Version **1.0.0rc2** is a release candidate for 1.0.0. It does not claim universal
-exactness, unconditional coverage for conditional procedures, clinical
-validation, or formal verification.
+Version **1.0.0** does not claim universal exactness, unconditional coverage for
+conditional procedures, clinical validation, or formal verification.
 
 ## Installation
 
 ExactCIs supports Python 3.11 through 3.13 and has zero runtime dependencies.
 (The lower bound is intentional: the public API and typing assume 3.11+.)
 
-While only a **release candidate** is published, install a pin or enable
-pre-releases (plain `pip install exactcis` will fail until a final non-pre
-`1.0.0` exists, because older releases are yanked):
-
-```bash
-python -m pip install "exactcis==1.0.0rc2"
-# or
-python -m pip install --pre exactcis
-```
-
-After the final `1.0.0` tag is on PyPI, the unpinned form is correct:
-
 ```bash
 python -m pip install exactcis
+```
+
+For a specific version:
+
+```bash
+python -m pip install exactcis==1.0.0
 ```
 
 For development and documentation checks (from a source checkout):
@@ -155,8 +148,8 @@ for return types, exceptions, and individual method examples.
 
 ## Experimental and compatibility methods
 
-This release candidate has no retained experimental or compatibility-only
-method. Historical evidence-policy, unconditional, Bayesian-evidence, plotting,
+This release has no retained experimental or compatibility-only method.
+Historical evidence-policy, unconditional, Bayesian-evidence, plotting,
 reporting, batch, accelerator, and clinical-adjudication routes are not imported
 or shipped.
 Unknown method keys fail explicitly and do not participate in automatic
