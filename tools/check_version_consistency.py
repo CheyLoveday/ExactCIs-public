@@ -38,12 +38,16 @@ def package_version() -> str:
 
 
 def candidate_tag(version: str) -> str:
-    """Convert one PEP 440 release candidate into the public tag convention."""
-    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)rc(\d+)", version)
-    if not match:
-        raise ValueError(f"version is not a release candidate: {version!r}")
-    major, minor, patch, candidate = match.groups()
-    return f"v{major}.{minor}.{patch}-rc.{candidate}"
+    """Convert a package version into the public git tag convention."""
+    rc = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)rc(\d+)", version)
+    if rc:
+        major, minor, patch, candidate = rc.groups()
+        return f"v{major}.{minor}.{patch}-rc.{candidate}"
+    final = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
+    if final:
+        major, minor, patch = final.groups()
+        return f"v{major}.{minor}.{patch}"
+    raise ValueError(f"unsupported version for tagging: {version!r}")
 
 
 def _scalar(text: str, key: str) -> str | None:
@@ -125,7 +129,11 @@ def check(release_tag: str | None = None) -> list[str]:
 
     citation_text = (ROOT / "CITATION.txt").read_text(encoding="utf-8")
     unreleased_citation = f"Version: {version} (unreleased release candidate)"
-    published_citation = f"Version: {version} (release candidate)"
+    published_rc_citation = f"Version: {version} (release candidate)"
+    final_citation = f"Version: {version}"
+    pypi_ref = f"exactcis=={version}"
+    has_tag = tag in citation_text or f"tagged {tag}" in citation_text
+    has_pypi = pypi_ref in citation_text
     if unreleased_citation in citation_text:
         unreleased_note = (
             "No DOI, archive identifier, publication date, or release "
@@ -133,12 +141,14 @@ def check(release_tag: str | None = None) -> list[str]:
         )
         if unreleased_note not in citation_text:
             errors.append("CITATION.txt unreleased disclaimer differs")
-    elif published_citation in citation_text:
-        pypi_ref = f"exactcis=={version}"
-        has_tag = tag in citation_text or f"tagged {tag}" in citation_text
-        has_pypi = pypi_ref in citation_text or version in citation_text
+    elif published_rc_citation in citation_text:
         if not has_tag and not has_pypi:
             errors.append("CITATION.txt published status is incomplete")
+    elif final_citation in citation_text and re.search(
+        rf"(?m)^Version:\s*{re.escape(version)}\s*$", citation_text
+    ):
+        if not has_tag or not has_pypi:
+            errors.append("CITATION.txt final release must name tag and PyPI version")
     else:
         errors.append("CITATION.txt version or release status differs")
     if f"Scientific source revision: {SOURCE_REVISION}" not in citation_text:
@@ -191,7 +201,7 @@ def main() -> int:
         "across package, changelog, citations, and release workflow"
     )
     if args.release_tag is None:
-        print("OK: local candidate check did not require or create a release tag")
+        print("OK: local version check did not require or create a release tag")
     return 0
 
 
