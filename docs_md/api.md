@@ -50,6 +50,10 @@ All public failures subclass `ExactCIsError` and a natural builtin where useful:
 mathematically valid (Mantel–Haenszel with one table) but is often a modelling
 mistake when “pooled” analysis was intended.
 
+Python **3.11+** is required: the public API uses modern typing and standard
+library features exercised under that floor. The upper bound is `<3.14` as
+declared in package metadata.
+
 ## Design-aware policy functions
 
 ### `compute_or_with_policy`

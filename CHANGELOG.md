@@ -2,6 +2,14 @@
 
 This file records user-facing changes only.
 
+## [Unreleased]
+
+### Documentation
+
+- Sparse cohort Wald coverage table and method-selection guidance.
+- Conditional exact runtime table and soft threshold notes.
+- Explicit Python ≥3.11 floor rationale in the API contract.
+
 ## [1.0.0] - 2026-08-04
 
 First stable release (`exactcis==1.0.0`, tag `v1.0.0`).
