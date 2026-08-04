@@ -33,19 +33,46 @@ SCORE_LARGE_N_EXPECTED_UPPER = 1.5001368544
 CONDITIONAL_MLE_LOCK = (1400, 1400, 1120, 1680)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="issue #13: score residual scale collapses to 1.0, gate stays absolute",
-)
 def test_score_inversion_survives_large_denominators() -> None:
-    """A well-conditioned root is refused because the residual gate does not scale.
+    """A well-conditioned root at large denominators must be returned, not refused.
 
     Total N here is 2e9, comfortably inside the certified per-cell bound of 1e12.
-    The root itself is accurate; only the acceptance criterion fails.
+    Under the old absolute residual gate the root was accurate but rejected; the
+    bracket-width certificate accepts it because the bracket is what proves the
+    root's location.
     """
     lower, upper = ci_score_rr(*SCORE_LARGE_N, 0.05, design=COHORT)
     assert 0.0 < lower < upper
     assert upper == pytest.approx(SCORE_LARGE_N_EXPECTED_UPPER, rel=1e-6)
+
+
+def test_score_inversion_scales_beyond_the_old_threshold() -> None:
+    """The certificate is scale-invariant, so an order of magnitude more is fine."""
+    lower, upper = ci_score_rr(
+        6_000_000_000, 4_000_000_000, 4_000_000_000, 6_000_000_000, 0.05, design=COHORT
+    )
+    assert lower < 1.5 < upper
+    assert upper - lower < 1e-3
+
+
+def test_bracket_certificate_bounds_the_returned_parameter() -> None:
+    """Half the bracket width bounds the error in the returned log parameter.
+
+    The certificate is a statement about the parameter the caller receives, which
+    is what makes it scale-invariant across inversion families whose local
+    derivatives differ by orders of magnitude.
+    """
+    from exactcis._numerics import _ROOT_TOL, solve_monotone_log_parameter
+
+    for magnitude in (1.0, 1.0e4, 1.0e8):
+
+        def monotone(eta: float, scale: float = magnitude) -> float:
+            return scale + scale * eta
+
+        root = solve_monotone_log_parameter(
+            monotone, magnitude, increasing=True, method="probe", side="point"
+        )
+        assert abs(root - 0.0) <= _ROOT_TOL * max(1.0, abs(root))
 
 
 @pytest.mark.parametrize(

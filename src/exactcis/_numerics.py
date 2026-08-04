@@ -357,14 +357,29 @@ def solve_monotone_log_parameter(
         )
 
     root = (left + right) / 2.0
+    # Certify the bracket, not the function value. The loop maintains a
+    # sign-changing bracket, which is a proof that a root lies inside it, so half
+    # its width bounds the error in the returned log parameter. That is the
+    # quantity the caller receives, and unlike a function residual it is
+    # scale-invariant: the local derivative varies by orders of magnitude across
+    # the inversion families sharing this solver (tail probabilities are O(1),
+    # the conditional mean is O(n1)), so no single residual threshold fits all.
+    # The residual is retained as a diagnostic only.
+    log_error_bound = 0.5 * (right - left)
     residual = abs(function(root) - target)
-    scale = max(1.0, abs(target))
-    if residual > 2e-10 * scale:
+    if not math.isfinite(root):
         raise NumericalError(
-            "confidence-limit inversion failed its residual criterion",
+            "confidence-limit inversion produced a non-finite root",
             method=method,
             side=side,
-            diagnostics={"residual": residual, "scale": scale},
+            diagnostics={"log_error_bound": log_error_bound, "residual": residual},
+        )
+    if log_error_bound > _ROOT_TOL * max(1.0, abs(root)):
+        raise NumericalError(
+            "confidence-limit inversion failed its bracket-width criterion",
+            method=method,
+            side=side,
+            diagnostics={"log_error_bound": log_error_bound, "residual": residual},
         )
     return root
 

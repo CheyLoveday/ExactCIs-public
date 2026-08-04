@@ -125,7 +125,7 @@ def test_stable_form_residual_error_is_bounded_by_inner_cancellation() -> None:
 
 
 def test_production_score_endpoints_are_unaffected_today() -> None:
-    """The cancellation does not currently reach a returned endpoint.
+    """The cancellation does not reach a returned endpoint.
 
     Recorded so that issue #13 is understood as numerical hygiene rather than an
     endpoint correction, and so a regression in endpoints would be caught.
@@ -137,3 +137,46 @@ def test_production_score_endpoints_are_unaffected_today() -> None:
     for table in [(3, 0, 4, 0), (30, 0, 1, 29), (0, 10, 0, 10)]:
         result = ci_score_rr(*table, 0.05, design=Design.COHORT_BINOMIAL)
         assert result[0] <= result[1]
+
+
+def test_production_discriminant_is_never_negative() -> None:
+    """The shipped form is structurally non-negative, so no repair is needed.
+
+    Previously a ``64 * ulp`` clamp existed to absorb small negative results from
+    the difference form. Sweeping the regime where that clamp used to fire must
+    now produce no negative discriminant at all.
+    """
+    from exactcis.inference.relative_risk.score import _constrained_control_risk
+
+    probes = [(3, 0, 4, 0), (30, 0, 1, 29), (7, 0, 5, 0), (12, 0, 9, 0), (0, 5, 0, 5)]
+    ratios = [1.0 - 1e-9, 1.0, 1.0 + 1e-9, 1.0000001, 1.93548, 0.5, 2.0, 100.0]
+    for a, b, c, d in probes:
+        for ratio in ratios:
+            risk = _constrained_control_risk(a, b, c, d, ratio)
+            assert 0.0 <= risk <= 1.0
+            assert risk == risk  # not NaN
+
+
+def test_constrained_risk_matches_a_direct_root_solve() -> None:
+    """Independent check of the quadratic root the stable form feeds."""
+    from fractions import Fraction
+
+    from exactcis.inference.relative_risk.score import _constrained_control_risk
+
+    worst = 0.0
+    for a, b, c, d in [(12, 4, 9, 5), (3, 7, 4, 6), (20, 11, 7, 13), (30, 0, 1, 29)]:
+        for ratio in (0.5, 0.9, 1.0, 1.5, 3.0):
+            n1, n0 = a + b, c + d
+            total = n1 + n0
+            # phi*N*p0**2 - [(a+n0) + phi*(n1+c)]*p0 + (a+c) = 0, smaller root.
+            qa = Fraction(ratio).limit_denominator(10**9) * total
+            qb = -(
+                Fraction(a + n0) + Fraction(ratio).limit_denominator(10**9) * (n1 + c)
+            )
+            qc = Fraction(a + c)
+            disc = qb * qb - 4 * qa * qc
+            root = (-float(qb) - float(disc) ** 0.5) / (2 * float(qa))
+            expected = min(1.0, 1.0 / ratio, max(0.0, root))
+            got = _constrained_control_risk(a, b, c, d, ratio)
+            worst = max(worst, abs(got - expected) / max(expected, 1e-300))
+    assert worst < 1e-9, f"worst relative deviation {worst:.3e}"

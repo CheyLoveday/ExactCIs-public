@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from exactcis._numerics import normal_quantile
+from exactcis._numerics import _ROOT_TOL, normal_quantile
 from exactcis._validation import validate_alpha, validate_independent_groups
 from exactcis.estimands import Design, Estimand, get_method_spec
 from exactcis.exceptions import NumericalError
@@ -37,20 +37,32 @@ def _constrained_control_risk(
     events = float(a + c)
     if events == 0.0:
         return 0.0
-    total = n1 + n0
+    # coef_a (= ratio * N or N) is no longer formed: the stable discriminant does
+    # not reference it, and the smaller root is taken as 2*coef_c / (coef_b +
+    # sqrt(D)), the rationalised form of (coef_b - sqrt(D)) / (2 * coef_a).
+    #
+    # The discriminant is formed as a sum of squares rather than as
+    # coef_b**2 - 4*coef_a*coef_c. The two are algebraically identical, via
+    #     (X + Y)**2 - (X - Y)**2 == 4*X*Y
+    # together with (a + n0)*(n1 + c) - N*(a + c) == b*d, but the difference form
+    # cancels catastrophically whenever b*d == 0: at (3, 0, 4, 0) with
+    # ratio = 1 + 1e-9 its relative error reaches 1.0, which is the regime the
+    # negative-result repair used to mask. The sum-of-squares form is exact there,
+    # and is manifestly non-negative so no repair is required.
     if ratio >= 1.0:
-        coef_a = total
         coef_b = n1 + c + (a + n0) / ratio
         coef_c = events / ratio
+        discriminant = ((a + n0) / ratio - (n1 + c)) ** 2 + 4.0 * b * d / ratio
     else:
-        coef_a = ratio * total
         coef_b = ratio * (n1 + c) + a + n0
         coef_c = events
-    discriminant = coef_b * coef_b - 4.0 * coef_a * coef_c
-    scale = max(coef_b * coef_b, 1.0)
-    if discriminant < 0.0 and abs(discriminant) <= 64.0 * math.ulp(scale):
-        discriminant = 0.0
-    if discriminant < 0.0:
+        discriminant = ((a + n0) - ratio * (n1 + c)) ** 2 + 4.0 * ratio * b * d
+    if not math.isfinite(discriminant):
+        raise NumericalError(
+            "constrained risk-ratio likelihood discriminant is not finite",
+            method="score_rr",
+        )
+    if discriminant < 0.0:  # pragma: no cover - structurally unreachable
         raise NumericalError(
             "constrained risk-ratio likelihood has a negative discriminant",
             method="score_rr",
@@ -141,17 +153,33 @@ def _invert_score(
             right, f_right = middle, f_middle
         else:
             left, f_left = middle, f_middle
-        if right - left <= 2e-12 * max(1.0, abs(middle)):
+        if right - left <= _ROOT_TOL * max(1.0, abs(middle)):
             break
     root = (left + right) / 2.0
+    # Certify the bracket, not the function value. A retained sign-changing
+    # bracket is a proof that a root lies inside it, so half its width bounds the
+    # error in the returned log ratio, which is the quantity the caller receives.
+    # A raw residual is not scale-invariant here: the local score derivative
+    # grows like sqrt(N), so an absolute residual gate refuses well-conditioned
+    # roots at large denominators. The previous scale,
+    # max(1, |f_left|, |f_right|, |residual|), collapsed to exactly 1.0 near
+    # convergence because all three are score values close to their own root, so
+    # it remained an absolute test in every case that mattered.
+    log_error_bound = 0.5 * (right - left)
     residual = abs(target(root))
-    scale = max(1.0, abs(f_left), abs(f_right), abs(residual))
-    if not math.isfinite(residual) or residual > 1e-8 * scale:
+    if not math.isfinite(root) or not math.isfinite(residual):
         raise NumericalError(
-            "score inversion failed its residual criterion",
+            "score inversion produced a non-finite root",
             method="score_rr",
             side=side,
-            diagnostics={"residual": residual, "scale": scale},
+            diagnostics={"residual": residual, "log_error_bound": log_error_bound},
+        )
+    if log_error_bound > _ROOT_TOL * max(1.0, abs(root)):
+        raise NumericalError(
+            "score inversion failed its bracket-width criterion",
+            method="score_rr",
+            side=side,
+            diagnostics={"log_error_bound": log_error_bound, "residual": residual},
         )
     return math.exp(root)
 
