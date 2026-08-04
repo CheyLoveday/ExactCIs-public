@@ -11,15 +11,22 @@ validation, or formal verification.
 ## Installation
 
 ExactCIs supports Python 3.11 through 3.13 and has zero runtime dependencies.
+(The lower bound is intentional: the public API and typing assume 3.11+.)
+
+While only a **release candidate** is published, install a pin or enable
+pre-releases (plain `pip install exactcis` will fail until a final non-pre
+`1.0.0` exists, because older releases are yanked):
+
+```bash
+python -m pip install "exactcis==1.0.0rc2"
+# or
+python -m pip install --pre exactcis
+```
+
+After the final `1.0.0` tag is on PyPI, the unpinned form is correct:
 
 ```bash
 python -m pip install exactcis
-```
-
-For a specific release candidate:
-
-```bash
-python -m pip install exactcis==1.0.0rc2
 ```
 
 For development and documentation checks (from a source checkout):

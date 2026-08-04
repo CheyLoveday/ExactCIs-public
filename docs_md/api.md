@@ -22,6 +22,34 @@ Raw interval functions require a keyword-only `design: Design` argument with
 **no** default. Policy helpers (`compute_*_with_policy`, `compute_pooled_or`)
 likewise require an explicit design.
 
+## Types and exceptions (root exports)
+
+### `Design` and `Estimand`
+
+- `Design` names the sampling scheme (`CASE_CONTROL_FIXED_MARGIN`,
+  `COHORT_BINOMIAL`, `CROSS_SECTIONAL`, `STRATIFIED_CASE_CONTROL`,
+  `STRATIFIED_COHORT`).
+- `Estimand` names the effect measure: `Estimand.OR` (`"odds_ratio"`) and
+  `Estimand.RR` (`"relative_risk"`). Policy results carry the enum on
+  `InferenceResult.estimand`.
+
+### `ExactCIsError` hierarchy
+
+All public failures subclass `ExactCIsError` and a natural builtin where useful:
+
+| Exception | Also a… | Typical trigger |
+|---|---|---|
+| `ExactCIsError` | `Exception` | Base |
+| `ValidationError` | `ValueError` | Bad counts, alpha outside certified domain |
+| `DesignError` | `ValueError` | Design/estimand/route incoherent |
+| `UnsupportedMethodError` | `ValueError` | Unknown or non-stable method key |
+| `NonIdentifiableError` | `ValueError` | No unique point (e.g. singleton support) |
+| `NumericalError` | `RuntimeError` | Inversion/certification failed |
+
+`compute_pooled_or` accepts one or more strata; a single stratum is
+mathematically valid (Mantel–Haenszel with one table) but is often a modelling
+mistake when “pooled” analysis was intended.
+
 ## Design-aware policy functions
 
 ### `compute_or_with_policy`
