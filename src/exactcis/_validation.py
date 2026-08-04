@@ -43,8 +43,7 @@ def validate_table(a: int, b: int, c: int, d: int) -> Table:
         raise ValidationError("table counts must be finite non-negative integers")
     if any(value > _MAXIMUM_CELL_COUNT for value in counts):
         raise ValidationError(
-            "table counts must not exceed "
-            f"{_MAXIMUM_CELL_COUNT} (1e12); got {counts!r}"
+            f"table counts must not exceed {_MAXIMUM_CELL_COUNT} (1e12); got {counts!r}"
         )
     try:
         total = sum(counts)
