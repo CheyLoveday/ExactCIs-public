@@ -137,10 +137,18 @@ jobs:
           "$wheel_python" -m pip check
           smoke_dir="$RUNNER_TEMP/exactcis-wheel-smoke"
           mkdir "$smoke_dir"
-          cp README.md tools/run_installed_smoke.py tools/run_readme_examples.py "$smoke_dir/"
+          cp README.md tools/run_installed_smoke.py tools/run_readme_examples.py \
+            tools/public_api_identity.py tools/compare_public_api_identity.py "$smoke_dir/"
           cd "$smoke_dir"
           "$wheel_python" run_installed_smoke.py
           "$wheel_python" run_readme_examples.py --source README.md
+          python -m venv "$RUNNER_TEMP/exactcis-1.1.0-venv"
+          reference_python="$RUNNER_TEMP/exactcis-1.1.0-venv/bin/python"
+          "$reference_python" -m pip install --disable-pip-version-check --no-cache-dir \
+            --no-deps exactcis==1.1.0
+          "$wheel_python" compare_public_api_identity.py \
+            --candidate-python "$wheel_python" \
+            --reference-python "$reference_python"
 
   sdist-install:
     name: Install and smoke-test sdist
