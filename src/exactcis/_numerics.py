@@ -11,6 +11,32 @@ from exactcis.exceptions import NumericalError
 _LOG_LIMIT = 740.0
 _ROOT_TOL = 2e-12
 
+# Active-support stop threshold for relative log masses. Strictly below the
+# binary64 exponent floor: exp(x) == 0.0 for every x at or below this value on
+# a conforming platform, verified once at import by _probe_underflow(). The
+# stop rule never assumes monotonicity of exp: it stops on the VALUE of the
+# accumulated relative log mass, whose outward non-increase is a rounding fact
+# (adding a non-positive increment to a float cannot round above it), so every
+# skipped term satisfies rel <= _UNDERFLOW_STOP and would itself evaluate to
+# exactly 0.0.
+_UNDERFLOW_STOP = -800.0
+
+
+def _probe_underflow() -> bool:
+    """Certify the platform behaviour the active-support stop relies on.
+
+    Checks that exp evaluates to exactly 0.0 at the stop threshold and at a
+    spread of values below it. If any probe fails, active support is disabled
+    and the complete-support recurrence is used, per the programme obligation
+    that an uncertifiable floating condition falls back rather than truncating
+    heuristically.
+    """
+    probes = (-800.0, -800.5, -1000.0, -5000.0, -1e6, -1e12, -math.inf)
+    return all(math.exp(value) == 0.0 for value in probes)
+
+
+_ACTIVE_SUPPORT_OK = _probe_underflow()
+
 
 def normal_quantile(probability: float) -> float:
     """Return the standard-normal quantile using the Python standard library."""
@@ -192,27 +218,91 @@ class PreparedMargins:
                 high = middle - 1
         return low
 
-    def _relative_log_masses(self, log_odds: float) -> list[float]:
-        """Return log masses relative to the modal point, which is pinned at zero."""
+    def _relative_log_masses(
+        self, log_odds: float, low: int | None = None, high: int | None = None
+    ) -> list[float]:
+        """Return log masses relative to the modal point, which is pinned at zero.
+
+        With ``low``/``high`` set, accumulation covers only ``[low, high)`` and
+        entries outside are left at ``0.0``; callers restricting the range must
+        only read inside it. Accumulated values are identical to the full walk
+        because the walk outward from the mode is a prefix of the same float
+        additions in both cases.
+        """
         ratios = self._ratios
         width = len(self._support)
         masses = [0.0] * width
         mode = self.mode_index(log_odds)
+        stop_high = width - 1 if high is None else min(width - 1, high - 1)
+        stop_low = 0 if low is None else low
 
         running = 0.0
-        for index in range(mode, width - 1):
+        for index in range(mode, stop_high):
             running += ratios[index] + log_odds
             masses[index + 1] = running
         running = 0.0
-        for index in range(mode - 1, -1, -1):
+        for index in range(mode - 1, stop_low - 1, -1):
             running -= ratios[index] + log_odds
             masses[index] = running
         return masses
 
+    def _active_range(self, log_odds: float) -> tuple[int, int]:
+        """Return the half-open index range whose masses are representable.
+
+        Walks outward from the mode accumulating relative log masses and stops
+        a direction at the first index whose value reaches ``_UNDERFLOW_STOP``.
+        Outward from the mode each increment is non-positive, and adding a
+        non-positive increment to a float cannot round above it, so every index
+        beyond a stop satisfies the same threshold and its mass is exactly
+        ``0.0`` under the probed platform behaviour. The skipped terms
+        therefore contribute exactly nothing to any sum the full recurrence
+        would have computed.
+        """
+        ratios = self._ratios
+        width = len(self._support)
+        mode = self.mode_index(log_odds)
+
+        high = width
+        running = 0.0
+        for index in range(mode, width - 1):
+            running += ratios[index] + log_odds
+            if running <= _UNDERFLOW_STOP:
+                high = index + 1
+                break
+        low = 0
+        running = 0.0
+        for index in range(mode - 1, -1, -1):
+            running -= ratios[index] + log_odds
+            if running <= _UNDERFLOW_STOP:
+                low = index + 1
+                break
+        return low, high
+
     def probabilities(
         self, log_odds: float
     ) -> tuple[tuple[int, ...], tuple[float, ...]]:
-        """Return the certified FNCH probability vector at one log odds ratio."""
+        """Return the certified FNCH probability vector at one log odds ratio.
+
+        Uses exact-underflow active support when the platform probe passed:
+        terms whose relative log mass is at or below ``_UNDERFLOW_STOP`` are
+        exactly ``0.0`` and are skipped without changing any computed value.
+        """
+        return self._evaluate(log_odds, _ACTIVE_SUPPORT_OK)
+
+    def _probabilities_full(
+        self, log_odds: float
+    ) -> tuple[tuple[int, ...], tuple[float, ...]]:
+        """Complete-support evaluation, retained as the differential oracle.
+
+        The active path must agree with this bit for bit: skipped terms would
+        evaluate to exactly ``0.0``, and appending exact zeros changes neither
+        ``math.fsum`` nor any normalised probability.
+        """
+        return self._evaluate(log_odds, False)
+
+    def _evaluate(
+        self, log_odds: float, active: bool
+    ) -> tuple[tuple[int, ...], tuple[float, ...]]:
         support = self._support
         if self._lower == self._upper:
             return support, (1.0,)
@@ -225,15 +315,21 @@ class PreparedMargins:
                 "log odds must be finite or an extended endpoint", method="FNCH"
             )
 
-        masses = self._relative_log_masses(log_odds)
+        if active:
+            low, high = self._active_range(log_odds)
+        else:
+            low, high = 0, len(support)
+        masses = self._relative_log_masses(log_odds, low, high)
         # Mode anchoring makes the maximum exactly zero by construction.
         # Verifying it is cheap and catches a mode-location fault directly.
-        if max(masses) != 0.0:
+        if max(masses[low:high]) != 0.0:
             raise NumericalError(
                 "conditional mass anchor is not the modal point", method="FNCH"
             )
-        scaled = tuple(math.exp(value) for value in masses)
-        total = math.fsum(scaled)
+        scaled = tuple(
+            math.exp(masses[i]) if low <= i < high else 0.0 for i in range(len(masses))
+        )
+        total = math.fsum(scaled[low:high])
         if not math.isfinite(total) or total <= 0.0:
             raise NumericalError("conditional mass normalization failed", method="FNCH")
         probabilities = tuple(value / total for value in scaled)
