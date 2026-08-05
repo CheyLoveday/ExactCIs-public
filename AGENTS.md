@@ -119,7 +119,8 @@ result = compute_pooled_or(
 )
 ```
 
-- Strata must be **prespecified independent** tables as **4-tuples**, not dicts.
+- Strata must be **prespecified independent** four-count tuples or lists, not
+  dicts.
 - Method is fixed: Mantel–Haenszel with Robins–Breslow–Greenland variance.
 - Empty strata inputs, zero pooled cross-products, or wrong design fail
   explicitly.
