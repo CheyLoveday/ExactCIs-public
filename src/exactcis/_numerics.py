@@ -13,6 +13,7 @@ from exactcis._capability import (
     _HULL_MAX_WIDTH,
     _PREPARE_MAX_WIDTH,
     _UNDERFLOW_STOP,
+    support_width,
 )
 from exactcis._capability import (
     _ROOT_TOL as _CAPABILITY_ROOT_TOL,
@@ -828,16 +829,26 @@ def ordered_interval(
     if support_lower == support_upper:
         return 0.0, math.inf
 
-    # One preparation for the whole inversion: the MLE solve, every acceptance
-    # probe and every certified bound share these parameter-independent ratios.
-    margins = prepare_margins(n1, n0, events)
-    if margins.width > _HULL_MAX_WIDTH:
+    # The ordered-hull certification cap is decidable from the margins. Check
+    # it before preparation, which otherwise materialises O(support width)
+    # sequences for a call that must fail closed.
+    width = support_width(n1, n0, events)
+    if width > _HULL_MAX_WIDTH:
         raise NumericalError(
             "ordered hull certification is not supported above support width"
             f" {_HULL_MAX_WIDTH}",
             method=ordering,
-            diagnostics={"support_size": margins.width},
+            diagnostics={
+                "method": ordering,
+                "support_size": width,
+                "limit": _HULL_MAX_WIDTH,
+                "limit_kind": "ordered_hull_certification",
+            },
         )
+
+    # One preparation for the whole inversion: the MLE solve, every acceptance
+    # probe and every certified bound share these parameter-independent ratios.
+    margins = prepare_margins(n1, n0, events)
 
     point = conditional_mle(a, b, c, d, prepared=margins)
     # For boundary observations the likelihood supremum sits at an extended
