@@ -81,24 +81,38 @@ every point in the conditional support.
 
 ## Fixed-margin certification limits
 
-`conditional` and `midp` reject support widths above 10,000,000 before support
-preparation. `minlike` and `blaker` reject support widths above 1,000,000 before
-ordered-hull preparation. Each threshold deterministically raises
-`NumericalError`. The ordered-hull width cap is a certification ceiling, not a
-performance promise: its 50,000-evaluation certification budget can refuse a
-narrower call when it cannot prove the endpoint.
+This block is generated from `exactcis._capability`; the tool verifies it in
+CI. The ordered-hull width cap is a certification ceiling, not a performance
+promise: its evaluation budget can refuse a narrower call when it cannot prove
+the endpoint.
 
-Indicative single-core timings on a laptop-class Python 3.12 build of 1.0.0
-(one call each; not a competitive benchmark):
+<!-- exactcis-capability-table:start -->
+| documented capability | value | applicability / failure contract |
+|---|---:|---|
+| Cell-count bound | `1,000,000,000,000` per cell | `ValidationError` before numerical work |
+| Certified alpha domain | `1e-12 < alpha < 1 - 1e-12` | `ValidationError` outside the open domain |
+| Preparation support-width cap | `10,000,000` | `conditional`, `midp`; `NumericalError` before support preparation |
+| Ordered-hull support-width cap | `1,000,000` | `minlike`, `blaker`; `NumericalError` before ordered-hull preparation |
+| Ordered-hull evaluation budget | `50,000` | certification can refuse below the width cap |
+| Ordered-hull recursion-depth cap | `64` | one rejection certificate |
+<!-- exactcis-capability-table:end -->
 
-| Table `(a,b,c,d)` | Character | ~seconds | Outcome |
+The version-stamped timing block below is generated from a committed clean-wheel
+measurement record. It is illustrative evidence, not a competitive benchmark.
+
+<!-- exactcis-timing-table:start -->
+Measured on `exactcis==1.1.0` at `18673bb` with Python 3.12.3 on macOS-26.5.1-arm64-arm-64bit (2026-08-05). Each measured row is one public API call from a clean wheel-installed virtual environment; time.perf_counter starts after imports and no profiler is attached. The cap-width row records the existing unoptimised cap-scale evidence rather than rerunning it.
+
+| Table / support width | method | seconds | outcome |
 |---|---|---:|---|
-| `(20, 10, 15, 25)` | small interior | 0.01 | returns |
-| `(100, 50, 80, 120)` | moderate | 0.07 | returns |
-| `(500, 250, 250, 1000)` | N≈2k | ~5 | returns |
-| Wide margins ~`1e5`–`1e6` with thin support extremes | biobank-scale unbalanced | tens of seconds to minutes | often still returns |
-| Support width above the relevant method-specific limit | exceeds a certification limit | — | deterministic `NumericalError` before support preparation |
-| Any cell `> 10**12` | above certified count bound | — | `ValidationError` before inversion |
+| `(20, 10, 15, 25); W=31` | `conditional` | 0.00148958 | returns |
+| `(100, 50, 80, 120); W=151` | `conditional` | 0.00706092 | returns |
+| `(500, 250, 250, 1000); W=751` | `conditional` | 0.0494918 | returns |
+| `(1500, 1500, 1500, 1500); W=3,001` | `conditional` | 0.16038 | returns |
+| `(50000, 50000, 50000, 50000); W=100,001` | `minlike` | 36.8814 | returns |
+| `(500000, 500000, 500000, 500000); W=1,000,001` | `minlike` | 2.825e-05 | raises NumericalError before allocation |
+| `(499999, 500000, 500000, 500000); W=1,000,000` | `minlike` | not rerun | tens of minutes, unoptimised; see #27 |
+<!-- exactcis-timing-table:end -->
 
 **Soft guidance.** If conditional support is large enough that a single call is
 taking many seconds and an asymptotic comparison is scientifically acceptable

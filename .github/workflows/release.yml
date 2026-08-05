@@ -79,6 +79,7 @@ jobs:
       - run: uv run mypy src/exactcis
       - run: uv run mkdocs build --strict
       - run: uv run python tools/check_method_docs.py
+      - run: uv run python tools/check_capability_docs.py --check
       - run: uv run python tools/check_public_tree.py
       - run: uv run python tools/audit_dependencies.py
       - run: uv run python tools/check_history_secrets.py

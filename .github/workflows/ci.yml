@@ -88,6 +88,7 @@ jobs:
       - run: uv sync --frozen --extra docs
       - run: uv run mkdocs build --strict
       - run: uv run python tools/check_method_docs.py
+      - run: uv run python tools/check_capability_docs.py --check
       - run: uv run python tools/check_version_consistency.py
       - run: uv run python tools/run_readme_examples.py --source README.md
 
