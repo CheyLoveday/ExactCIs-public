@@ -492,6 +492,100 @@ def exp_parameter(log_value: float) -> float:
     return 0.0 if value < float.fromhex("0x0.0000000000001p-1022") else value
 
 
+def _solve_mean_newton(
+    margins: PreparedMargins,
+    target: float,
+    *,
+    method: str,
+) -> float:
+    """Invert the conditional mean with bracket-safeguarded Newton steps.
+
+    For the FNCH exponential family ``d/d eta E_eta[X] == Var_eta(X)``, so one
+    ``moments`` traversal yields both the function value and its derivative.
+    A Newton proposal is accepted only when it is finite and strictly inside
+    the retained sign-changing bracket; otherwise the step is a bisection. The
+    bracket is updated on every accepted evaluation and remains authoritative:
+    termination and certification use exactly the bracket-width contract of
+    ``solve_monotone_log_parameter``, so failure semantics are unchanged and
+    the returned root carries the same parameter-error bound. Quadratic
+    convergence near the root cuts distribution evaluations several-fold
+    against pure bisection.
+    """
+    left = -_LOG_LIMIT
+    right = _LOG_LIMIT
+    try:
+        f_left = margins.mean(left)
+        f_right = margins.mean(right)
+    except NumericalError:
+        raise
+    except (OverflowError, ValueError, ZeroDivisionError, MemoryError) as exc:
+        raise NumericalError(
+            "endpoint evaluation failed during inversion",
+            method=method,
+            side="point",
+        ) from exc
+    if any(not math.isfinite(v) for v in (f_left, f_right, target)):
+        raise NumericalError(
+            "non-finite value encountered during inversion",
+            method=method,
+            side="point",
+        )
+    if not f_left <= target <= f_right:
+        raise NumericalError(
+            "monotone confidence-limit equation was not bracketed",
+            method=method,
+            side="point",
+            diagnostics={"left": f_left, "right": f_right, "target": target},
+        )
+
+    current = 0.5 * (left + right)
+    for _ in range(220):
+        mean, variance = margins.moments(current)
+        if not math.isfinite(mean) or not math.isfinite(variance):
+            raise NumericalError(
+                "non-finite value encountered during inversion",
+                method=method,
+                side="point",
+            )
+        if mean < target:
+            left = current
+        else:
+            right = current
+        if right - left <= _ROOT_TOL * max(1.0, abs(0.5 * (left + right))):
+            break
+        proposal = math.inf
+        if variance > 0.0:
+            proposal = current - (mean - target) / variance
+        if math.isfinite(proposal) and left < proposal < right:
+            current = proposal
+        else:
+            current = 0.5 * (left + right)
+    else:
+        raise NumericalError(
+            "confidence-limit inversion exceeded its iteration budget",
+            method=method,
+            side="point",
+        )
+
+    root = 0.5 * (left + right)
+    log_error_bound = 0.5 * (right - left)
+    if not math.isfinite(root):
+        raise NumericalError(
+            "confidence-limit inversion produced a non-finite root",
+            method=method,
+            side="point",
+            diagnostics={"log_error_bound": log_error_bound},
+        )
+    if log_error_bound > _ROOT_TOL * max(1.0, abs(root)):
+        raise NumericalError(
+            "confidence-limit inversion failed its bracket-width criterion",
+            method=method,
+            side="point",
+            diagnostics={"log_error_bound": log_error_bound},
+        )
+    return root
+
+
 def conditional_mle(
     a: int,
     b: int,
@@ -514,13 +608,7 @@ def conditional_mle(
     if a == upper:
         return math.inf
     margins = prepared if prepared is not None else prepare_margins(n1, n0, events)
-    log_value = solve_monotone_log_parameter(
-        margins.mean,
-        float(a),
-        increasing=True,
-        method="conditional_mle",
-        side="point",
-    )
+    log_value = _solve_mean_newton(margins, float(a), method="conditional_mle")
     return exp_parameter(log_value)
 
 

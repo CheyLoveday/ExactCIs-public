@@ -6,6 +6,14 @@ This file records user-facing changes only.
 
 ### Changed
 
+- Fisher noncentral hypergeometric evaluation skips terms whose relative log
+  mass sits at or below the binary64 underflow floor, certified by an import
+  probe with a complete-support fallback; every returned value is bit-identical
+  to the full recurrence.
+- The conditional MLE inversion uses bracket-safeguarded Newton steps with the
+  variance from the same probability traversal, cutting distribution
+  evaluations several-fold while keeping the bracket-width certificate and
+  failure semantics unchanged.
 - `exact_ci_minlike` and `exact_ci_blaker` now return a numerically certified
   interval hull of the complete inverted confidence set, which may be
   disconnected. The previous search stopped at the first transition around the
