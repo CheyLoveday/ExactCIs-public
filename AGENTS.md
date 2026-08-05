@@ -14,11 +14,12 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
 - **Fail-closed:** unsupported inputs and numerical failures raise; no method
   silently replaces another.
 - Python **3.11–3.13**. Runtime: **standard library only**.
-- Current release: `exactcis==1.0.0`.
+- Current package version is recorded by `exactcis.__version__`; the current
+  release is `exactcis==1.1.0`.
 
 ```bash
 pip install exactcis
-# or: pip install exactcis==1.0.0
+# reproducible current-release pin: pip install exactcis==1.1.0
 ```
 
 ---
@@ -199,8 +200,13 @@ different method. Surface the failure.
 - Exact conditional family: no Wald-style continuity correction.
 - Empty comparison groups (independent-binomial) and all-zero structure fail
   validation where required.
-- Exact conditional work is complete-support; very wide margins can be slow —
-  **warn**, do not silently switch to Wald.
+- Exact conditional probability evaluation traverses outward from the mode and
+  omits only binary64-underflow terms, while remaining bit-identical to the
+  full recurrence. `conditional` and `midp` reject support widths above
+  10,000,000 before preparation; `minlike` and `blaker` reject widths above
+  1,000,000 before ordered-hull preparation. The ordered-hull budget can refuse
+  below that width cap, so it is a certification ceiling rather than a runtime
+  promise. **Warn**, do not silently switch to Wald.
 
 ---
 

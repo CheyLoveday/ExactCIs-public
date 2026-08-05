@@ -74,9 +74,19 @@ a free lunch: the procedure often refuses rather than undercovering.
 
 ## Conditional exact runtime (illustration)
 
-`exact_ci_conditional` (and the other fixed-margin exact methods) sum over the
-**full conditional support**. Wall-clock therefore grows with support width, not
-only with total N.
+The fixed-margin evaluator traverses outward from the mode and stops only when
+a term's relative log mass underflows exactly to zero in binary64. Returned
+probabilities are bit-identical to the full recurrence, but need not evaluate
+every point in the conditional support.
+
+## Fixed-margin certification limits
+
+`conditional` and `midp` reject support widths above 10,000,000 before support
+preparation. `minlike` and `blaker` reject support widths above 1,000,000 before
+ordered-hull preparation. Each threshold deterministically raises
+`NumericalError`. The ordered-hull width cap is a certification ceiling, not a
+performance promise: its 50,000-evaluation certification budget can refuse a
+narrower call when it cannot prove the endpoint.
 
 Indicative single-core timings on a laptop-class Python 3.12 build of 1.0.0
 (one call each; not a competitive benchmark):
@@ -87,7 +97,7 @@ Indicative single-core timings on a laptop-class Python 3.12 build of 1.0.0
 | `(100, 50, 80, 120)` | moderate | 0.07 | returns |
 | `(500, 250, 250, 1000)` | N≈2k | ~5 | returns |
 | Wide margins ~`1e5`–`1e6` with thin support extremes | biobank-scale unbalanced | tens of seconds to minutes | often still returns |
-| Margins ≳ `1e7` with extreme imbalance | e.g. `(10**7, 1, 1, 10**7)` | usually short | typically `NumericalError` (fail-closed) |
+| Support width above the relevant method-specific limit | exceeds a certification limit | — | deterministic `NumericalError` before support preparation |
 | Any cell `> 10**12` | above certified count bound | — | `ValidationError` before inversion |
 
 **Soft guidance.** If conditional support is large enough that a single call is

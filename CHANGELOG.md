@@ -4,6 +4,20 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+### Changed
+
+- `exact_ci_minlike` and `exact_ci_blaker` now reject support widths above
+  1,000,000 before constructing `PreparedMargins`. The earlier refusal avoids
+  support-sized allocation for calls that ordered-hull certification must reject.
+
+### Documentation
+
+- Record the `_PREPARE_MAX_WIDTH = 10_000_000` pre-allocation hard limit,
+  introduced in 1.1.0 for `conditional` and `midp`. The limit makes oversized
+  preparation fail closed portably: macOS can accept an oversized allocation
+  optimistically and let the kernel terminate the process instead of raising
+  `MemoryError`.
+
 ## [1.1.0] - 2026-08-05
 
 Conditional-numerics correctness and performance release (`exactcis==1.1.0`, tag `v1.1.0`).
