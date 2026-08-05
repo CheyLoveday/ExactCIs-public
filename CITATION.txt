@@ -1,8 +1,8 @@
 ExactCIs
 Author: Chey Loveday
-Version: 1.0.0
+Version: 1.1.0
 Scientific source revision: ba6717167fe81d929b02a9580d0fcc7bc86b830c
-Public tag: v1.0.0
-PyPI: exactcis==1.0.0
+Public tag: v1.1.0
+PyPI: exactcis==1.1.0
 
 Cite the exact version and tag above. No DOI has been assigned.

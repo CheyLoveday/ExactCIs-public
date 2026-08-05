@@ -4,6 +4,14 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-05
+
+Conditional-numerics correctness and performance release (`exactcis==1.1.0`, tag `v1.1.0`).
+
+`exact_ci_minlike` and `exact_ci_blaker` return wider, corrected intervals on
+tables whose inverted confidence set is disconnected. Endpoints move outward
+only. Results computed with 1.0.0 for those two methods should be recomputed.
+
 ### Changed
 
 - Fisher noncentral hypergeometric evaluation skips terms whose relative log
