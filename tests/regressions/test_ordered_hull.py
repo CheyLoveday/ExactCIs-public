@@ -1,10 +1,9 @@
 """Ordered minlike/Blaker interval completeness (programme issue #16).
 
-Measured against installed ``exactcis==1.0.0``: ``ordered_interval`` walks
-outward from the conditional MLE and stops at the first transition, so when the
-accepted set is disconnected it returns only the component containing the MLE.
-The returned interval is then a strict subset of the accepted set rather than an
-enclosure of its hull.
+Originally frozen against installed ``exactcis==1.0.0``, whose first-transition
+search returned only the accepted component containing the MLE. The certified
+hull implementation must contain every accepted parameter, so the reproducers
+here now run as ordinary blocking tests.
 """
 
 from __future__ import annotations
@@ -40,10 +39,6 @@ def _probe_grid(
     return sorted(t for t in grid if -700.0 < t < 700.0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="issue #16: first-transition search returns a subset of the accepted set",
-)
 def test_named_accepted_parameter_lies_inside_returned_interval() -> None:
     a, b, c, d = HULL_REPRODUCER["table"]
     alpha = HULL_REPRODUCER["alpha"]
@@ -59,10 +54,6 @@ def test_named_accepted_parameter_lies_inside_returned_interval() -> None:
     assert lower <= theta <= upper
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="issue #16: accepted parameters exist outside the returned interval",
-)
 @pytest.mark.parametrize(
     ("table", "alpha", "ordering"),
     [

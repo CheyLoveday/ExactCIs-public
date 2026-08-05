@@ -4,6 +4,29 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+### Changed
+
+- `exact_ci_minlike` and `exact_ci_blaker` now return a numerically certified
+  interval hull of the complete inverted confidence set, which may be
+  disconnected. The previous search stopped at the first transition around the
+  conditional MLE and could omit accepted parameters; on `(4, 300, 150, 4)` at
+  `alpha = 0.01` the upper endpoint moves from 0.0021641 to 0.0022976. A region
+  is now excluded only by a conservative certified bound, direct evaluations
+  only ever widen the interval, structural endpoints are exact, and an
+  uncertifiable enclosure raises `NumericalError` rather than returning a
+  best-effort interval. Contract in `docs_md/ordered_hull_specification.md`;
+  registry wording updated accordingly. On connected accepted sets endpoints
+  agree with 1.0.0 to better than 3e-8 on the log scale, always outward.
+- Fisher noncentral hypergeometric evaluation uses a mode-centred
+  adjacent-ratio kernel prepared once per inversion, restoring linear scaling
+  in support width (support 3001: 95.1s to 0.29s per conditional interval).
+- Root acceptance is certified by the retained sign-changing bracket width, the
+  bound on the returned log parameter, instead of function residuals. The score
+  gate previously collapsed to an absolute 1e-8 test and refused
+  well-conditioned roots near total N of 2e9.
+- The Koopman-Nam constrained-MLE discriminant uses cancellation-free
+  sum-of-squares forms; the negative-result repair clamp is removed.
+
 ### Documentation
 
 - Sparse cohort Wald coverage table and method-selection guidance.

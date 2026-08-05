@@ -38,11 +38,20 @@ R2. **Structural endpoints are exact.** If the observed count sits at the lower
     `U == inf` exactly. If the conditional support is a single point, the
     returned interval is `(0.0, inf)` exactly.
 
-R3. **Bounded excess.** Finite endpoints lie outside the ideal endpoints, and
-    the log-scale excess is bounded by the declared tolerance:
-    `0 <= log(exp(sup A)) - ... <= TOL` on each finite side, with
+R3. **Bounded excess.** Finite endpoints lie outside the ideal endpoints.
+    Define the near-accepted set `A_kappa = { eta : p(eta) >= alpha - kappa }`,
+    where `kappa` is the certification floor: the smallest p-difference the
+    conservative bounds can resolve, set by the documented inflation constant
+    and of order `1e-9 * p`. The log-scale excess of each finite endpoint
+    beyond the closure of `A_kappa` is bounded by
     `TOL = _ROOT_TOL * max(1.0, |log endpoint|)`, the same parameter-error
-    contract used by the root solvers.
+    contract used by the root solvers. Excess relative to the ideal endpoint of
+    `A` itself is additionally bounded by the width of the band on which
+    `|p - alpha| < kappa`, which is `kappa` divided by the local slope of `p`;
+    measured on an exhaustive small-table sweep this totals below `3e-8` on the
+    log scale. A tolerance stated against `A` alone would be unachievable by
+    any finite-precision implementation, which is precisely the ideal-versus-
+    floating distinction this specification exists to keep.
 
 R4. **No search sentinel.** A finite configured search-domain limit is never
     reported as an inferential endpoint. If acceptance persists at the domain
