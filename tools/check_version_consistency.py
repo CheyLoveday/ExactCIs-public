@@ -13,7 +13,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ABOUT = ROOT / "src" / "exactcis" / "__about__.py"
-SOURCE_REVISION = "".join(("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c"))
+
+# Published 1.0.0 and 1.1.0 artefacts truthfully retain this scientific-source
+# lineage.  Model B makes the public repository canonical from 1.1.1 onward;
+# do not retroactively relabel the old files as public-release provenance.
+HISTORICAL_SCIENTIFIC_SOURCE_SHA = "".join(
+    ("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c")
+)
+GRANDFATHERED_VERSION_CORES = frozenset({(1, 0, 0), (1, 1, 0)})
+MODEL_B_FIRST_VERSION = (1, 1, 1)
+
+# Before a post-1.0.0 release tag exists, Model B requires this explicit CFF
+# placeholder.  At release time ``--release-tag`` resolves the tag with
+# ``git rev-list -n 1`` and requires that commit instead.
+UNRELEASED_COMMIT_PLACEHOLDER = "UNRELEASED"
 
 
 def package_version() -> str:
@@ -50,11 +63,125 @@ def candidate_tag(version: str) -> str:
     raise ValueError(f"unsupported version for tagging: {version!r}")
 
 
+def version_core(version: str) -> tuple[int, int, int]:
+    """Return the comparable release tuple, accepting the package RC spelling."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:rc\d+)?", version)
+    if match is None:
+        raise ValueError(f"unsupported package version: {version!r}")
+    major, minor, patch = (int(part) for part in match.groups())
+    return major, minor, patch
+
+
+def is_grandfathered_version(version: str) -> bool:
+    """Whether published historical citation semantics apply to ``version``."""
+    return version_core(version) in GRANDFATHERED_VERSION_CORES
+
+
+def uses_model_b(version: str) -> bool:
+    """Whether public-release provenance is required for ``version``."""
+    return version_core(version) >= MODEL_B_FIRST_VERSION
+
+
 def _scalar(text: str, key: str) -> str | None:
     matches = re.findall(
         rf"(?m)^{re.escape(key)}:\s*[\"']?([^\"'\n]+?)[\"']?\s*$", text
     )
     return matches[0].strip() if len(matches) == 1 else None
+
+
+def citation_cff_errors(
+    cff: str,
+    version: str,
+    *,
+    is_unreleased: bool,
+    release_tag: str | None,
+    tag_commit: str | None,
+) -> list[str]:
+    """Return CFF metadata/provenance failures for one package version.
+
+    Model B is deliberately explicit: `commit: "UNRELEASED"` is valid only
+    while the matching changelog heading is unreleased.  A release invocation
+    supplies ``--release-tag``; its resolved commit then becomes the required
+    public implementation revision, with release date and repository URL.
+    """
+    errors: list[str] = []
+    expected_cff = {
+        "cff-version": "1.2.0",
+        "title": "ExactCIs",
+        "type": "software",
+        "version": version,
+        "license": "MIT",
+    }
+    for key, expected in expected_cff.items():
+        if _scalar(cff, key) != expected:
+            errors.append(f"CITATION.cff {key} does not equal {expected!r}")
+    if re.search(r"(?m)^\s*doi:", cff):
+        errors.append("CITATION.cff invents a DOI")
+
+    commit = _scalar(cff, "commit")
+    if is_grandfathered_version(version):
+        if commit != HISTORICAL_SCIENTIFIC_SOURCE_SHA:
+            errors.append(
+                "CITATION.cff historical scientific-source commit differs from "
+                f"{HISTORICAL_SCIENTIFIC_SOURCE_SHA!r}"
+            )
+        return errors
+
+    if not uses_model_b(version):
+        errors.append(
+            f"version {version!r} is neither a grandfathered release nor Model B"
+        )
+        return errors
+
+    if is_unreleased:
+        if release_tag is not None:
+            errors.append("an unreleased Model B version must not name a release tag")
+        if commit != UNRELEASED_COMMIT_PLACEHOLDER:
+            errors.append(
+                "CITATION.cff commit must equal the documented unreleased "
+                f"placeholder {UNRELEASED_COMMIT_PLACEHOLDER!r}"
+            )
+        return errors
+
+    if release_tag is None:
+        errors.append("a published Model B version requires --release-tag")
+        return errors
+    if tag_commit is None or not re.fullmatch(r"[0-9a-f]{40}", tag_commit):
+        errors.append("release tag did not resolve to one 40-character commit")
+        return errors
+    if commit != tag_commit:
+        errors.append(
+            "CITATION.cff commit does not equal the commit resolved from "
+            f"release tag {release_tag!r}"
+        )
+    for key in ("date-released", "repository-code"):
+        if _scalar(cff, key) is None:
+            errors.append(f"CITATION.cff {key} is required for published Model B")
+    return errors
+
+
+def _git_output(*arguments: str) -> str:
+    """Run a deterministic git query rooted at this checkout."""
+    completed = subprocess.run(
+        ["git", *arguments],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise ValueError(f"git {' '.join(arguments)} failed: {detail}")
+    return completed.stdout.strip()
+
+
+def release_tag_commit(release_tag: str) -> str:
+    """Resolve exactly the commit a requested release tag names."""
+    commit = _git_output("rev-list", "-n", "1", release_tag)
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError(f"release tag {release_tag!r} did not resolve to a commit")
+    return commit
 
 
 def check(release_tag: str | None = None) -> list[str]:
@@ -112,20 +239,22 @@ def check(release_tag: str | None = None) -> list[str]:
         )
 
     cff = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    expected_cff = {
-        "cff-version": "1.2.0",
-        "title": "ExactCIs",
-        "type": "software",
-        "version": version,
-        "commit": SOURCE_REVISION,
-        "license": "MIT",
-    }
-    for key, expected in expected_cff.items():
-        if _scalar(cff, key) != expected:
-            errors.append(f"CITATION.cff {key} does not equal {expected!r}")
-    forbidden_cff = ("doi:", "date-released:", "repository-code:")
-    if any(re.search(rf"(?m)^\s*{re.escape(key)}", cff) for key in forbidden_cff):
-        errors.append("CITATION.cff invents a DOI, release date, or public repository")
+    is_unreleased = changelog.count(unreleased_heading) == 1
+    tag_commit: str | None = None
+    if uses_model_b(version) and release_tag is not None:
+        try:
+            tag_commit = release_tag_commit(release_tag)
+        except ValueError as exc:
+            errors.append(str(exc))
+    errors.extend(
+        citation_cff_errors(
+            cff,
+            version,
+            is_unreleased=is_unreleased,
+            release_tag=release_tag,
+            tag_commit=tag_commit,
+        )
+    )
 
     citation_text = (ROOT / "CITATION.txt").read_text(encoding="utf-8")
     unreleased_citation = f"Version: {version} (unreleased release candidate)"
@@ -151,8 +280,17 @@ def check(release_tag: str | None = None) -> list[str]:
             errors.append("CITATION.txt final release must name tag and PyPI version")
     else:
         errors.append("CITATION.txt version or release status differs")
-    if f"Scientific source revision: {SOURCE_REVISION}" not in citation_text:
-        errors.append("CITATION.txt source revision differs")
+    cff_commit = _scalar(cff, "commit")
+    if is_grandfathered_version(version):
+        if (
+            f"Scientific source revision: {HISTORICAL_SCIENTIFIC_SOURCE_SHA}"
+            not in citation_text
+        ):
+            errors.append("CITATION.txt historical scientific-source revision differs")
+    elif uses_model_b(version) and (
+        f"Public repository revision: {cff_commit}" not in citation_text
+    ):
+        errors.append("CITATION.txt public repository revision differs from CFF")
 
     workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
         encoding="utf-8"
@@ -174,15 +312,13 @@ def check(release_tag: str | None = None) -> list[str]:
     if release_tag is not None:
         if release_tag != tag:
             errors.append(f"requested release tag {release_tag!r} differs from {tag!r}")
-        tags = subprocess.run(
-            ["git", "tag", "--points-at", "HEAD"],
-            cwd=ROOT,
-            check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-        ).stdout.splitlines()
-        if release_tag not in tags:
-            errors.append(f"release tag {release_tag!r} does not point at HEAD")
+        try:
+            tags = _git_output("tag", "--points-at", "HEAD").splitlines()
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            if release_tag not in tags:
+                errors.append(f"release tag {release_tag!r} does not point at HEAD")
     return errors
 
 

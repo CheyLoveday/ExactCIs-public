@@ -4,7 +4,7 @@ ExactCIs provides design-aware inference for sparse 2 × 2 tables in Python,
 with explicit sampling assumptions, documented interval constructions, and
 fail-closed numerical behaviour.
 
-Version **1.0.0** does not claim universal exactness, unconditional coverage for
+This release does not claim universal exactness, unconditional coverage for
 conditional procedures, clinical validation, or formal verification.
 
 ## Installation
@@ -16,10 +16,10 @@ ExactCIs supports Python 3.11 through 3.13 and has zero runtime dependencies.
 python -m pip install exactcis
 ```
 
-For a specific version:
+For a reproducible pin to the current release:
 
 ```bash
-python -m pip install exactcis==1.0.0
+python -m pip install exactcis==1.1.0
 ```
 
 For development and documentation checks (from a source checkout):
@@ -137,11 +137,15 @@ are not expected to agree by construction.
   `NumericalError`; ExactCIs never returns another method as a fallback.
 - A finite configured search-domain limit is never reported as an inferential
   endpoint. Unsupported significance levels fail validation instead.
-- Algorithms sum the complete conditional support. Runtime grows with support
-  width: tables with margins around `1e5`–`1e6` can take tens of seconds to
-  minutes on a single core; above roughly `1e7` the solvers typically fail
-  closed with `NumericalError` rather than hang forever. Prefer asymptotic
-  methods when such scales are expected and exact conditioning is not required.
+- Conditional probability evaluation traverses outward from the mode and omits
+  only terms that underflow exactly in binary64; returned values are
+  bit-identical to the full recurrence. `conditional` and `midp` reject support
+  widths above 10,000,000 before preparation; `minlike` and `blaker` reject
+  widths above 1,000,000 before ordered-hull preparation. These limits always
+  raise `NumericalError`. The ordered-hull evaluation budget can also refuse a
+  narrower call, so its width cap is a certification ceiling, not a runtime
+  promise. Prefer asymptotic methods when such scales are expected and exact
+  conditioning is not required.
 - Sparse independent-binomial Wald OR intervals can look successful while
   empirical coverage and failure rates deviate from the nominal 95%; see the
   coverage and timing tables in

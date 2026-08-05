@@ -10,9 +10,6 @@ import sys
 import tempfile
 from pathlib import Path, PurePosixPath
 
-from detect_secrets.core.scan import scan_file
-from detect_secrets.settings import default_settings
-
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_SOURCE_SHA = "".join(
     ("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c")
@@ -22,6 +19,24 @@ PREVIOUS_REVIEWED_SOURCE_SHA = "".join(
 )
 REVIEWED_SOURCE_SHAS = {FROZEN_SOURCE_SHA, PREVIOUS_REVIEWED_SOURCE_SHA}
 SOURCE_REVISION = re.compile(r'^\s*"source_revision"\s*:\s*"[0-9a-f]{40}"\s*,?\s*$')
+TIMING_EVIDENCE_COMMIT = re.compile(
+    r'^\s*"git_commit"\s*:\s*"(?P<commit>[0-9a-f]{40})"\s*,?\s*$'
+)
+TIMING_EVIDENCE_WHEEL_SHA256 = "".join(
+    (
+        "800c3176",
+        "24678bb0",
+        "d80f3219",
+        "6a57bb58",
+        "1f81eb01",
+        "eaff1ebb",
+        "5091b2fb",
+        "f77cae3c",
+    )
+)
+TIMING_EVIDENCE_WHEEL = re.compile(
+    r'^\s*"wheel_sha256"\s*:\s*"(?P<digest>[0-9a-f]{64})"\s*,?\s*$'
+)
 
 
 def _git(*args: str, text: bool = True) -> str | bytes:
@@ -44,7 +59,16 @@ def _allowed_reference_revision(path: str, line: str) -> bool:
             f"Scientific source revision: {sha}" for sha in REVIEWED_SOURCE_SHAS
         },
     }
-    return line.strip() in allowed_citation_lines.get(path, set())
+    if line.strip() in allowed_citation_lines.get(path, set()):
+        return True
+    wheel_match = TIMING_EVIDENCE_WHEEL.match(line)
+    if path == "tools/timing_evidence.json" and wheel_match is not None:
+        return wheel_match.group("digest") == TIMING_EVIDENCE_WHEEL_SHA256
+    timing_match = TIMING_EVIDENCE_COMMIT.match(line)
+    if path == "tools/timing_evidence.json" and timing_match is not None:
+        commit = timing_match.group("commit")
+        return commit in str(_git("rev-list", "--all")).splitlines()
+    return False
 
 
 def _current_tree_errors() -> list[str]:
@@ -75,6 +99,9 @@ def _current_tree_errors() -> list[str]:
 
 
 def _history_errors() -> tuple[list[str], int, int]:
+    from detect_secrets.core.scan import scan_file
+    from detect_secrets.settings import default_settings
+
     revisions = tuple(str(_git("rev-list", "--all")).splitlines())
     scanned: set[tuple[str, str]] = set()
     errors: list[str] = []
@@ -138,7 +165,10 @@ def main() -> int:
         f"OK: detect-secrets scanned the current tree and {blobs} unique "
         f"path/blob pairs across {revisions} public commits"
     )
-    print("OK: reviewed allowlist is limited to frozen scientific source SHAs")
+    print(
+        "OK: reviewed allowlist is limited to frozen scientific-source SHAs "
+        "and the reviewed timing-evidence wheel checksum/commits"
+    )
     return 0
 
 
