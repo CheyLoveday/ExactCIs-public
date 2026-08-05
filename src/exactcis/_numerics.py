@@ -489,11 +489,14 @@ _BOUND_INFLATION = 1e-9
 # for graze bands: when p approaches alpha flatly from either side, certifying
 # the band costs roughly (band width / certifiable cell width) evaluations, and
 # the envelope's first-order slack makes the certifiable width proportional to
-# |p - alpha|. A measured worst case, table (23, 21, 23, 10) at alpha = 0.1 with
-# a 1.3e-3-wide band sitting within 5e-7 of alpha, sweeps in about 5300
-# evaluations; the budget carries several times that headroom before failing
-# closed.
-_HULL_BOUND_BUDGET = 25000
+# |p - alpha|. Measured on the anchor case, table (23, 21, 23, 10) at
+# alpha = 0.1 with a 1.3e-3-wide band sitting within 5e-7 of alpha, one
+# endpoint spends 11764 evaluations, so the budget carries about 4x headroom.
+# The cliff is structural: an alpha within about 1e-6 above the flat peak of a
+# rejected island can exhaust any finite budget, and such calls fail closed
+# with NumericalError rather than returning a loose interval. Worst-case
+# runtime is budget * O(support width) element operations.
+_HULL_BOUND_BUDGET = 50000
 # Recursion depth cap for one rejection certificate.
 _HULL_CERTIFY_DEPTH = 64
 # The inflation margin covers cumulative running-sum rounding only up to this
@@ -667,10 +670,22 @@ def ordered_interval(
         )
 
     point = conditional_mle(a, b, c, d, prepared=margins)
+    # For boundary observations the likelihood supremum sits at an extended
+    # endpoint, and the acceptance probe below must be taken beyond every
+    # ordering breakpoint, all of which lie within the range of the adjacent
+    # log ratios. A fixed proxy of +/-36 is not sufficient for extreme margins
+    # whose ratios exceed it, and previously produced a false "below alpha at
+    # its likelihood maximum" refusal on valid tables.
+    # Adjacent masses tie exactly at t = -r_k, so every mass-ordering change
+    # lies in [-r_first, -r_last] and a probe beyond that span sees the frozen
+    # limiting ordering.
+    ratios = margins._ratios
+    below_all = min(-36.0, -(ratios[0] if ratios else 0.0) - 5.0)
+    above_all = max(36.0, -(ratios[-1] if ratios else 0.0) + 5.0)
     if point == 0.0:
-        center = -36.0
+        center = max(below_all, -_LOG_LIMIT + 1.0)
     elif math.isinf(point):
-        center = 36.0
+        center = min(above_all, _LOG_LIMIT - 1.0)
     else:
         center = math.log(point)
 

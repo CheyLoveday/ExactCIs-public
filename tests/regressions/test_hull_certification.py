@@ -167,6 +167,20 @@ def test_structural_endpoints_and_sentinels() -> None:
         assert (lower, upper) == (0.0, math.inf)
 
 
+def test_boundary_observation_with_extreme_ratios_is_not_refused() -> None:
+    """Regression for a pre-existing false refusal, exposed by review.
+
+    For a boundary observation the likelihood supremum sits at an extended
+    endpoint, and the acceptance probe must be taken beyond every mass-ordering
+    tie, which all lie at t = -r_k. The previous fixed +/-36 proxy was inside
+    that span for extreme margins and produced a false "below alpha at its
+    likelihood maximum" refusal on a valid table.
+    """
+    lower, upper = exact_ci_minlike(0, 10**12, 50000, 0, 0.05, design=CASE_CONTROL)
+    assert lower == 0.0
+    assert 0.0 < upper < 1e-12
+
+
 def test_registry_wording_matches_the_specification() -> None:
     from exactcis.estimands import Design as RegistryDesign
     from exactcis.estimands import Estimand, get_method_spec
