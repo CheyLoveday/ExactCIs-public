@@ -6,28 +6,28 @@ import math
 from numbers import Integral
 from typing import Iterable
 
+from exactcis._capability import (
+    _ALPHA_DOMAIN_MESSAGE,
+    _ALPHA_STABILITY_MARGIN,
+    _MAXIMUM_CELL_COUNT,
+    _MAXIMUM_CERTIFIED_ALPHA,
+)
 from exactcis.exceptions import ValidationError
 
 Table = tuple[int, int, int, int]
-_ALPHA_STABILITY_MARGIN = 1e-12
-_MAXIMUM_CERTIFIED_ALPHA = 1.0 - _ALPHA_STABILITY_MARGIN
-# Keep cell counts inside a range where float/log-space arithmetic retains
-# relative error comfortably below 1e-8 for the certified methods.
-_MAXIMUM_CELL_COUNT = 10**12
 
 
 def validate_alpha(alpha: float) -> float:
     """Return a significance level inside the certified numerical domain."""
-    message = "alpha must satisfy 1e-12 < alpha < 1 - 1e-12 for numerical stability"
     try:
         value = float(alpha)
     except (TypeError, ValueError, OverflowError) as exc:
-        raise ValidationError(message) from exc
+        raise ValidationError(_ALPHA_DOMAIN_MESSAGE) from exc
     if (
         not math.isfinite(value)
         or not _ALPHA_STABILITY_MARGIN < value < _MAXIMUM_CERTIFIED_ALPHA
     ):
-        raise ValidationError(f"{message}, got {alpha!r}")
+        raise ValidationError(f"{_ALPHA_DOMAIN_MESSAGE}, got {alpha!r}")
     return value
 
 

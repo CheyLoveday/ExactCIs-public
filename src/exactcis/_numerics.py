@@ -6,20 +6,24 @@ import math
 from collections.abc import Callable
 from statistics import NormalDist
 
+from exactcis._capability import (
+    _BOUND_INFLATION,
+    _HULL_BOUND_BUDGET,
+    _HULL_CERTIFY_DEPTH,
+    _HULL_MAX_WIDTH,
+    _PREPARE_MAX_WIDTH,
+    _UNDERFLOW_STOP,
+    support_width,
+)
+from exactcis._capability import (
+    _ROOT_TOL as _CAPABILITY_ROOT_TOL,
+)
 from exactcis.exceptions import NumericalError
 
 _LOG_LIMIT = 740.0
-_ROOT_TOL = 2e-12
-
-# Active-support stop threshold for relative log masses. Strictly below the
-# binary64 exponent floor: exp(x) == 0.0 for every x at or below this value on
-# a conforming platform, verified once at import by _probe_underflow(). The
-# stop rule never assumes monotonicity of exp: it stops on the VALUE of the
-# accumulated relative log mass, whose outward non-increase is a rounding fact
-# (adding a non-positive increment to a float cannot round above it), so every
-# skipped term satisfies rel <= _UNDERFLOW_STOP and would itself evaluate to
-# exactly 0.0.
-_UNDERFLOW_STOP = -800.0
+# Retain this private re-export for the score solver while sourcing its value
+# from the canonical capability module.
+_ROOT_TOL = _CAPABILITY_ROOT_TOL
 
 
 def _probe_underflow() -> bool:
@@ -671,42 +675,6 @@ def ordered_p_value(
     return min(1.0, max(0.0, p_value))
 
 
-# Explicit conservative roundoff inflation applied to every certified bound, per
-# the hull specification (docs_md/ordered_hull_specification.md, E2). The margin
-# dominates the measured kernel evaluation error (about 3e-14 at width 2e4) by
-# more than four orders of magnitude, covers running-sum rounding for support
-# widths up to about 1e6, and is validated against dense sampling in the test
-# suite. Pure Python has no directed rounding, so explicit inflation is the
-# reviewed zero-dependency enclosure mechanism.
-_BOUND_INFLATION = 1e-9
-# Certified-bound evaluations allowed per endpoint before failing closed. Sized
-# for graze bands: when p approaches alpha flatly from either side, certifying
-# the band costs roughly (band width / certifiable cell width) evaluations, and
-# the envelope's first-order slack makes the certifiable width proportional to
-# |p - alpha|. Measured on the anchor case, table (23, 21, 23, 10) at
-# alpha = 0.1 with a 1.3e-3-wide band sitting within 5e-7 of alpha, one
-# endpoint spends 11764 evaluations, so the budget carries about 4x headroom.
-# The cliff is structural: an alpha within about 1e-6 above the flat peak of a
-# rejected island can exhaust any finite budget, and such calls fail closed
-# with NumericalError rather than returning a loose interval. Worst-case
-# runtime is budget * O(support width) element operations.
-_HULL_BOUND_BUDGET = 50000
-# Recursion depth cap for one rejection certificate.
-_HULL_CERTIFY_DEPTH = 64
-# The inflation margin covers cumulative running-sum rounding only up to this
-# support width; wider tables fail closed rather than weakening the certificate.
-_HULL_MAX_WIDTH = 1_000_000
-
-
-# Preparation materialises two sequences proportional to the support width, so
-# the width must be rejected *before* allocation rather than by catching the
-# allocator's failure. Catching MemoryError is not portable: Linux refuses an
-# oversized request promptly, while macOS may accept it optimistically and let
-# the kernel terminate the process, which is not fail-closed behaviour. This cap
-# matches the >= 1e7 fail-closed band already documented in docs_md/methods.md.
-_PREPARE_MAX_WIDTH = 10_000_000
-
-
 class _AcceptedPoint(Exception):
     """Control-flow signal: a rejection certificate found an accepted point."""
 
@@ -861,16 +829,26 @@ def ordered_interval(
     if support_lower == support_upper:
         return 0.0, math.inf
 
-    # One preparation for the whole inversion: the MLE solve, every acceptance
-    # probe and every certified bound share these parameter-independent ratios.
-    margins = prepare_margins(n1, n0, events)
-    if margins.width > _HULL_MAX_WIDTH:
+    # The ordered-hull certification cap is decidable from the margins. Check
+    # it before preparation, which otherwise materialises O(support width)
+    # sequences for a call that must fail closed.
+    width = support_width(n1, n0, events)
+    if width > _HULL_MAX_WIDTH:
         raise NumericalError(
             "ordered hull certification is not supported above support width"
             f" {_HULL_MAX_WIDTH}",
             method=ordering,
-            diagnostics={"support_size": margins.width},
+            diagnostics={
+                "method": ordering,
+                "support_size": width,
+                "limit": _HULL_MAX_WIDTH,
+                "limit_kind": "ordered_hull_certification",
+            },
         )
+
+    # One preparation for the whole inversion: the MLE solve, every acceptance
+    # probe and every certified bound share these parameter-independent ratios.
+    margins = prepare_margins(n1, n0, events)
 
     point = conditional_mle(a, b, c, d, prepared=margins)
     # For boundary observations the likelihood supremum sits at an extended

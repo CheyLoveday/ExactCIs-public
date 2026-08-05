@@ -14,7 +14,13 @@ import random
 
 import pytest
 
-from exactcis import exact_ci_blaker, exact_ci_minlike
+from exactcis import (
+    exact_ci_blaker,
+    exact_ci_conditional,
+    exact_ci_midp,
+    exact_ci_minlike,
+)
+from exactcis._capability import _HULL_MAX_WIDTH, support_width
 from exactcis._numerics import (
     _ordered_p_upper_bound,
     ordered_p_value,
@@ -147,13 +153,74 @@ def test_budget_exhaustion_fails_closed(monkeypatch) -> None:
         exact_ci_minlike(*GRAZE_TABLE, GRAZE_ALPHA, design=CASE_CONTROL)
 
 
-def test_width_guard_fails_closed(monkeypatch) -> None:
-    """The inflation margin only covers documented widths; beyond them, refuse."""
+@pytest.mark.parametrize(("ordering", "solver"), ORDERINGS)
+def test_ordered_width_preflight_refuses_before_any_preparation(
+    monkeypatch, ordering, solver
+) -> None:
+    """An over-cap ordered call must not enter either preparation entry point."""
     import exactcis._numerics as numerics
 
     monkeypatch.setattr(numerics, "_HULL_MAX_WIDTH", 10)
+
+    def unexpected_preparation(*args, **kwargs):
+        raise AssertionError("ordered preflight entered support preparation")
+
+    monkeypatch.setattr(numerics, "prepare_margins", unexpected_preparation)
+    monkeypatch.setattr(numerics.PreparedMargins, "__init__", unexpected_preparation)
+    with pytest.raises(NumericalError) as excinfo:
+        solver(5, 5, 5, 5, 0.05, design=CASE_CONTROL)
+    diagnostics = excinfo.value.diagnostics
+    assert excinfo.value.method == ordering
+    assert diagnostics == {
+        "method": ordering,
+        "support_size": 11,
+        "limit": 10,
+        "limit_kind": "ordered_hull_certification",
+    }
+
+
+@pytest.mark.parametrize(("ordering", "solver"), ORDERINGS)
+def test_ordered_small_cap_boundary_enters_preparation_only_at_cap(
+    monkeypatch, ordering, solver
+) -> None:
+    """An injected cap proves the at-cap and cap-plus-one execution order."""
+    import exactcis._numerics as numerics
+
+    monkeypatch.setattr(numerics, "_HULL_MAX_WIDTH", 10)
+    original_prepare_margins = numerics.prepare_margins
+    prepared_calls: list[tuple[int, int, int]] = []
+
+    def spy_prepare_margins(n1: int, n0: int, events: int):
+        prepared_calls.append((n1, n0, events))
+        return original_prepare_margins(n1, n0, events)
+
+    monkeypatch.setattr(numerics, "prepare_margins", spy_prepare_margins)
+    lower, upper = solver(4, 5, 5, 5, 0.05, design=CASE_CONTROL)
+    assert 0.0 <= lower <= upper
+    assert prepared_calls == [(9, 10, 9)]
+
+    prepared_calls.clear()
     with pytest.raises(NumericalError):
-        exact_ci_minlike(30, 20, 15, 35, 0.05, design=CASE_CONTROL)
+        solver(5, 5, 5, 5, 0.05, design=CASE_CONTROL)
+    assert prepared_calls == []
+
+
+def test_ordered_real_cap_boundary_is_calculated_without_allocation() -> None:
+    """The production cap and cap-plus-one boundary use pure arithmetic."""
+    assert support_width(999_999, 1_000_000, 999_999) == _HULL_MAX_WIDTH
+    assert support_width(1_000_000, 1_000_000, 1_000_000) == _HULL_MAX_WIDTH + 1
+
+
+@pytest.mark.parametrize("solver", (exact_ci_conditional, exact_ci_midp))
+def test_equal_tail_routes_keep_their_common_preparation_cap(
+    monkeypatch, solver
+) -> None:
+    """Conditional and Mid-P do not inherit the ordered-hull cap."""
+    import exactcis._numerics as numerics
+
+    monkeypatch.setattr(numerics, "_HULL_MAX_WIDTH", 10)
+    lower, upper = solver(5, 5, 5, 5, 0.05, design=CASE_CONTROL)
+    assert 0.0 <= lower <= upper
 
 
 def test_structural_endpoints_and_sentinels() -> None:

@@ -188,9 +188,52 @@ jobs:
           "$smoke_python" run_installed_smoke.py
           "$smoke_python" run_readme_examples.py --source README.md
 
+  ordered-preflight-evidence:
+    name: Archive ordered preflight cap evidence
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.candidate_tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-bundle-${{ github.sha }}
+          path: release-bundle
+      - name: Measure installed-wheel ordered preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum --check release-bundle/SHA256SUMS
+          artefacts=(release-bundle/dist/*.whl)
+          test "${#artefacts[@]}" -eq 1
+          wheel_sha256=$(sha256sum "${artefacts[0]}" | awk '{print $1}')
+          python -m venv "$RUNNER_TEMP/exactcis-ordered-preflight-venv"
+          evidence_python="$RUNNER_TEMP/exactcis-ordered-preflight-venv/bin/python"
+          "$evidence_python" -m pip install --disable-pip-version-check "${artefacts[0]}"
+          "$evidence_python" -m pip check
+          evidence_dir="$RUNNER_TEMP/exactcis-ordered-preflight-evidence"
+          mkdir "$evidence_dir"
+          cp tools/ordered_preflight_evidence.py "$evidence_dir/"
+          cd "$evidence_dir"
+          "$evidence_python" ordered_preflight_evidence.py \
+            --json ordered-preflight-evidence.json \
+            --artifact-sha256 "$wheel_sha256"
+      - name: Archive ordered preflight evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ordered-preflight-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/exactcis-ordered-preflight-evidence/ordered-preflight-evidence.json
+          if-no-files-found: error
+          retention-days: 7
+
   publish-testpypi:
     name: Publish verified bundle to TestPyPI
-    needs: artifact-smoke
+    needs: [artifact-smoke, ordered-preflight-evidence]
     runs-on: ubuntu-latest
     environment:
       name: testpypi
