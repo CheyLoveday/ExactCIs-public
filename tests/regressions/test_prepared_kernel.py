@@ -19,6 +19,7 @@ from exactcis import (
     exact_ci_midp,
     exact_ci_minlike,
 )
+from exactcis._capability import support_width
 from exactcis._numerics import (
     _PREPARE_MAX_WIDTH,
     _legacy_fnch_probabilities,
@@ -206,8 +207,7 @@ def test_oversized_support_is_rejected_before_allocation() -> None:
     assert diagnostics.get("support_size", 0) > _PREPARE_MAX_WIDTH
 
 
-def test_width_at_the_cap_is_still_accepted() -> None:
-    """The cap must reject only beyond the documented band, not at it."""
-    assert _PREPARE_MAX_WIDTH == 10_000_000
-    margins = prepare_margins(4, 4, 4)
-    assert margins.width <= _PREPARE_MAX_WIDTH
+def test_prepare_width_boundary_is_calculated_without_allocation() -> None:
+    """The common preparation cap has exact at-cap and cap-plus-one widths."""
+    assert support_width(9_999_999, 10_000_000, 9_999_999) == _PREPARE_MAX_WIDTH
+    assert support_width(10_000_000, 10_000_000, 10_000_000) == _PREPARE_MAX_WIDTH + 1
