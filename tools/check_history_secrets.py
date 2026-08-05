@@ -10,9 +10,6 @@ import sys
 import tempfile
 from pathlib import Path, PurePosixPath
 
-from detect_secrets.core.scan import scan_file
-from detect_secrets.settings import default_settings
-
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_SOURCE_SHA = "".join(
     ("ba671716", "7fe81d92", "9b02a958", "0d0fcc7b", "c86b830c")
@@ -102,6 +99,9 @@ def _current_tree_errors() -> list[str]:
 
 
 def _history_errors() -> tuple[list[str], int, int]:
+    from detect_secrets.core.scan import scan_file
+    from detect_secrets.settings import default_settings
+
     revisions = tuple(str(_git("rev-list", "--all")).splitlines())
     scanned: set[tuple[str, str]] = set()
     errors: list[str] = []
