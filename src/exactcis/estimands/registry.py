@@ -92,7 +92,8 @@ _FIXED_OR = (
         "minlike",
         "Fisher-Irwin minimum-likelihood ordering under the conditional law",
         "conditional maximum-likelihood estimate",
-        "ordered conditional exact confidence set",
+        "numerically certified interval hull of the inverted ordered"
+        " conditional exact confidence set",
         "Inverts an inclusive probability-mass ordering at fixed margins.",
         "Discrete ordering can yield non-smooth endpoints and conservative coverage.",
         "exactcis.exact_ci_minlike",
@@ -101,7 +102,8 @@ _FIXED_OR = (
         "blaker",
         "Blaker acceptability ordering under the conditional law",
         "conditional maximum-likelihood estimate",
-        "ordered conditional exact confidence set",
+        "numerically certified interval hull of the inverted ordered"
+        " conditional exact confidence set",
         "Inverts inclusive Blaker acceptability ordering at fixed margins.",
         "Discrete ordering can yield non-smooth endpoints and conservative coverage.",
         "exactcis.exact_ci_blaker",

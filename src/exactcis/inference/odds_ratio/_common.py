@@ -6,7 +6,7 @@ import math
 
 from exactcis._numerics import (
     exp_parameter,
-    fnch_probabilities,
+    prepare_margins,
     solve_monotone_log_parameter,
     support_bounds,
 )
@@ -52,9 +52,11 @@ def equal_tail_interval(
         return 0.0, math.inf
 
     target = alpha / 2.0
+    # One preparation for both endpoint inversions of this interval.
+    margins = prepare_margins(n1, n0, events)
 
     def tail(log_odds: float, *, upper: bool) -> float:
-        support, probabilities = fnch_probabilities(n1, n0, events, log_odds)
+        support, probabilities = margins.probabilities(log_odds)
         index = support.index(a)
         observed_mass = probabilities[index]
         if upper:

@@ -7,7 +7,6 @@ import math
 import pytest
 
 import exactcis._numerics as numerics
-import exactcis.inference.odds_ratio._common as common
 from exactcis._numerics import ordered_p_value
 from exactcis.estimands import Design
 from exactcis.exceptions import DesignError, NumericalError, ValidationError
@@ -140,18 +139,32 @@ def test_exact_methods_reject_invalid_counts(method, table) -> None:
 
 
 def test_equal_tail_callback_failure_is_not_a_vacuous_interval(monkeypatch) -> None:
-    def fail(*args, **kwargs):
+    # The distribution-evaluation seam is PreparedMargins.probabilities: both the
+    # equal-tail and the ordered inversions reach the FNCH vector through it.
+    def fail(self, log_odds):
         raise NumericalError("forced FNCH failure")
 
-    monkeypatch.setattr(common, "fnch_probabilities", fail)
+    monkeypatch.setattr(numerics.PreparedMargins, "probabilities", fail)
     with pytest.raises(NumericalError, match="forced FNCH failure"):
         exact_ci_conditional(12, 5, 8, 10, design=FIXED)
 
 
 def test_ordered_callback_failure_is_not_a_different_method(monkeypatch) -> None:
-    def fail(*args, **kwargs):
+    def fail(self, log_odds):
         raise NumericalError("forced ordered failure")
 
-    monkeypatch.setattr(numerics, "fnch_probabilities", fail)
+    monkeypatch.setattr(numerics.PreparedMargins, "probabilities", fail)
     with pytest.raises(NumericalError, match="forced ordered failure"):
         exact_ci_blaker(12, 5, 8, 10, design=FIXED)
+
+
+def test_unallocatable_support_is_a_numerical_error() -> None:
+    """Preparation runs before the solver's guarded region, so it guards itself.
+
+    This table passes count validation (both counts are below the 1e12 bound) but
+    its support cannot be allocated. Without a guard inside preparation the
+    failure escapes as a bare MemoryError instead of the documented
+    NumericalError.
+    """
+    with pytest.raises(NumericalError):
+        exact_ci_conditional(10**11, 1, 1, 10**11, design=FIXED)
