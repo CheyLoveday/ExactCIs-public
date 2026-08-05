@@ -20,6 +20,7 @@ from exactcis import (
     exact_ci_minlike,
 )
 from exactcis._numerics import (
+    _PREPARE_MAX_WIDTH,
     _legacy_fnch_probabilities,
     prepare_margins,
 )
@@ -187,3 +188,26 @@ def test_public_intervals_are_unchanged_within_envelope(table) -> None:
         assert lower <= upper
         assert lower >= 0.0
         assert not math.isnan(lower) and not math.isnan(upper)
+
+
+def test_oversized_support_is_rejected_before_allocation() -> None:
+    """Fail-closed on width must not depend on the platform's allocator.
+
+    Catching ``MemoryError`` is not portable: Linux refuses an oversized request
+    promptly, while macOS may accept it optimistically and let the kernel
+    terminate the process. The width check must therefore run before any
+    allocation. The ``limit`` diagnostic is what proves the width path ran
+    rather than the allocator backstop.
+    """
+    with pytest.raises(NumericalError) as excinfo:
+        prepare_margins(10**11 + 1, 10**11 + 1, 10**11 + 1)
+    diagnostics = excinfo.value.diagnostics or {}
+    assert diagnostics.get("limit") == _PREPARE_MAX_WIDTH
+    assert diagnostics.get("support_size", 0) > _PREPARE_MAX_WIDTH
+
+
+def test_width_at_the_cap_is_still_accepted() -> None:
+    """The cap must reject only beyond the documented band, not at it."""
+    assert _PREPARE_MAX_WIDTH == 10_000_000
+    margins = prepare_margins(4, 4, 4)
+    assert margins.width <= _PREPARE_MAX_WIDTH

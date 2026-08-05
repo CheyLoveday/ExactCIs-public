@@ -163,6 +163,16 @@ class PreparedMargins:
         self._events = events
         self._lower = lower
         self._upper = upper
+        # Reject an unusable width deterministically, before any allocation is
+        # attempted, so the fail-closed contract does not depend on how a given
+        # platform's allocator reports exhaustion.
+        span = upper - lower + 1
+        if span > _PREPARE_MAX_WIDTH:
+            raise NumericalError(
+                "conditional support is too wide to prepare",
+                method="FNCH",
+                diagnostics={"support_size": span, "limit": _PREPARE_MAX_WIDTH},
+            )
         # Preparation allocates two sequences proportional to the support width,
         # so it can exhaust memory on a table that passes count validation. That
         # must surface as NumericalError like every other numerical failure, not
@@ -686,6 +696,15 @@ _HULL_CERTIFY_DEPTH = 64
 # The inflation margin covers cumulative running-sum rounding only up to this
 # support width; wider tables fail closed rather than weakening the certificate.
 _HULL_MAX_WIDTH = 1_000_000
+
+
+# Preparation materialises two sequences proportional to the support width, so
+# the width must be rejected *before* allocation rather than by catching the
+# allocator's failure. Catching MemoryError is not portable: Linux refuses an
+# oversized request promptly, while macOS may accept it optimistically and let
+# the kernel terminate the process, which is not fail-closed behaviour. This cap
+# matches the >= 1e7 fail-closed band already documented in docs_md/methods.md.
+_PREPARE_MAX_WIDTH = 10_000_000
 
 
 class _AcceptedPoint(Exception):
