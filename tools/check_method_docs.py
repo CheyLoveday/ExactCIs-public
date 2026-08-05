@@ -9,7 +9,7 @@ from pathlib import Path
 from exactcis.estimands import Design, Estimand, MethodSpec, method_registry
 
 ROOT = Path(__file__).resolve().parents[1]
-DOC = ROOT / "docs_md" / "methods.md"
+DOC = Path("docs_md/methods.md")
 START = "<!-- exactcis-method-table:start -->"
 END = "<!-- exactcis-method-table:end -->"
 DESIGN_ORDER = {design: index for index, design in enumerate(Design)}
@@ -75,15 +75,15 @@ def replace_table(text: str, table: str) -> str:
     return f"{before}{START}\n{table}\n{END}{after}"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--write", action="store_true")
-    args = parser.parse_args()
-    current = DOC.read_text(encoding="utf-8")
+def main(root: Path, *, write: bool = False) -> int:
+    """Check or write the generated method table beneath ``root``."""
+    root = root.resolve()
+    document = root / DOC
+    current = document.read_text(encoding="utf-8")
     expected = replace_table(current, render_table())
-    if args.write:
-        DOC.write_text(expected, encoding="utf-8")
-        print(f"updated {DOC.relative_to(ROOT)}")
+    if write:
+        document.write_text(expected, encoding="utf-8")
+        print(f"updated {DOC}")
         return 0
     if current != expected:
         print("ERROR: docs_md/methods.md differs from the canonical method registry")
@@ -93,4 +93,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--write", action="store_true")
+    arguments = parser.parse_args()
+    raise SystemExit(main(arguments.root, write=arguments.write))
