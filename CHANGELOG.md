@@ -4,6 +4,10 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-06
+
+Corrective release (`exactcis==1.1.1`, tag `v1.1.1`).
+
 ### Changed
 
 - `exact_ci_minlike` and `exact_ci_blaker` now reject support widths above
