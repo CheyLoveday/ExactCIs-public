@@ -103,10 +103,50 @@ jobs:
       - uses: ./.github/actions/setup-python-uv
         with:
           python-version: "3.11"
-      - run: uv sync --frozen --extra release
+      - run: uv sync --frozen --extra dev --extra release
       - run: uv run python -m build
       - run: uv run python -m twine check dist/*
       - run: uv run python tools/check_distribution_contents.py dist/*
+      - name: Collect shipped tests from the extracted sdist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_python="$GITHUB_WORKSPACE/.venv/bin/python"
+          extract_dir="$(mktemp -d "$RUNNER_TEMP/exactcis-sdist-collect.XXXXXX")"
+          tar -xzf dist/*.tar.gz -C "$extract_dir"
+          sdist_dirs=("$extract_dir"/exactcis-*/)
+          test "${#sdist_dirs[@]}" -eq 1
+          test -d "${sdist_dirs[0]}"
+          cd "${sdist_dirs[0]}"
+          test -d tests
+          test ! -d tools
+          PYTHONPATH="$PWD/src" "$test_python" - <<'PY'
+          from pathlib import Path
+          import exactcis
+
+          origin = Path(exactcis.__file__).resolve()
+          assert origin.is_relative_to(Path.cwd().resolve() / "src"), origin
+          PY
+          collection_log="$RUNNER_TEMP/exactcis-sdist-collection.log"
+          if ! PYTHONPATH="$PWD/src" "$test_python" -m pytest --collect-only -q \
+            > "$collection_log" 2>&1; then
+            cat "$collection_log"
+            exit 1
+          fi
+          cat "$collection_log"
+          collected="$(awk '/^[0-9]+ tests? collected/ {print $1}' "$collection_log")"
+          test -n "$collected"
+          test "$collected" -gt 500
+          skip_count="$(awk '/^SKIPPED \[1\]/ {count += 1} END {print count + 0}' "$collection_log")"
+          test "$skip_count" -eq 5
+          for skipped_module in \
+            tests/test_gate_mutations.py \
+            tests/test_history_secrets.py \
+            tests/test_public_api_identity.py \
+            tests/test_release_tools.py \
+            tests/test_version_consistency.py; do
+            grep -Fq "SKIPPED [1] $skipped_module:" "$collection_log"
+          done
       - name: Upload immutable build inputs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -8,7 +8,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from tools import check_version_consistency as version_gate
+ROOT = Path(__file__).parents[1]
+
+if not (ROOT / "tools").is_dir():
+    pytest.skip("tools/ not shipped in the public sdist", allow_module_level=True)
+
+from tools import check_version_consistency as version_gate  # noqa: E402
 
 
 def _cff(
