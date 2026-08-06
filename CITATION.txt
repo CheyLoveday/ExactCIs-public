@@ -1,8 +1,8 @@
 ExactCIs
 Author: Chey Loveday
-Version: 1.1.1
+Version: 1.1.2
 Public repository: https://github.com/CheyLoveday/ExactCIs-public
-Public tag: v1.1.1
-PyPI: exactcis==1.1.1
+Public tag: v1.1.2
+PyPI: exactcis==1.1.2
 
 Cite the exact version and tag above. No DOI has been assigned.

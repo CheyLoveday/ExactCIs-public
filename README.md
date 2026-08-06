@@ -19,7 +19,7 @@ python -m pip install exactcis
 For a reproducible pin to the current release:
 
 ```bash
-python -m pip install exactcis==1.1.1
+python -m pip install exactcis==1.1.2
 ```
 
 For development and documentation checks (from a source checkout):

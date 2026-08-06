@@ -52,9 +52,9 @@ def test_stale_version_pin_is_rejected_by_the_version_reference_gate(
     )
     readme = tmp_path / "README.md"
     original = readme.read_text(encoding="utf-8")
-    assert "exactcis==1.1.1" in original
+    assert "exactcis==1.1.2" in original
     readme.write_text(
-        original.replace("exactcis==1.1.1", "exactcis==9.9.9", 1),
+        original.replace("exactcis==1.1.2", "exactcis==9.9.9", 1),
         encoding="utf-8",
     )
 

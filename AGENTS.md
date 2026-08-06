@@ -15,11 +15,11 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
   silently replaces another.
 - Python **3.11–3.13**. Runtime: **standard library only**.
 - Current package version is recorded by `exactcis.__version__`; the current
-  release is `exactcis==1.1.1`.
+  release is `exactcis==1.1.2`.
 
 ```bash
 pip install exactcis
-# reproducible current-release pin: pip install exactcis==1.1.1
+# reproducible current-release pin: pip install exactcis==1.1.2
 ```
 
 ---
