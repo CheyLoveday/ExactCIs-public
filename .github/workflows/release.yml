@@ -6,10 +6,10 @@ on:
       candidate_tag:
         description: Existing candidate tag to verify and release
         required: true
-        default: v1.1.0
+        default: v1.1.1
         type: string
       release_authorisation:
-        description: Type release-v1.1.0-through-testpypi
+        description: Type release-v1.1.1-through-testpypi
         required: true
         type: string
 
@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$ENABLED" = "true"
-          test "$AUTHORISATION" = "release-v1.1.0-through-testpypi"
+          test "$AUTHORISATION" = "release-v1.1.1-through-testpypi"
       - name: Check out the requested tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -343,9 +343,17 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum --check release-bundle/SHA256SUMS
+          {
+            cat CHANGELOG.md
+            printf '\n## Release provenance\n\n'
+            printf 'Release revision: %s\n\n' "$(git rev-list -n 1 "$CANDIDATE_TAG")"
+            printf 'Artefact SHA-256:\n\n```text\n'
+            cat release-bundle/SHA256SUMS
+            printf '```\n'
+          } > release-bundle/RELEASE_NOTES.md
           gh release create "$CANDIDATE_TAG" \
             release-bundle/dist/* \
             release-bundle/SHA256SUMS \
             --verify-tag \
             --title "ExactCIs $CANDIDATE_TAG" \
-            --notes-file CHANGELOG.md
+            --notes-file release-bundle/RELEASE_NOTES.md

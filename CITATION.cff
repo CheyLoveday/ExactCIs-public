@@ -1,12 +1,13 @@
 cff-version: 1.2.0
-message: "Cite ExactCIs by version, public tag, and source revision."
+message: "Cite ExactCIs by version, public tag, and public repository."
 title: "ExactCIs"
 type: software
 authors:
   - family-names: "Loveday"
     given-names: "Chey"
-version: "1.1.0"
-commit: "ba6717167fe81d929b02a9580d0fcc7bc86b830c"
+version: "1.1.1"
+date-released: 2026-08-06
+repository-code: "https://github.com/CheyLoveday/ExactCIs-public"
 abstract: >-
   Design-aware confidence intervals and related inference for sparse 2 by 2
   tables, with explicit sampling assumptions and fail-closed numerical

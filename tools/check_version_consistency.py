@@ -22,10 +22,12 @@ HISTORICAL_SCIENTIFIC_SOURCE_SHA = "".join(
 )
 GRANDFATHERED_VERSION_CORES = frozenset({(1, 0, 0), (1, 1, 0)})
 MODEL_B_FIRST_VERSION = (1, 1, 1)
+PUBLIC_REPOSITORY = "https://github.com/CheyLoveday/ExactCIs-public"
 
 # Before a post-1.0.0 release tag exists, Model B requires this explicit CFF
-# placeholder.  At release time ``--release-tag`` resolves the tag with
-# ``git rev-list -n 1`` and requires that commit instead.
+# placeholder. At release time ``--release-tag`` resolves the tag with
+# ``git rev-list -n 1``; the tag, not an in-tree SHA, is the published
+# revision authority.
 UNRELEASED_COMMIT_PLACEHOLDER = "UNRELEASED"
 
 
@@ -89,6 +91,11 @@ def _scalar(text: str, key: str) -> str | None:
     return matches[0].strip() if len(matches) == 1 else None
 
 
+def _has_key(text: str, key: str) -> bool:
+    """Whether a top-level CFF key is present, including duplicate keys."""
+    return re.search(rf"(?m)^\s*{re.escape(key)}:", text) is not None
+
+
 def citation_cff_errors(
     cff: str,
     version: str,
@@ -100,9 +107,9 @@ def citation_cff_errors(
     """Return CFF metadata/provenance failures for one package version.
 
     Model B is deliberately explicit: `commit: "UNRELEASED"` is valid only
-    while the matching changelog heading is unreleased.  A release invocation
-    supplies ``--release-tag``; its resolved commit then becomes the required
-    public implementation revision, with release date and repository URL.
+    while the matching changelog heading is unreleased. A published release
+    uses its tag as revision authority, so an in-tree ``commit:`` key would be
+    self-referential or stale.
     """
     errors: list[str] = []
     expected_cff = {
@@ -143,20 +150,80 @@ def citation_cff_errors(
             )
         return errors
 
-    if release_tag is None:
-        errors.append("a published Model B version requires --release-tag")
-        return errors
-    if tag_commit is None or not re.fullmatch(r"[0-9a-f]{40}", tag_commit):
-        errors.append("release tag did not resolve to one 40-character commit")
-        return errors
-    if commit != tag_commit:
+    if _has_key(cff, "commit"):
         errors.append(
-            "CITATION.cff commit does not equal the commit resolved from "
-            f"release tag {release_tag!r}"
+            "CITATION.cff commit must be absent for published Model B "
+            "(would be self-referential or stale)"
         )
     for key in ("date-released", "repository-code"):
         if _scalar(cff, key) is None:
             errors.append(f"CITATION.cff {key} is required for published Model B")
+    if release_tag is not None and (
+        tag_commit is None or not re.fullmatch(r"[0-9a-f]{40}", tag_commit)
+    ):
+        errors.append("release tag did not resolve to one 40-character commit")
+    return errors
+
+
+def citation_text_errors(
+    citation_text: str,
+    version: str,
+    *,
+    is_unreleased: bool,
+    cff_commit: str | None,
+) -> list[str]:
+    """Return CITATION.txt failures for one package version and release state."""
+    errors: list[str] = []
+    tag = candidate_tag(version)
+    unreleased_citation = f"Version: {version} (unreleased release candidate)"
+    published_rc_citation = f"Version: {version} (release candidate)"
+    final_citation = f"Version: {version}"
+    pypi_ref = f"exactcis=={version}"
+    has_tag = tag in citation_text or f"tagged {tag}" in citation_text
+    has_pypi = pypi_ref in citation_text
+    if unreleased_citation in citation_text:
+        unreleased_note = (
+            "No DOI, archive identifier, publication date, or release "
+            "tag has been assigned."
+        )
+        if unreleased_note not in citation_text:
+            errors.append("CITATION.txt unreleased disclaimer differs")
+    elif published_rc_citation in citation_text:
+        if not has_tag and not has_pypi:
+            errors.append("CITATION.txt published status is incomplete")
+    elif final_citation in citation_text and re.search(
+        rf"(?m)^Version:\s*{re.escape(version)}\s*$", citation_text
+    ):
+        if not has_tag or not has_pypi:
+            errors.append("CITATION.txt final release must name tag and PyPI version")
+    else:
+        errors.append("CITATION.txt version or release status differs")
+
+    if is_grandfathered_version(version):
+        if (
+            f"Scientific source revision: {HISTORICAL_SCIENTIFIC_SOURCE_SHA}"
+            not in citation_text
+        ):
+            errors.append("CITATION.txt historical scientific-source revision differs")
+    elif uses_model_b(version):
+        if is_unreleased:
+            if f"Public repository revision: {cff_commit}" not in citation_text:
+                errors.append(
+                    "CITATION.txt public repository revision differs from CFF"
+                )
+        else:
+            expected_lines = (
+                f"Public repository: {PUBLIC_REPOSITORY}",
+                f"Public tag: {tag}",
+                f"PyPI: {pypi_ref}",
+            )
+            for line in expected_lines:
+                if re.search(rf"(?m)^{re.escape(line)}$", citation_text) is None:
+                    errors.append(f"CITATION.txt published Model B is missing {line!r}")
+            if re.search(r"(?m)^[^\n]*\b[0-9a-f]{40}\b[^\n]*$", citation_text):
+                errors.append(
+                    "CITATION.txt published Model B must not name a revision SHA"
+                )
     return errors
 
 
@@ -257,40 +324,14 @@ def check(release_tag: str | None = None) -> list[str]:
     )
 
     citation_text = (ROOT / "CITATION.txt").read_text(encoding="utf-8")
-    unreleased_citation = f"Version: {version} (unreleased release candidate)"
-    published_rc_citation = f"Version: {version} (release candidate)"
-    final_citation = f"Version: {version}"
-    pypi_ref = f"exactcis=={version}"
-    has_tag = tag in citation_text or f"tagged {tag}" in citation_text
-    has_pypi = pypi_ref in citation_text
-    if unreleased_citation in citation_text:
-        unreleased_note = (
-            "No DOI, archive identifier, publication date, or release "
-            "tag has been assigned."
+    errors.extend(
+        citation_text_errors(
+            citation_text,
+            version,
+            is_unreleased=is_unreleased,
+            cff_commit=_scalar(cff, "commit"),
         )
-        if unreleased_note not in citation_text:
-            errors.append("CITATION.txt unreleased disclaimer differs")
-    elif published_rc_citation in citation_text:
-        if not has_tag and not has_pypi:
-            errors.append("CITATION.txt published status is incomplete")
-    elif final_citation in citation_text and re.search(
-        rf"(?m)^Version:\s*{re.escape(version)}\s*$", citation_text
-    ):
-        if not has_tag or not has_pypi:
-            errors.append("CITATION.txt final release must name tag and PyPI version")
-    else:
-        errors.append("CITATION.txt version or release status differs")
-    cff_commit = _scalar(cff, "commit")
-    if is_grandfathered_version(version):
-        if (
-            f"Scientific source revision: {HISTORICAL_SCIENTIFIC_SOURCE_SHA}"
-            not in citation_text
-        ):
-            errors.append("CITATION.txt historical scientific-source revision differs")
-    elif uses_model_b(version) and (
-        f"Public repository revision: {cff_commit}" not in citation_text
-    ):
-        errors.append("CITATION.txt public repository revision differs from CFF")
+    )
 
     workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
         encoding="utf-8"
