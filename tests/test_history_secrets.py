@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from tools import check_history_secrets as history_gate
+ROOT = Path(__file__).parents[1]
+
+if not (ROOT / "tools").is_dir():
+    pytest.skip("tools/ not shipped in the public sdist", allow_module_level=True)
+
+from tools import check_history_secrets as history_gate  # noqa: E402
 
 
 def test_timing_evidence_wheel_checksum_allowlist_is_exact() -> None:

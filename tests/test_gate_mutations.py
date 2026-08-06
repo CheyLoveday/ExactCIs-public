@@ -8,11 +8,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools.check_capability_docs import main as check_capability_docs
-from tools.check_doc_version_references import main as check_doc_version_references
-from tools.check_method_docs import main as check_method_docs
+import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).parents[1]
+
+if not (ROOT / "tools").is_dir():
+    pytest.skip("tools/ not shipped in the public sdist", allow_module_level=True)
+
+from tools.check_capability_docs import main as check_capability_docs  # noqa: E402
+from tools.check_doc_version_references import (  # noqa: E402
+    main as check_doc_version_references,
+)
+from tools.check_method_docs import main as check_method_docs  # noqa: E402
 
 
 def _copy_files(destination: Path, *relative_paths: str) -> None:
