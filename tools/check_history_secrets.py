@@ -50,6 +50,20 @@ def _git(*args: str, text: bool = True) -> str | bytes:
     return completed.stdout
 
 
+def _full_history_error() -> str | None:
+    """Return an error when reachability checks lack a complete clone."""
+    shallow = str(_git("rev-parse", "--is-shallow-repository")).strip()
+    requirement = (
+        "a full Git clone is required for history reachability checks; "
+        "configure actions/checkout with fetch-depth: 0"
+    )
+    if shallow == "false":
+        return None
+    if shallow == "true":
+        return requirement
+    return f"git rev-parse --is-shallow-repository returned {shallow!r}; {requirement}"
+
+
 def _allowed_reference_revision(path: str, line: str) -> bool:
     if path.startswith("tests/references/") and SOURCE_REVISION.match(line):
         return any(source_sha in line for source_sha in REVIEWED_SOURCE_SHAS)
@@ -154,6 +168,10 @@ def _history_errors() -> tuple[list[str], int, int]:
 
 
 def main() -> int:
+    history_error = _full_history_error()
+    if history_error is not None:
+        print(f"ERROR: {history_error}")
+        return 1
     errors = _current_tree_errors()
     history_errors, revisions, blobs = _history_errors()
     errors.extend(history_errors)

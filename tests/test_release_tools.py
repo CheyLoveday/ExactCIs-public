@@ -6,6 +6,7 @@ skipped when ``tools/`` is absent, as in the published sdist.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import zipfile
@@ -23,6 +24,51 @@ if not TOOLS.is_dir():
 from tools.check_distribution_contents import inspect_distribution  # noqa: E402
 from tools.run_installed_smoke import main as run_installed_smoke  # noqa: E402
 from tools.run_readme_examples import extract_examples  # noqa: E402
+
+
+def _workflow_jobs(path: Path) -> dict[str, tuple[str, ...]]:
+    """Parse top-level job blocks without adding a YAML runtime dependency."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    jobs_index = lines.index("jobs:")
+    jobs: dict[str, list[str]] = {}
+    current: list[str] | None = None
+    for line in lines[jobs_index + 1 :]:
+        if line and not line.startswith(" "):
+            break
+        match = re.fullmatch(r"  (?P<name>[A-Za-z0-9_-]+):", line)
+        if match is not None:
+            current = []
+            jobs[match.group("name")] = current
+        elif current is not None:
+            current.append(line)
+    return {name: tuple(block) for name, block in jobs.items()}
+
+
+def _workflow_steps(job: tuple[str, ...]) -> tuple[tuple[str, ...], ...]:
+    """Return the step blocks from one parsed workflow job."""
+    steps_line = next(line for line in job if line.strip() == "steps:")
+    item_indent = len(steps_line) - len(steps_line.lstrip()) + 2
+    steps: list[list[str]] = []
+    current: list[str] | None = None
+    for line in job[job.index(steps_line) + 1 :]:
+        indent = len(line) - len(line.lstrip())
+        if line.strip() and indent < item_indent:
+            break
+        if indent == item_indent and line.lstrip().startswith("- "):
+            current = [line]
+            steps.append(current)
+        elif current is not None:
+            current.append(line)
+    return tuple(tuple(step) for step in steps)
+
+
+def _has_full_history_checkout(job: tuple[str, ...]) -> bool:
+    for step in _workflow_steps(job):
+        if not any("uses: actions/checkout@" in line for line in step):
+            continue
+        if any(re.fullmatch(r"\s*fetch-depth:\s*0\s*(?:#.*)?", line) for line in step):
+            return True
+    return False
 
 
 def test_readme_has_one_executable_marked_example() -> None:
@@ -75,6 +121,23 @@ def test_release_version_metadata_is_consistent() -> None:
         stderr=subprocess.STDOUT,
     )
     assert completed.returncode == 0, completed.stdout
+
+
+@pytest.mark.parametrize("workflow_name", ("ci.yml", "release.yml"))
+def test_history_secret_steps_require_full_clone(workflow_name: str) -> None:
+    workflow = ROOT / ".github" / "workflows" / workflow_name
+    jobs = _workflow_jobs(workflow)
+    invoking = {
+        name: block
+        for name, block in jobs.items()
+        if any("check_history_secrets.py" in line for line in block)
+    }
+    assert invoking, f"{workflow_name} does not invoke the history-secrets gate"
+    for name, block in invoking.items():
+        assert _has_full_history_checkout(block), (
+            f"{workflow_name} job {name!r} invokes check_history_secrets.py "
+            "without actions/checkout fetch-depth: 0"
+        )
 
 
 def test_distribution_checker_rejects_private_paths(tmp_path: Path) -> None:
