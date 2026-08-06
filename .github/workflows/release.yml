@@ -343,9 +343,17 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum --check release-bundle/SHA256SUMS
+          {
+            cat CHANGELOG.md
+            printf '\n## Release provenance\n\n'
+            printf 'Release revision: %s\n\n' "$(git rev-list -n 1 "$CANDIDATE_TAG")"
+            printf 'Artefact SHA-256:\n\n```text\n'
+            cat release-bundle/SHA256SUMS
+            printf '```\n'
+          } > release-bundle/RELEASE_NOTES.md
           gh release create "$CANDIDATE_TAG" \
             release-bundle/dist/* \
             release-bundle/SHA256SUMS \
             --verify-tag \
             --title "ExactCIs $CANDIDATE_TAG" \
-            --notes-file CHANGELOG.md
+            --notes-file release-bundle/RELEASE_NOTES.md
