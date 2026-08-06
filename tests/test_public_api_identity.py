@@ -16,7 +16,7 @@ from tools.public_api_identity import snapshot  # noqa: E402
 def test_public_api_differential_corpus_has_all_expected_calls() -> None:
     """Keep the installed-artifact byte comparison broad and public-only."""
     corpus = snapshot()
-    assert corpus["package_version"] == "1.1.1"
+    assert corpus["package_version"] == "1.1.2"
     assert [item["name"] for item in corpus["calls"]] == [
         "exact_ci_conditional",
         "exact_ci_midp",

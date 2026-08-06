@@ -4,9 +4,41 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-08-06
+
+Published corrective release (`exactcis==1.1.2`, tag `v1.1.2`). This release
+carries forward the 1.1.1 numerical and documentation corrections and adds the
+release-pipeline and source-distribution fixes below.
+
+### Changed
+
+- `exact_ci_minlike` and `exact_ci_blaker` now reject support widths above
+  1,000,000 before constructing `PreparedMargins`. The earlier refusal avoids
+  support-sized allocation for calls that ordered-hull certification must reject.
+
+### Fixed
+
+- Release quality checks now require a full Git history before applying the
+  history-secrets reachability allowlist, and the release checkout fetches that
+  history explicitly.
+- Tests that exercise repository-only tools now skip only when the entire
+  `tools/` substrate is deliberately absent. The release build verifies that
+  more than 500 tests collect from the extracted source distribution, with the
+  expected five module-level skips and no import path back to the checkout.
+
+### Documentation
+
+- Record the `_PREPARE_MAX_WIDTH = 10_000_000` pre-allocation hard limit,
+  introduced in 1.1.0 for `conditional` and `midp`. The limit makes oversized
+  preparation fail closed portably: macOS can accept an oversized allocation
+  optimistically and let the kernel terminate the process instead of raising
+  `MemoryError`.
+
 ## [1.1.1] - 2026-08-06
 
-Corrective release (`exactcis==1.1.1`, tag `v1.1.1`).
+Corrective release candidate (`exactcis==1.1.1`, tag `v1.1.1`). The tag was
+created, but its protected release workflow failed before publication; 1.1.1
+was never published to PyPI and is superseded by 1.1.2.
 
 ### Changed
 
