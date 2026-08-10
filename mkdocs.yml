@@ -12,6 +12,7 @@ nav:
   - Supported methods: methods.md
   - API contract: api.md
   - Ordered hull specification: ordered_hull_specification.md
+  - Unconditional exact specification: unconditional_exact_specification.md
   - Contributing: contributing.md
 
 markdown_extensions:
