@@ -24,6 +24,7 @@ site/
 
 # Editors and operating systems
 .DS_Store
+/replication/output/
 .idea/
 .vscode/
 *.swp
