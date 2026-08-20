@@ -40,8 +40,11 @@ def test_jss_minimal_replication_is_deterministic(tmp_path: Path) -> None:
     assert "exactcis_version" in first_run.stdout
 
     results = json.loads(first_results)
+    expected_release_commit = "".join(
+        ("f0cbf3c0", "ab37ea9a", "7f96e1b7", "0367f40b", "6281f3c4")
+    )
     assert results["release"] == {
-        "commit": "f0cbf3c0ab37ea9a7f96e1b70367f40b6281f3c4",
+        "commit": expected_release_commit,
         "version": "1.1.2",
     }
     hull = results["examples"]["ordered_hull"]

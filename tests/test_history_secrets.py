@@ -23,6 +23,25 @@ def test_timing_evidence_wheel_checksum_allowlist_is_exact() -> None:
     assert not history_gate._allowed_reference_revision(path, unknown)
 
 
+def test_jss_release_commit_allowlist_is_path_and_value_exact() -> None:
+    script_line = f'RELEASE_COMMIT = "{history_gate.JSS_RELEASE_SHA}"'
+    test_line = f'    "commit": "{history_gate.JSS_RELEASE_SHA}",'
+    unknown_line = f'RELEASE_COMMIT = "{"0" * 40}"'
+
+    assert history_gate._allowed_reference_revision(
+        "replication/jss_package_paper.py", script_line
+    )
+    assert history_gate._allowed_reference_revision(
+        "tests/test_jss_replication.py", test_line
+    )
+    assert not history_gate._allowed_reference_revision(
+        "replication/jss_package_paper.py", unknown_line
+    )
+    assert not history_gate._allowed_reference_revision(
+        "tools/unrelated.py", script_line
+    )
+
+
 def test_shallow_repository_is_rejected_before_scanning(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
