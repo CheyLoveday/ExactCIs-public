@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 from exactcis._numerics import (
+    PreparedMargins,
     exp_parameter,
     prepare_margins,
     solve_monotone_log_parameter,
@@ -44,6 +45,7 @@ def equal_tail_interval(
     alpha: float,
     *,
     midp: bool,
+    prepared: PreparedMargins | None = None,
 ) -> tuple[float, float]:
     """Invert inclusive or mid-P one-sided FNCH tails."""
     n1, n0, events = a + b, c + d, a + c
@@ -53,7 +55,7 @@ def equal_tail_interval(
 
     target = alpha / 2.0
     # One preparation for both endpoint inversions of this interval.
-    margins = prepare_margins(n1, n0, events)
+    margins = prepared if prepared is not None else prepare_margins(n1, n0, events)
 
     def tail(log_odds: float, *, upper: bool) -> float:
         _, probabilities = margins.probabilities(log_odds)

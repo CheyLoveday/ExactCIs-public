@@ -15,6 +15,7 @@ import random
 import pytest
 
 from exactcis import (
+    compute_or_with_policy,
     exact_ci_blaker,
     exact_ci_conditional,
     exact_ci_midp,
@@ -172,6 +173,38 @@ def test_ordered_width_preflight_refuses_before_any_preparation(
     diagnostics = excinfo.value.diagnostics
     assert excinfo.value.method == ordering
     assert diagnostics == {
+        "method": ordering,
+        "support_size": 11,
+        "limit": 10,
+        "limit_kind": "ordered_hull_certification",
+    }
+
+
+@pytest.mark.parametrize("ordering", ("minlike", "blaker"))
+def test_ordered_policy_width_preflight_refuses_before_any_preparation(
+    monkeypatch, ordering
+) -> None:
+    """Policy reuse must not move preparation ahead of the ordered cap."""
+    import exactcis._numerics as numerics
+
+    monkeypatch.setattr(numerics, "_HULL_MAX_WIDTH", 10)
+
+    def unexpected_preparation(*args, **kwargs):
+        raise AssertionError("ordered policy preflight entered support preparation")
+
+    monkeypatch.setattr(numerics, "prepare_margins", unexpected_preparation)
+    monkeypatch.setattr(numerics.PreparedMargins, "__init__", unexpected_preparation)
+    with pytest.raises(NumericalError) as excinfo:
+        compute_or_with_policy(
+            5,
+            5,
+            5,
+            5,
+            design=CASE_CONTROL,
+            method=ordering,
+        )
+    assert excinfo.value.method == ordering
+    assert excinfo.value.diagnostics == {
         "method": ordering,
         "support_size": 11,
         "limit": 10,

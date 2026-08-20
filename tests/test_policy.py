@@ -12,6 +12,7 @@ from exactcis.exceptions import (
     DesignError,
     NonIdentifiableError,
     UnsupportedMethodError,
+    ValidationError,
 )
 from exactcis.results import InferenceResult
 
@@ -93,3 +94,35 @@ def test_policy_preserves_structural_infinite_point_and_interval() -> None:
     result = compute_rr_with_policy(5, 15, 0, 10, design=Design.COHORT_BINOMIAL)
     assert math.isinf(result.point)
     assert math.isinf(result.upper)
+
+
+def test_fixed_margin_policy_preserves_validation_and_dispatch_order() -> None:
+    """Optimization must not reorder alpha, registry, and table validation."""
+    with pytest.raises(ValidationError, match="alpha"):
+        compute_or_with_policy(
+            -1,
+            2,
+            3,
+            4,
+            alpha=0.0,
+            design=Design.CASE_CONTROL_FIXED_MARGIN,
+            method="unknown",
+        )
+    with pytest.raises(UnsupportedMethodError, match="available methods"):
+        compute_or_with_policy(
+            -1,
+            2,
+            3,
+            4,
+            design=Design.CASE_CONTROL_FIXED_MARGIN,
+            method="unknown",
+        )
+    with pytest.raises(ValidationError, match="counts"):
+        compute_or_with_policy(
+            -1,
+            2,
+            3,
+            4,
+            design=Design.CASE_CONTROL_FIXED_MARGIN,
+            method="conditional",
+        )

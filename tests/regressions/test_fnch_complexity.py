@@ -20,8 +20,9 @@ import pstats
 
 import pytest
 
-from exactcis import exact_ci_conditional
+from exactcis import compute_or_with_policy, exact_ci_conditional
 from exactcis._numerics import fnch_probabilities, ordered_p_value, prepare_margins
+from exactcis.exceptions import NonIdentifiableError
 from exactcis.inference.odds_ratio._common import equal_tail_interval
 
 from ._evidence import CASE_CONTROL, count_work, support_width
@@ -157,6 +158,68 @@ def test_ordered_inversion_prepares_once_across_both_endpoints() -> None:
         exact_ci_blaker(30, 20, 15, 35, 0.05, design=CASE_CONTROL)
     assert counter.fnch_calls > 10
     assert counter.prepared == 1
+
+
+@pytest.mark.parametrize("method", ("conditional", "midp", "minlike", "blaker"))
+def test_fixed_margin_policy_prepares_once_for_interval_and_point(method: str) -> None:
+    """One policy result shares preparation between its interval and cMLE."""
+    with count_work() as counter:
+        compute_or_with_policy(
+            30,
+            20,
+            15,
+            35,
+            design=CASE_CONTROL,
+            method=method,
+        )
+    assert counter.fnch_calls > 10
+    assert counter.prepared == 1
+
+
+@pytest.mark.parametrize("method", ("conditional", "midp", "minlike", "blaker"))
+def test_fixed_margin_policy_computes_conditional_mle_once(
+    monkeypatch, method: str
+) -> None:
+    """Preparation reuse must also remove the duplicate MLE probability walk."""
+    import exactcis._numerics as numerics
+    import exactcis.estimation as estimation
+
+    real_conditional_mle = numerics.conditional_mle
+    calls = 0
+
+    def counting_conditional_mle(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return real_conditional_mle(*args, **kwargs)
+
+    monkeypatch.setattr(numerics, "conditional_mle", counting_conditional_mle)
+    monkeypatch.setattr(estimation, "conditional_mle", counting_conditional_mle)
+    compute_or_with_policy(
+        30,
+        20,
+        15,
+        35,
+        design=CASE_CONTROL,
+        method=method,
+    )
+    assert calls == 1
+
+
+@pytest.mark.parametrize("method", ("conditional", "midp", "minlike", "blaker"))
+def test_fixed_margin_policy_singleton_does_not_prepare(method: str) -> None:
+    """A singleton remains non-identifiable without allocating a support."""
+    with count_work() as counter:
+        with pytest.raises(NonIdentifiableError, match="singleton support"):
+            compute_or_with_policy(
+                0,
+                0,
+                5,
+                5,
+                design=CASE_CONTROL,
+                method=method,
+            )
+    assert counter.prepared == 0
+    assert counter.fnch_calls == 0
 
 
 def test_total_interval_work_scales_linearly_with_width() -> None:
