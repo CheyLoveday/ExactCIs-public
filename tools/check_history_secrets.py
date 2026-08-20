@@ -18,6 +18,9 @@ PREVIOUS_REVIEWED_SOURCE_SHA = "".join(
     ("d4ce3a5b", "ce501eb6", "16ef6abf", "38107a6f", "917319c4")
 )
 REVIEWED_SOURCE_SHAS = {FROZEN_SOURCE_SHA, PREVIOUS_REVIEWED_SOURCE_SHA}
+PUBLIC_RELEASE_1_1_2_SHA = "".join(
+    ("f0cbf3c0", "ab37ea9a", "7f96e1b7", "0367f40b", "6281f3c4")
+)
 SOURCE_REVISION = re.compile(r'^\s*"source_revision"\s*:\s*"[0-9a-f]{40}"\s*,?\s*$')
 TIMING_EVIDENCE_COMMIT = re.compile(
     r'^\s*"git_commit"\s*:\s*"(?P<commit>[0-9a-f]{40})"\s*,?\s*$'
@@ -74,6 +77,14 @@ def _allowed_reference_revision(path: str, line: str) -> bool:
         },
     }
     if line.strip() in allowed_citation_lines.get(path, set()):
+        return True
+    allowed_replication_lines = {
+        "replication/jss_package_paper.py": {
+            f'RELEASE_COMMIT = "{PUBLIC_RELEASE_1_1_2_SHA}"'
+        },
+        "tests/test_jss_replication.py": {f'"commit": "{PUBLIC_RELEASE_1_1_2_SHA}",'},
+    }
+    if line.strip() in allowed_replication_lines.get(path, set()):
         return True
     wheel_match = TIMING_EVIDENCE_WHEEL.match(line)
     if path == "tools/timing_evidence.json" and wheel_match is not None:

@@ -9,8 +9,10 @@ conditional procedures, clinical validation, or formal verification.
 
 ## Installation
 
-ExactCIs supports Python 3.11 through 3.13 and has zero runtime dependencies.
-(The lower bound is intentional: the public API and typing assume 3.11+.)
+The unreleased source tree supports Python 3.11 through 3.14 and has zero
+runtime dependencies. The currently published `exactcis==1.1.2` metadata
+supports Python 3.11 through 3.13; Python 3.14 enters the PyPI contract with
+1.2.0. The lower bound is intentional: the public API and typing assume 3.11+.
 
 ```bash
 python -m pip install exactcis

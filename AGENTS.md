@@ -13,9 +13,9 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
 - **Not** a general statistics toolkit. Sampling design is always explicit.
 - **Fail-closed:** unsupported inputs and numerical failures raise; no method
   silently replaces another.
-- Python **3.11–3.13**. Runtime: **standard library only**.
+- Source tree: Python **3.11–3.14**. Runtime: **standard library only**.
 - Current package version is recorded by `exactcis.__version__`; the current
-  release is `exactcis==1.1.2`.
+  release is `exactcis==1.1.2`, whose published metadata supports 3.11–3.13.
 
 ```bash
 pip install exactcis

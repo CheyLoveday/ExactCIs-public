@@ -23,6 +23,27 @@ def test_timing_evidence_wheel_checksum_allowlist_is_exact() -> None:
     assert not history_gate._allowed_reference_revision(path, unknown)
 
 
+@pytest.mark.parametrize(
+    ("path", "line"),
+    (
+        (
+            "replication/jss_package_paper.py",
+            f'RELEASE_COMMIT = "{history_gate.PUBLIC_RELEASE_1_1_2_SHA}"',
+        ),
+        (
+            "tests/test_jss_replication.py",
+            f'"commit": "{history_gate.PUBLIC_RELEASE_1_1_2_SHA}",',
+        ),
+    ),
+)
+def test_jss_release_provenance_allowlist_is_exact(path: str, line: str) -> None:
+    unknown = line.replace(history_gate.PUBLIC_RELEASE_1_1_2_SHA, "0" * 40)
+
+    assert history_gate._allowed_reference_revision(path, line)
+    assert not history_gate._allowed_reference_revision(path, unknown)
+    assert not history_gate._allowed_reference_revision("replication/other.py", line)
+
+
 def test_shallow_repository_is_rejected_before_scanning(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
