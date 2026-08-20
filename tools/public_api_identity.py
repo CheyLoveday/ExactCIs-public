@@ -95,6 +95,24 @@ def _corpus() -> tuple[tuple[str, Callable[[], object]], ...]:
             lambda: compute_or_with_policy(12, 5, 8, 10, design=_CASE_CONTROL),
         ),
         (
+            "compute_or_with_policy_fixed_margin_midp",
+            lambda: compute_or_with_policy(
+                12, 5, 8, 10, design=_CASE_CONTROL, method="midp"
+            ),
+        ),
+        (
+            "compute_or_with_policy_fixed_margin_minlike",
+            lambda: compute_or_with_policy(
+                12, 5, 8, 10, design=_CASE_CONTROL, method="minlike"
+            ),
+        ),
+        (
+            "compute_or_with_policy_fixed_margin_blaker",
+            lambda: compute_or_with_policy(
+                12, 5, 8, 10, design=_CASE_CONTROL, method="blaker"
+            ),
+        ),
+        (
             "compute_or_with_policy_cohort",
             lambda: compute_or_with_policy(12, 5, 8, 10, design=_COHORT),
         ),

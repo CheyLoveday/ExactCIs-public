@@ -5,12 +5,19 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable
 
-from exactcis._numerics import conditional_mle, normal_quantile
+from exactcis._numerics import (
+    _ordered_interval_with_mle,
+    conditional_mle,
+    normal_quantile,
+    prepare_margins,
+    support_bounds,
+)
 from exactcis._validation import (
     Table,
     validate_alpha,
     validate_independent_groups,
     validate_strata,
+    validate_table,
 )
 from exactcis.estimands import Design, Estimand, get_method_spec
 from exactcis.exceptions import (
@@ -22,11 +29,8 @@ from exactcis.exceptions import (
 from exactcis.inference.odds_ratio import (
     ci_wald,
     ci_wald_haldane,
-    exact_ci_blaker,
-    exact_ci_conditional,
-    exact_ci_midp,
-    exact_ci_minlike,
 )
+from exactcis.inference.odds_ratio._common import equal_tail_interval
 from exactcis.inference.relative_risk import ci_score_rr, ci_wald_rr
 from exactcis.results import InferenceResult, PooledORResult
 
@@ -58,6 +62,50 @@ def _ratio_point(a: int, b: int, c: int, d: int) -> float:
     return (a / (a + b)) / (c / (c + d))
 
 
+def _fixed_margin_interval_and_point(
+    a: int,
+    b: int,
+    c: int,
+    d: int,
+    alpha: float,
+    *,
+    method: str,
+) -> tuple[float, float, float]:
+    """Compute one fixed-margin interval and cMLE with one preparation.
+
+    Ordered methods retain their width preflight before preparation. Singleton
+    support likewise returns without preparing and lets the policy layer emit
+    its established ``NonIdentifiableError`` for the missing unique cMLE.
+    """
+    if method in {"conditional", "midp"}:
+        n1, n0, events = a + b, c + d, a + c
+        lower_support, upper_support = support_bounds(n1, n0, events)
+        if lower_support == upper_support:
+            return 0.0, math.inf, math.nan
+        margins = prepare_margins(n1, n0, events)
+        lower, upper = equal_tail_interval(
+            a,
+            b,
+            c,
+            d,
+            alpha,
+            midp=method == "midp",
+            prepared=margins,
+        )
+        point = conditional_mle(a, b, c, d, prepared=margins)
+        return lower, upper, point
+    if method in {"minlike", "blaker"}:
+        return _ordered_interval_with_mle(
+            a,
+            b,
+            c,
+            d,
+            alpha,
+            ordering=method,
+        )
+    raise RuntimeError(f"unwired stable conditional OR method {method!r}")
+
+
 def compute_or_with_policy(
     a: int,
     b: int,
@@ -80,14 +128,15 @@ def compute_or_with_policy(
     if design is Design.CASE_CONTROL_FIXED_MARGIN:
         selected = "conditional" if method is None else method
         spec = get_method_spec(design, Estimand.OR, selected)
-        intervals = {
-            "conditional": exact_ci_conditional,
-            "midp": exact_ci_midp,
-            "minlike": exact_ci_minlike,
-            "blaker": exact_ci_blaker,
-        }
-        lower, upper = intervals[selected](a, b, c, d, alpha, design=design)
-        point = conditional_mle(a, b, c, d)
+        a, b, c, d = validate_table(a, b, c, d)
+        lower, upper, point = _fixed_margin_interval_and_point(
+            a,
+            b,
+            c,
+            d,
+            alpha,
+            method=selected,
+        )
         if math.isnan(point):
             raise NonIdentifiableError(
                 "conditioning leaves singleton support, so the odds-ratio "

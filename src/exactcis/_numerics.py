@@ -799,7 +799,7 @@ def _ordered_p_upper_bound(
     return p_upper
 
 
-def ordered_interval(
+def _ordered_interval_with_mle(
     a: int,
     b: int,
     c: int,
@@ -807,8 +807,8 @@ def ordered_interval(
     alpha: float,
     *,
     ordering: str,
-) -> tuple[float, float]:
-    """Return the certified interval hull of one inverted ordered p-value.
+) -> tuple[float, float, float]:
+    """Return one ordered interval together with its already-computed MLE.
 
     The returned interval is a numerically certified enclosure of the smallest
     interval containing the complete accepted set ``{eta : p(eta) >= alpha}``,
@@ -824,7 +824,7 @@ def ordered_interval(
     n1, n0, events = a + b, c + d, a + c
     support_lower, support_upper = support_bounds(n1, n0, events)
     if support_lower == support_upper:
-        return 0.0, math.inf
+        return 0.0, math.inf, math.nan
 
     # The ordered-hull certification cap is decidable from the margins. Check
     # it before preparation, which otherwise materialises O(support width)
@@ -1014,6 +1014,32 @@ def ordered_interval(
             "ordered conditional inversion returned invalid bounds",
             method=ordering,
         )
+    return lower, upper, point
+
+
+def ordered_interval(
+    a: int,
+    b: int,
+    c: int,
+    d: int,
+    alpha: float,
+    *,
+    ordering: str,
+) -> tuple[float, float]:
+    """Return the certified interval hull of one inverted ordered p-value.
+
+    The MLE computed during inversion remains private; policy callers reuse it
+    through :func:`_ordered_interval_with_mle`, while this established interval
+    interface and its two-value result remain unchanged.
+    """
+    lower, upper, _point = _ordered_interval_with_mle(
+        a,
+        b,
+        c,
+        d,
+        alpha,
+        ordering=ordering,
+    )
     return lower, upper
 
 
