@@ -97,6 +97,7 @@ def test_supported_python_matrix_is_consistent() -> None:
     )
     assert ci.count(expected_matrix) == 3
     assert 'python-version: ["3.11", "3.14"]' in ci
+    assert "if: matrix.python-version != '3.14'" in ci
     assert expected_matrix in release
     assert 'python-version: ["3.11", "3.14"]' in release
     assert 'python-version: "3.14"' in release

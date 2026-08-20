@@ -189,6 +189,13 @@ jobs:
           cd "$smoke_dir"
           "$wheel_python" run_installed_smoke.py
           "$wheel_python" run_readme_examples.py --source README.md
+      - name: Compare public API with the Python 3.14-incompatible 1.1.0 reference
+        if: matrix.python-version != '3.14'
+        shell: bash
+        run: |
+          wheel_python="$RUNNER_TEMP/exactcis-wheel-venv/bin/python"
+          smoke_dir="$RUNNER_TEMP/exactcis-wheel-smoke"
+          cd "$smoke_dir"
           python -m venv "$RUNNER_TEMP/exactcis-1.1.0-venv"
           reference_python="$RUNNER_TEMP/exactcis-1.1.0-venv/bin/python"
           "$reference_python" -m pip install --disable-pip-version-check --no-cache-dir \
