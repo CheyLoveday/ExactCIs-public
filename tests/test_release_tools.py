@@ -90,17 +90,41 @@ def test_supported_python_matrix_is_consistent() -> None:
         "Programming Language :: Python :: 3.14",
     }.issubset(project["classifiers"])
 
-    expected_matrix = 'python-version: ["3.11", "3.12", "3.13", "3.14"]'
-    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    release = (ROOT / ".github" / "workflows" / "release.yml").read_text(
-        encoding="utf-8"
+    full_matrix = 'python-version: ["3.11", "3.12", "3.13", "3.14"]'
+    edge_matrix = 'python-version: ["3.11", "3.14"]'
+    ci_jobs = _workflow_jobs(ROOT / ".github" / "workflows" / "ci.yml")
+    assert full_matrix in "\n".join(ci_jobs["test-linux"])
+    assert edge_matrix in "\n".join(ci_jobs["test-platform"])
+    assert full_matrix in "\n".join(ci_jobs["wheel-install"])
+    assert full_matrix in "\n".join(ci_jobs["sdist-install"])
+
+    legacy_step = next(
+        step
+        for step in _workflow_steps(ci_jobs["wheel-install"])
+        if any("Compare public API with" in line for line in step)
     )
-    assert ci.count(expected_matrix) == 3
-    assert 'python-version: ["3.11", "3.14"]' in ci
-    assert "if: matrix.python-version != '3.14'" in ci
-    assert expected_matrix in release
-    assert 'python-version: ["3.11", "3.14"]' in release
-    assert 'python-version: "3.14"' in release
+    assert any("if: matrix.python-version != '3.14'" in line for line in legacy_step)
+
+    release_jobs = _workflow_jobs(ROOT / ".github" / "workflows" / "release.yml")
+    release_platforms = "\n".join(release_jobs["test-platforms"])
+    expected_platforms = (
+        ("ubuntu-latest", "3.11"),
+        ("ubuntu-latest", "3.12"),
+        ("ubuntu-latest", "3.13"),
+        ("ubuntu-latest", "3.14"),
+        ("macos-latest", "3.11"),
+        ("macos-latest", "3.14"),
+        ("windows-latest", "3.11"),
+        ("windows-latest", "3.14"),
+    )
+    for operating_system, python_version in expected_platforms:
+        pair = (
+            f"          - os: {operating_system}\n"
+            f'            python-version: "{python_version}"'
+        )
+        assert pair in release_platforms
+    assert full_matrix in "\n".join(release_jobs["artifact-smoke"])
+    assert edge_matrix in "\n".join(release_jobs["testpypi-smoke"])
 
 
 def test_installed_smoke_contract_passes_against_source() -> None:
