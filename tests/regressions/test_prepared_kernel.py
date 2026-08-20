@@ -148,6 +148,19 @@ def test_singleton_support_is_a_point_mass() -> None:
     assert probabilities == (1.0,)
 
 
+def test_index_of_maps_a_nonzero_lower_support_exactly() -> None:
+    margins = prepare_margins(17, 18, 20)
+    assert margins.support[0] == 2
+    assert margins.support[-1] == 17
+    assert margins.index_of(2) == 0
+    assert margins.index_of(9) == 7
+    assert margins.index_of(17) == 15
+    with pytest.raises(NumericalError, match="outside conditional support"):
+        margins.index_of(1)
+    with pytest.raises(NumericalError, match="outside conditional support"):
+        margins.index_of(18)
+
+
 def test_preparation_is_reusable_and_stateless() -> None:
     """Repeated evaluation on one prepared object must not drift."""
     margins = prepare_margins(200, 150, 180)

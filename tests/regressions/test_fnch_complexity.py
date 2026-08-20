@@ -13,10 +13,16 @@ per support point and is called twice per point.
 
 from __future__ import annotations
 
+import ast
+import cProfile
+import inspect
+import pstats
+
 import pytest
 
 from exactcis import exact_ci_conditional
-from exactcis._numerics import fnch_probabilities
+from exactcis._numerics import fnch_probabilities, ordered_p_value, prepare_margins
+from exactcis.inference.odds_ratio._common import equal_tail_interval
 
 from ._evidence import CASE_CONTROL, count_work, support_width
 
@@ -25,6 +31,22 @@ WIDTH_CASES = [(250, 250, 250), (500, 500, 500), (1000, 1000, 1000), (2000, 2000
 # Generous constant: the replacement kernel should use a handful of operations
 # per support point per evaluation. Anything super-linear blows through this.
 LINEAR_WORK_BUDGET_PER_POINT = 12
+
+
+def _profile_call_count(profile: cProfile.Profile, function_name: str) -> int:
+    return sum(
+        row[1]
+        for key, row in pstats.Stats(profile).stats.items()
+        if key[2] == function_name
+    )
+
+
+def _tuple_index_call_count(profile: cProfile.Profile) -> int:
+    return sum(
+        row[1]
+        for key, row in pstats.Stats(profile).stats.items()
+        if "method 'index' of 'tuple'" in key[2]
+    )
 
 
 def _single_evaluation_work(n1: int, n0: int, events: int) -> tuple[int, int]:
@@ -78,6 +100,53 @@ def test_margins_are_prepared_once_per_inversion() -> None:
         f"expected exactly one preparation per inversion, observed {counter.prepared} "
         f"across {counter.fnch_calls} distribution evaluations"
     )
+
+
+@pytest.mark.parametrize("function", (equal_tail_interval, ordered_p_value))
+def test_hot_functions_use_only_constant_time_support_indexing(function) -> None:
+    """The two FNCH hot paths must call ``index_of``, never ``support.index``."""
+    tree = ast.parse(inspect.getsource(function))
+    attributes = [
+        node.func.attr
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    ]
+    assert "index_of" in attributes
+    assert "index" not in attributes
+
+
+def test_equal_tail_profile_has_no_tuple_index_calls() -> None:
+    """A width-1001 inversion profiles lookup calls, not wall-clock time."""
+    profile = cProfile.Profile()
+    profile.runcall(
+        exact_ci_conditional,
+        500,
+        500,
+        500,
+        500,
+        0.05,
+        design=CASE_CONTROL,
+    )
+    assert _tuple_index_call_count(profile) == 0
+    assert _profile_call_count(profile, "index_of") > 1
+
+
+@pytest.mark.parametrize("ordering", ("minlike", "blaker"))
+def test_ordered_p_value_profile_has_no_tuple_index_calls(ordering: str) -> None:
+    margins = prepare_margins(1000, 1000, 1000)
+    profile = cProfile.Profile()
+    profile.runcall(
+        ordered_p_value,
+        1000,
+        1000,
+        1000,
+        500,
+        0.3,
+        ordering=ordering,
+        prepared=margins,
+    )
+    assert _tuple_index_call_count(profile) == 0
+    assert _profile_call_count(profile, "index_of") == 1
 
 
 def test_ordered_inversion_prepares_once_across_both_endpoints() -> None:

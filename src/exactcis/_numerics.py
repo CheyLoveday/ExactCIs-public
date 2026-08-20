@@ -642,11 +642,8 @@ def ordered_p_value(
     evaluations instead of rebuilding it per call.
     """
     margins = prepared if prepared is not None else prepare_margins(n1, n0, events)
-    support, probabilities = margins.probabilities(log_odds)
-    try:
-        index = support.index(observed)
-    except ValueError as exc:
-        raise NumericalError("observed count is outside conditional support") from exc
+    _, probabilities = margins.probabilities(log_odds)
+    index = margins.index_of(observed)
     if ordering == "minlike":
         order = probabilities
     elif ordering == "blaker":

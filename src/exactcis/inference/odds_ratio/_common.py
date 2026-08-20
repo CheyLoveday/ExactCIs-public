@@ -56,8 +56,8 @@ def equal_tail_interval(
     margins = prepare_margins(n1, n0, events)
 
     def tail(log_odds: float, *, upper: bool) -> float:
-        support, probabilities = margins.probabilities(log_odds)
-        index = support.index(a)
+        _, probabilities = margins.probabilities(log_odds)
+        index = margins.index_of(a)
         observed_mass = probabilities[index]
         if upper:
             strict = math.fsum(probabilities[index + 1 :])
