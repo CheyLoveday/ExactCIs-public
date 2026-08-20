@@ -157,7 +157,7 @@ jobs:
           retention-days: 7
 
   wheel-install:
-    name: Install and smoke-test wheel / Python ${{ matrix.python-version }}
+    name: ${{ matrix.python-version == '3.11' && 'Install and smoke-test wheel' || format('Install and smoke-test wheel / Python {0}', matrix.python-version) }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
@@ -205,7 +205,7 @@ jobs:
             --reference-python "$reference_python"
 
   sdist-install:
-    name: Install and smoke-test sdist / Python ${{ matrix.python-version }}
+    name: ${{ matrix.python-version == '3.11' && 'Install and smoke-test sdist' || format('Install and smoke-test sdist / Python {0}', matrix.python-version) }}
     needs: build
     runs-on: ubuntu-latest
     strategy:

@@ -95,8 +95,16 @@ def test_supported_python_matrix_is_consistent() -> None:
     ci_jobs = _workflow_jobs(ROOT / ".github" / "workflows" / "ci.yml")
     assert full_matrix in "\n".join(ci_jobs["test-linux"])
     assert edge_matrix in "\n".join(ci_jobs["test-platform"])
-    assert full_matrix in "\n".join(ci_jobs["wheel-install"])
-    assert full_matrix in "\n".join(ci_jobs["sdist-install"])
+    wheel_job = "\n".join(ci_jobs["wheel-install"])
+    sdist_job = "\n".join(ci_jobs["sdist-install"])
+    assert full_matrix in wheel_job
+    assert full_matrix in sdist_job
+    assert (
+        "matrix.python-version == '3.11' && 'Install and smoke-test wheel'" in wheel_job
+    )
+    assert (
+        "matrix.python-version == '3.11' && 'Install and smoke-test sdist'" in sdist_job
+    )
 
     legacy_step = next(
         step
