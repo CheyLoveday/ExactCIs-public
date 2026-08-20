@@ -4,6 +4,47 @@ ExactCIs provides design-aware inference for sparse 2 × 2 tables in Python,
 with explicit sampling assumptions, documented interval constructions, and
 fail-closed numerical behaviour.
 
+## Three guarantees
+
+### 1. It will not compute a quantity the study cannot identify
+
+You declare the sampling design. Case-control sampling identifies the odds
+ratio; cohort sampling also permits the risk ratio. The same four counts under
+the wrong design raise `DesignError`: there is no silent relabelling, Wald
+substitution, or invented point estimate.
+
+```python
+from exactcis import Design, compute_rr_with_policy
+
+compute_rr_with_policy(
+    10,
+    2,
+    5,
+    20,
+    design=Design.CASE_CONTROL_FIXED_MARGIN,
+)
+# DesignError: relative_risk is not shipped for design 'case_control_fixed_margin'
+```
+
+That is the contract against inferential incoherence. General-purpose 2 × 2
+helpers may print a quantity labelled “relative risk” from those numbers;
+ExactCIs will not do so under a fixed-margin case-control design.
+
+### 2. The numerical kernel matches the inferential contract
+
+Conditional intervals use Fisher's noncentral-hypergeometric law at the two
+observed margins. The implementation uses mode-centred adjacent ratios,
+enables tail pruning only after an import-time binary64 underflow check, and
+inverts limits inside a retained bracket. A failed numerical certificate raises
+`NumericalError`; it never returns a different method.
+
+### 3. Nothing else is in the box
+
+`pip install exactcis` supports Python 3.11 through 3.13 using the standard
+library and `dependencies = []`. It requires no NumPy, SciPy, or R runtime. The
+design gate and numerical kernel cannot be bypassed by a helper that delegates
+to `scipy.stats`.
+
 This release does not claim universal exactness, unconditional coverage for
 conditional procedures, clinical validation, or formal verification.
 
