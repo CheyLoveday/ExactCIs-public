@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import tomllib
 import zipfile
 from pathlib import Path
 
@@ -75,6 +76,30 @@ def test_readme_has_one_executable_marked_example() -> None:
     examples = extract_examples((ROOT / "README.md").read_text(encoding="utf-8"))
     assert len(examples) == 1
     compile(examples[0], "README.md", "exec")
+
+
+def test_supported_python_matrix_is_consistent() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
+        "project"
+    ]
+    assert project["requires-python"] == ">=3.11,<3.15"
+    assert {
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+    }.issubset(project["classifiers"])
+
+    expected_matrix = 'python-version: ["3.11", "3.12", "3.13", "3.14"]'
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    release = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    assert ci.count(expected_matrix) == 3
+    assert 'python-version: ["3.11", "3.14"]' in ci
+    assert expected_matrix in release
+    assert 'python-version: ["3.11", "3.14"]' in release
+    assert 'python-version: "3.14"' in release
 
 
 def test_installed_smoke_contract_passes_against_source() -> None:

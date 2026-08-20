@@ -177,10 +177,10 @@ def inspect_distribution(path: Path) -> list[str]:
             python_specifiers = {
                 item.strip() for item in message.get("Requires-Python", "").split(",")
             }
-            if python_specifiers != {">=3.11", "<3.14"}:
+            if python_specifiers != {">=3.11", "<3.15"}:
                 errors.append(
                     f"{path.name}: Requires-Python is "
-                    f"{message.get('Requires-Python')!r}, expected >=3.11,<3.14"
+                    f"{message.get('Requires-Python')!r}, expected >=3.11,<3.15"
                 )
             unconditional = [
                 requirement

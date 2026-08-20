@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -59,19 +59,20 @@ jobs:
       - run: uv run pytest -m "not slow" --tb=short
 
   test-platform:
-    name: Test ${{ matrix.os }} / Python 3.11
+    name: Test ${{ matrix.os }} / Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-python-uv
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --extra dev
       - run: uv run pytest -m "not slow" --tb=short
 
@@ -156,16 +157,20 @@ jobs:
           retention-days: 7
 
   wheel-install:
-    name: Install and smoke-test wheel
+    name: Install and smoke-test wheel / Python ${{ matrix.python-version }}
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: distributions
@@ -193,16 +198,20 @@ jobs:
             --reference-python "$reference_python"
 
   sdist-install:
-    name: Install and smoke-test sdist
+    name: Install and smoke-test sdist / Python ${{ matrix.python-version }}
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: distributions

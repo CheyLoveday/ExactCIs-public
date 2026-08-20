@@ -4,6 +4,11 @@ This file records user-facing changes only.
 
 ## [Unreleased]
 
+### Changed
+
+- Extend the supported interpreter and clean-artifact validation matrix through
+  Python 3.14 while retaining Python 3.11 as the minimum language target.
+
 ## [1.1.2] - 2026-08-06
 
 Published corrective release (`exactcis==1.1.2`, tag `v1.1.2`). This release

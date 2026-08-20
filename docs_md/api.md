@@ -51,8 +51,9 @@ mathematically valid (Mantel–Haenszel with one table) but is often a modelling
 mistake when “pooled” analysis was intended.
 
 Python **3.11+** is required: the public API uses modern typing and standard
-library features exercised under that floor. The upper bound is `<3.14` as
-declared in package metadata.
+library features exercised under that floor. The unreleased source tree has an
+upper bound of `<3.15`; the published `exactcis==1.1.2` metadata remains
+`<3.14` until Python 3.14 enters the PyPI contract with 1.2.0.
 
 ## Design-aware policy functions
 
