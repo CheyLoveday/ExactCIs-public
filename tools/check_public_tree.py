@@ -26,6 +26,7 @@ ALLOWED_TOP_LEVEL = {
     "docs_md",
     "examples",
     "mkdocs.yml",
+    "paper",
     "pyproject.toml",
     "replication",
     "src",
