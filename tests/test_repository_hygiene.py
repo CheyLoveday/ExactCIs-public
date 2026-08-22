@@ -11,7 +11,7 @@ ROOT = Path(__file__).parents[1]
 if not (ROOT / "tools").is_dir():
     pytest.skip("tools/ not shipped in the public sdist", allow_module_level=True)
 
-from tools import check_repository_hygiene as hygiene
+from tools import check_repository_hygiene as hygiene  # noqa: E402
 
 
 def test_public_formalisation_vocabulary_is_not_private() -> None:
