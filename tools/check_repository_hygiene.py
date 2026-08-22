@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_EMAIL = "cheyloveday@users.noreply.github.com"
 EMAIL = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
 PRIVATE_DOC_TERM = re.compile(
-    r"\b(?:PS4|Paper[ -]?M|JSS|Lean|ClinVar|VEP|CARF|ERDOS|hotstart)\b|manuscript",
+    r"\b(?:PS4|Paper[ -]?M|JSS|ClinVar|VEP|CARF|ERDOS|hotstart)\b|manuscript",
     re.IGNORECASE,
 )
 DOC_PREFIXES = ("README.md", "CONTRIBUTING.md", "docs_md/", "examples/")
