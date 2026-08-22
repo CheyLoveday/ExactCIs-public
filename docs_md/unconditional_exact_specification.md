@@ -220,7 +220,7 @@ the executable envelope is a permitted specialization.
 
 ### B.3 Effect domain and structural fibres
 
-For either ratio `beta` in its extended real statistical domain, global
+For the Boschloo OR `beta` in its extended real statistical domain, global
 inversion uses
 
 ```text

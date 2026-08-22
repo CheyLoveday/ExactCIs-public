@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+
+ROOT = Path(__file__).parents[1]
+
+if not (ROOT / "tools").is_dir():
+    pytest.skip("tools/ not shipped in the public sdist", allow_module_level=True)
 
 from tools import check_repository_hygiene as hygiene
 
