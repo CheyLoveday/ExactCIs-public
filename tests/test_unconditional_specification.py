@@ -6,8 +6,10 @@ import copy
 import importlib.util
 import json
 import re
+from collections.abc import Callable
 from decimal import Decimal, localcontext
 from fractions import Fraction
+from math import comb
 from pathlib import Path
 from typing import Any
 
@@ -193,6 +195,7 @@ EXPECTED_CONTRACT_IDS = (
     "U-EXACT-P-001",
     "U-COVER-001",
     "U-STRUCT-OR-001",
+    "U-STRUCT-OR-VALID-001",
     "U-STRUCT-OR-MASK-001",
     "U-STRUCT-OR-LIMIT-001",
     "U-MOVING-USC-001",
@@ -400,6 +403,68 @@ def _structural_endpoint_accepts(
     return pair[0] >= alpha_side and pair[1] >= alpha_side
 
 
+def _structural_or_supports(
+    a: int,
+    b: int,
+    c: int,
+    d: int,
+    endpoint: str,
+) -> bool:
+    """Direct table support predicate for the endpoint contract."""
+    if endpoint == "zero":
+        return a == 0 or d == 0
+    if endpoint == "positive_infinity":
+        return c == 0 or b == 0
+    raise AssertionError(f"unknown structural endpoint: {endpoint}")
+
+
+def _product_binomial_table_mass(
+    a: int,
+    b: int,
+    c: int,
+    d: int,
+    *,
+    p1: Fraction,
+    p0: Fraction,
+) -> Fraction:
+    """Exact mass of a 2x2 table under independent product binomials."""
+    n1 = a + b
+    n0 = c + d
+    return (
+        Fraction(comb(n1, a) * comb(n0, c))
+        * p1**a
+        * (1 - p1) ** b
+        * p0**c
+        * (1 - p0) ** d
+    )
+
+
+def _product_binomial_event_mass(
+    n1: int,
+    n0: int,
+    *,
+    p1: Fraction,
+    p0: Fraction,
+    event: Callable[[int, int, int, int], bool],
+) -> Fraction:
+    return sum(
+        (
+            _product_binomial_table_mass(
+                a,
+                n1 - a,
+                c,
+                n0 - c,
+                p1=p1,
+                p0=p0,
+            )
+            for a in range(n1 + 1)
+            for c in range(n0 + 1)
+            if event(a, n1 - a, c, n0 - c)
+        ),
+        start=Fraction(0),
+    )
+
+
 def _poly_multiply(left: list[int], right: list[int]) -> list[int]:
     result = [0] * (len(left) + len(right) - 1)
     for left_index, left_value in enumerate(left):
@@ -469,7 +534,15 @@ def _assert_breakpoint_authority(payload: dict[str, Any]) -> None:
 def _assert_binding_text(text: str) -> None:
     normalized = " ".join(text.split())
     required = (
-        "exact-head approval pending",
+        (
+            "Status: **specified but unshipped.** This document is U0 authority only "
+            "when introduced to `main` by an explicitly owner-approved immutable-head "
+            "merge. It does not authorize unconditional production implementation."
+        ),
+        (
+            "It is the candidate U0-A/U0-B contract for programme issue #41 and "
+            "records the #64-ratified structural OR endpoint lock."
+        ),
         "p[m,greater,x](beta) >= alpha_side",
         "p[m,less,x](beta) >= alpha_side",
         "directional p-value is **strictly less** than `alpha_side`",
@@ -510,14 +583,19 @@ def _assert_binding_text(text: str) -> None:
         "Empty, full, and hull are sibling terminal branches",
         "FIXED-NULL-BASE + FIXED-NULL-EVIDENCE -> fixed-null exact decisions",
         "fixed-positive-total ideal coverage + U-XSEC-001",
+        "The complete-domain case split -> fixed-positive-total ideal coverage",
         "U-MOVING-USC-001 -> U-ACCEPTED-CLOSED-001",
-        "(U-HULL-001 OR U-FULL-001) -> fixed-positive-total returned-event bound",
+        "ideal branch of U-COVER-001 + (U-HULL-001 OR U-FULL-001)",
         "U-HULL-001 + U-ACCEPTED-CLOSED-001",
         "U-XSEC-RETURN-001",
         "fixed-positive-total return bounds from (`U-HULL-001` or `U-FULL-001`)",
         "#check @RootSignCertificate.existsComplete :",
         "#check @Structural.orEndpoints :",
-        "#check @BoschlooOrdering.structuralMaskStrata :",
+        "#check @Structural.orFibreSupportAlmostSure :",
+        "#check @Structural.orFibreTwoSidedValidity :",
+        "#check @BoschlooOrdering.eventualZeroGreaterMaskStratum :",
+        "#check @BoschlooOrdering.eventualPositiveInfinityLessMaskStratum :",
+        "#check @BoschlooOrdering.groupSwapFiniteMask :",
         "#check @Structural.orEndpointUniformLimits :",
         "#check @Structural.hullTransport :",
         "#check @GlobalInversion.movingPUpperSemicontinuous :",
@@ -537,6 +615,94 @@ def _assert_binding_text(text: str) -> None:
         ),
     )
     assert all(" ".join(fragment.split()) in normalized for fragment in required)
+    assert "exact-head approval pending" not in normalized
+    assert "This exact-head candidate" not in normalized
+    assert "does not add it, and it is not currently public" in normalized
+
+
+def _assert_structural_repair_authority(text: str) -> None:
+    """Guard the two mathematical repairs required before a U0 merge review."""
+    normalized = " ".join(text.split())
+    required = (
+        (
+            "This finite ordered-p lemma does **not** certify the separately "
+            "tagged endpoints"
+        ),
+        "P[n1,n0,p1,p0](a = 0 or d = 0) = 1",
+        "P[n1,n0,p1,p0](c = 0 or b = 0) = 1",
+        "U-STRUCT-OR-VALID-001",
+        "must join this structural branch (`U-STRUCT-OR-VALID-001`) with the finite",
+        "all-failure corner `(p1,p0)=(0,0)`",
+        "all-success corner `(p1,p0)=(1,1)`",
+        "it does not invent a unique true OR",
+        "BoschlooOrdering.finiteMask z dir psi",
+        "finiteMaskMass(z,dir,psi,q)",
+        "finiteP(z,dir,psi)",
+        "#check @BoschlooOrdering.finiteMaskMass_eq :",
+        "#check @BoschlooOrdering.finiteP_eq :",
+        "#check @Structural.zeroUnsupportedFiniteMaskMassBound :",
+        "#check @Structural.zeroUnsupportedFinitePBound :",
+        "#check @Structural.positiveInfinityUnsupportedFiniteMaskMassBound :",
+        "#check @Structural.positiveInfinityUnsupportedFinitePBound :",
+        "one `delta`/`M` before all finite effects and candidates",
+        "a tagged endpoint mask is -- not an admissible replacement premise",
+        "reciprocal finite-mask transport for the infinity theorem",
+    )
+    assert all(" ".join(fragment.split()) in normalized for fragment in required)
+    assert "BoschlooOrdering.structuralMask" not in text
+
+    zero_start = text.index("#check @BoschlooOrdering.eventualZeroGreaterMaskStratum :")
+    infinity_start = text.index(
+        "#check @BoschlooOrdering.eventualPositiveInfinityLessMaskStratum :"
+    )
+    swap_start = text.index("#check @BoschlooOrdering.groupSwapFiniteMask :")
+    zero = text[zero_start:infinity_start]
+    infinity = text[infinity_start:swap_start]
+    for theorem, expected_order in (
+        (
+            zero,
+            (
+                "observed : TableAt n1 n0",
+                "∃ delta : Real, 0 < delta ∧ delta ≤ 1 ∧",
+                "∀ (psi : Real), 0 < psi → psi ≤ delta →",
+                "∀ candidate : TableAt n1 n0,",
+                "candidate ∈ BoschlooOrdering.finiteMask observed .greater psi",
+            ),
+        ),
+        (
+            infinity,
+            (
+                "observed : TableAt n1 n0",
+                "∃ M : Real, 1 < M ∧",
+                "∀ (psi : Real), M ≤ psi →",
+                "∀ candidate : TableAt n1 n0,",
+                "candidate ∈ BoschlooOrdering.finiteMask observed .less psi",
+            ),
+        ),
+    ):
+        assert all(fragment in theorem for fragment in expected_order)
+        positions = [theorem.index(fragment) for fragment in expected_order]
+        assert positions == sorted(positions)
+        assert " q" not in theorem
+
+    mass_start = text.index("#check @BoschlooOrdering.finiteMaskMass_eq :")
+    p_value_start = text.index("#check @BoschlooOrdering.finiteP_eq :")
+    mass_bound_start = text.index(
+        "#check @Structural.zeroUnsupportedFiniteMaskMassBound :"
+    )
+    limits_start = text.index("#check @Structural.orEndpointUniformLimits :")
+    mass_definition = text[mass_start:p_value_start]
+    p_value_definition = text[p_value_start:mass_bound_start]
+    limits = text[mass_bound_start:limits_start]
+    assert "ProductBinomial.mass n1 n0" in mass_definition
+    assert "candidate ∈\n          BoschlooOrdering.finiteMask" in mass_definition
+    assert "sSup (BoschlooOrdering.finiteMaskMass" in p_value_definition
+    assert "Set.Icc (0 : Real) 1" in p_value_definition
+    assert "BoschlooOrdering.finiteMaskMass observed .greater psi q" in limits
+    assert "BoschlooOrdering.finiteMaskMass observed .less psi q" in limits
+    assert "BoschlooOrdering.finiteP observed .greater psi" in limits
+    assert "BoschlooOrdering.finiteP observed .less psi" in limits
+    assert "BoschlooDirectionalTail" not in limits
 
 
 def _contract_ids(text: str) -> list[str]:
@@ -582,6 +748,7 @@ def test_u0_authority_blocks_are_exact() -> None:
     _assert_breakpoint_authority(breakpoint)
     _assert_structural_or_endpoint_authority(structural_endpoint)
     _assert_binding_text(text)
+    _assert_structural_repair_authority(text)
 
 
 def test_contract_ids_are_stable_unique_and_boschloo_only() -> None:
@@ -659,6 +826,110 @@ def test_structural_or_endpoint_alpha_zero_is_inclusive() -> None:
     assert infinity_unsupported[1] < positive_alpha
 
 
+@pytest.mark.parametrize(
+    ("endpoint", "p1", "p0"),
+    (
+        ("zero", Fraction(0), Fraction(0)),
+        ("zero", Fraction(0), Fraction(1, 2)),
+        ("zero", Fraction(0), Fraction(1)),
+        ("zero", Fraction(1, 2), Fraction(1)),
+        ("zero", Fraction(1), Fraction(1)),
+        ("positive_infinity", Fraction(0), Fraction(0)),
+        ("positive_infinity", Fraction(1, 2), Fraction(0)),
+        ("positive_infinity", Fraction(1), Fraction(0)),
+        ("positive_infinity", Fraction(1), Fraction(1, 2)),
+        ("positive_infinity", Fraction(1), Fraction(1)),
+    ),
+)
+@pytest.mark.parametrize(("n1", "n0"), ((1, 1), (2, 3), (4, 2)))
+def test_structural_or_fibre_support_and_two_sided_validity_are_exact(
+    endpoint: str,
+    p1: Fraction,
+    p0: Fraction,
+    n1: int,
+    n0: int,
+) -> None:
+    """Finite exact evidence for the U-STRUCT-OR-VALID-001 theorem shape."""
+    support_mass = _product_binomial_event_mass(
+        n1,
+        n0,
+        p1=p1,
+        p0=p0,
+        event=lambda a, b, c, d: _structural_or_supports(a, b, c, d, endpoint),
+    )
+    assert support_mass == 1
+
+    for alpha_side in (Fraction(0), Fraction(1, 7), Fraction(1)):
+        rejection_mass = _product_binomial_event_mass(
+            n1,
+            n0,
+            p1=p1,
+            p0=p0,
+            event=lambda a, b, c, d: (
+                not _structural_endpoint_accepts(
+                    _structural_or_endpoint_pair(a, b, c, d, endpoint), alpha_side
+                )
+            ),
+        )
+        assert rejection_mass == 0
+
+
+@pytest.mark.parametrize(
+    ("endpoint", "p1", "p0"),
+    (
+        ("zero", Fraction(0), Fraction(1, 2)),
+        ("zero", Fraction(1, 2), Fraction(1)),
+        ("positive_infinity", Fraction(1, 2), Fraction(0)),
+        ("positive_infinity", Fraction(1), Fraction(1, 2)),
+    ),
+)
+def test_structural_or_fibre_support_is_disjunctive_not_conjunctive(
+    endpoint: str,
+    p1: Fraction,
+    p0: Fraction,
+) -> None:
+    def conjunctive_support(a: int, b: int, c: int, d: int) -> bool:
+        if endpoint == "zero":
+            return a == 0 and d == 0
+        return c == 0 and b == 0
+
+    union_mass = _product_binomial_event_mass(
+        1,
+        1,
+        p1=p1,
+        p0=p0,
+        event=lambda a, b, c, d: _structural_or_supports(a, b, c, d, endpoint),
+    )
+    conjunction_mass = _product_binomial_event_mass(
+        1,
+        1,
+        p1=p1,
+        p0=p0,
+        event=conjunctive_support,
+    )
+    assert union_mass == 1
+    assert conjunction_mass == Fraction(1, 2)
+
+
+def test_structural_or_endpoint_group_swap_reverses_endpoint_pairs() -> None:
+    for a in range(3):
+        for b in range(3):
+            for c in range(3):
+                for d in range(3):
+                    if a + b == 0 or c + d == 0:
+                        continue
+                    table = (a, b, c, d)
+                    swapped = (c, d, a, b)
+                    assert _structural_or_endpoint_pair(*table, "zero") == tuple(
+                        reversed(
+                            _structural_or_endpoint_pair(*swapped, "positive_infinity")
+                        )
+                    )
+                    assert _structural_or_endpoint_pair(
+                        *table, "positive_infinity"
+                    ) == tuple(reversed(_structural_or_endpoint_pair(*swapped, "zero")))
+
+
 @pytest.mark.parametrize("t", (Fraction(1, 2), Fraction(2, 3), Fraction(5, 7)))
 def test_n1_n0_one_rational_square_structural_anchor_and_swap(
     t: Fraction,
@@ -711,6 +982,53 @@ def test_structural_or_endpoint_authority_mutations_fail() -> None:
         mutate(payload)
         with pytest.raises(AssertionError):
             _assert_structural_or_endpoint_authority(payload)
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "P[n1,n0,p1,p0](a = 0 or d = 0) = 1",
+            "P[n1,n0,p1,p0](a = 0 and d = 0) = 1",
+        ),
+        (
+            "BoschlooOrdering.finiteMask observed .greater psi",
+            "BoschlooOrdering.structuralMask observed .zero .greater",
+        ),
+        (
+            "BoschlooOrdering.finiteMaskMass observed .greater psi q",
+            "UnrelatedDirectionalQuantity observed .greater psi q",
+        ),
+        (
+            "∀ (psi : Real), 0 < psi → psi ≤ delta →\n        ∀ candidate",
+            "∀ candidate\n        ∀ (psi : Real), 0 < psi → psi ≤ delta →",
+        ),
+        (
+            "U-STRUCT-OR-VALID-001`) with the finite",
+            "U-EXACT-P-001`) with the finite",
+        ),
+    ),
+)
+def test_structural_coverage_and_eventual_mask_mutations_fail(
+    old: str, new: str
+) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_structural_repair_authority(text.replace(old, new, 1))
+
+
+def test_u0_claim_ceiling_is_evergreen_not_self_ratifying() -> None:
+    text = _text()
+    _assert_binding_text(text)
+    stale = text.replace(
+        "Status: **specified but unshipped.**",
+        "Status: **review candidate; exact-head approval pending.**",
+        1,
+    )
+    assert stale != text
+    with pytest.raises(AssertionError):
+        _assert_binding_text(stale)
 
 
 def test_duplicate_json_authority_key_fails_closed() -> None:
@@ -814,7 +1132,7 @@ def test_structural_endpoint_handoff_text_mutations_fail(old: str, new: str) -> 
             "U-MOVING-USC-001 does not control accepted-set closure",
         ),
         (
-            "(U-HULL-001 OR U-FULL-001) -> fixed-positive-total returned-event bound",
+            "ideal branch of U-COVER-001 + (U-HULL-001 OR U-FULL-001)",
             "U-HULL-001 alone -> fixed-positive-total returned-event bound",
         ),
         (
