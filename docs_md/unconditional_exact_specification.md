@@ -1,11 +1,12 @@
 # Certified unconditional exact intervals: U0 statistical specification
 
-Status: **review candidate implementing owner-ratified decisions; exact-head
-approval pending; specified but unshipped**. This document is the proposed
-U0-A/U0-B contract for programme issue #41 and consumes the binding
-mathematics-first decisions recorded on 2026-08-20. It changes no runtime
-behaviour, does not add a registry row, and does not represent an unconditional
-method as available in ExactCIs 1.1.2.
+Status: **specified but unshipped.** This document is U0 authority only when
+introduced to `main` by an explicitly owner-approved immutable-head merge. It
+does not authorize unconditional production implementation. It is the candidate
+U0-A/U0-B contract for programme issue #41 and records the #64-ratified
+structural OR endpoint lock. It changes no runtime behaviour, does not add a
+registry row, and does not represent an unconditional method as available in
+ExactCIs 1.1.2.
 
 The release manifest is deliberately narrower than the research programme.
 Boschloo odds-ratio inversion is the only method specified for the 1.2.0
@@ -129,7 +130,8 @@ are not sufficient.
 
 ### B.1 Release boundary and manifest
 
-The following block is the machine-readable U0 release decision.
+The following block is the machine-readable candidate U0 release-manifest
+contract. It freezes scope only; it does not make the method public or shipped.
 
 <!-- exactcis-unconditional-release-manifest:start -->
 ```json
@@ -429,10 +431,10 @@ otherwise            -> refine or fail closed.
 The full supremum and an argmax enclosure are optional diagnostics. The exact
 threshold relation is the scientific result.
 
-### B.7 Exact-p validity and two-sided coverage
+### B.7 Finite-positive exact-p validity and complete-domain coverage
 
-At fixed real `psi` and direction, let `T` be the exact Fisher-tail ordering value
-with smaller values more extreme, and let
+At fixed **finite positive** real `psi` and direction, let `T` be the exact
+Fisher-tail ordering value with smaller values more extreme, and let
 
 ```text
 R(x) = {y: T(y) <= T(x)}.
@@ -448,23 +450,55 @@ p(x) = sup_q P[psi,q](R(x))
 
 The finite ordered-p lemma makes `p(X)` super-uniform under `q0`. The generic
 validity theorem uses `0 <= alpha <= 1` where appropriate; the ordinary CI
-corollary uses `0 < alpha < 1`. Hence the
+corollary uses `0 < alpha < 1`. Hence, on the finite-positive effect branch, the
 strict rejection event `p(X)<alpha_side` has probability at most
 `alpha_side`. The two directional rejection events each satisfy that bound;
-their union has probability at most `alpha`, so the ideal total procedure has
-coverage at least `1-alpha`. If the implementation returns only certified
-outward enclosures of that ideal accepted-set hull, then
+their union has probability at most `alpha`.
+
+This finite ordered-p lemma does **not** certify the separately tagged endpoints
+`psi=0` and `psi=+infinity`: B.9 values those by direct structural support, not
+by a finite-`psi` preorder. For positive group totals, let
+`P[n1,n0,p1,p0]` denote the product-binomial law with `b=n1-a` and `d=n0-c`.
+The structural coverage bridge is:
+
+```text
+for every p1,p0 in [0,1] with p1 = 0 or p0 = 1:
+    P[n1,n0,p1,p0](a = 0 or d = 0) = 1;
+
+for every p1,p0 in [0,1] with p0 = 0 or p1 = 1:
+    P[n1,n0,p1,p0](c = 0 or b = 0) = 1.
+```
+
+At every `0 < alpha_side <= 1`, B.9 rejects the zero endpoint only on
+`a>0 and d>0`, and rejects the infinity endpoint only on `c>0 and b>0`.
+Each structural rejection event therefore has probability zero on its own true
+structural fibre. At `alpha_side = 0`, the inclusive predicate accepts every
+endpoint pair, so structural rejection is identically absent. `U-COVER-001`
+must join this structural branch (`U-STRUCT-OR-VALID-001`) with the finite
+positive branch (`U-EXACT-P-001` twice) by the complete extended-effect domain
+case split; neither branch may stand in for the other.
+
+The all-failure corner `(p1,p0)=(0,0)` and all-success corner `(p1,p0)=(1,1)`
+may satisfy more than one structural-fibre label. The validity theorem applies
+separately to every such endpoint label; it does not invent a unique true OR at
+either nonidentified corner.
+
+The resulting ideal procedure has coverage at least `1-alpha` on the complete
+extended OR domain. If the implementation returns only certified outward
+enclosures of that ideal accepted-set hull, then
 `{return and miss}` is a subset of the ideal noncoverage event and has
 probability at most `alpha`. No conditional-on-return coverage follows without
 an additional theorem about the refusal mechanism.
 
-The hypotheses are: a finite sample space, normalized point-null masses, one
-common inclusive total preorder (equivalently, a nested family of inclusive
-principal rejection sets) for each fixed effect and direction,
+The finite-positive hypotheses are: a finite sample space, normalized point-null
+masses, one common inclusive total preorder (equivalently, a nested family of
+inclusive principal rejection sets) for each fixed effect and direction,
 nuisance-independent masks, an exact real-continuum nuisance supremum, and
-successful completion. A grid, sampler, local optimizer, non-nested family of
-ad-hoc self-containing masks, or resource-exhausted call does not satisfy the
-theorem.
+successful completion. The structural hypotheses are the two direct
+product-binomial support identities above and B.9's inclusive endpoint rule. A
+grid, sampler, local optimizer, non-nested family of ad-hoc self-containing
+masks, finite sampling substituted for structural support, or resource-exhausted
+call does not satisfy the theorem.
 
 ### B.8 Deferred research boundary
 
@@ -504,9 +538,10 @@ direction. At `alpha_side = 0`, inclusive equality accepts every endpoint,
 including the pairs containing zero. No implementation may install an
 unconditional structural-rejection state that overrides this threshold rule.
 Under a true structural null, generated observations are supported almost
-surely; the unsupported observation has null probability zero. This endpoint
-rule is a specified conservative Boschloo extension, not a limit of the
-finite-`psi` preorder.
+surely; the unsupported observation has null probability zero. The formal
+probability identities and their complete-domain coverage role are frozen in
+`U-STRUCT-OR-VALID-001`. This endpoint rule is a specified conservative
+Boschloo extension, not a limit of the finite-`psi` preorder.
 
 <!-- exactcis-unconditional-structural-or-endpoint-contract:start -->
 ```json
@@ -564,10 +599,10 @@ At `alpha_side = 0`, replace every endpoint rejection in this table with
 acceptance by the preceding inclusive predicate; the table does not create an
 exception to zero-alpha semantics.
 
-`EmptyConfidenceSetError(ExactCIsError, RuntimeError)` is the owner-approved
-public 1.2.0 exception for mathematical certified emptiness; U0 specifies it
-but does not add it. Its trigger is a completed sound partition proving the
-certified outer enclosure `O` empty. Failure to find accepted content,
+`EmptyConfidenceSetError(ExactCIsError, RuntimeError)` is the frozen planned
+1.2.0 exception for mathematical certified emptiness; U0 specifies it but does
+not add it, and it is not currently public. Its trigger is a completed sound
+partition proving the certified outer enclosure `O` empty. Failure to find accepted content,
 unfinished refinement, an invalid certificate, or exhausted resources cannot
 enter this branch. A certified full set proves the complete compact effect
 domain accepted, including both structural points, and returns exactly
@@ -969,16 +1004,17 @@ rows are checked by repository gates rather than presented as Lean theorems.
 | `U-BOSCH-ORDER-001` | Fisher tails define inclusive total preorders independent of `q` at each finite real OR | `ExactCIs.Unconditional.BoschlooOrdering.totalPreorder` | real `psi>0` | Boschloo | mask builder |
 | `U-BOSCH-REP-001` | the rational exact comparator agrees after coercion with the corresponding real Boschloo ordering | `ExactCIs.Unconditional.BoschlooOrdering.rationalCoercion` | reduced rational `psi>0` | Boschloo | executable comparator |
 | `U-BOSCH-BREAKPOINT-001` | the signed `(0,2)` versus `(1,3)` comparator has numerator, unique positive root, and mask-side orientation fixed in B.18 | `ExactCIs.Unconditional.BoschlooOrdering.signedBreakpointAnchor` | `n1=n0=4`, `psi>0`, direction `less` | Boschloo | comparator oracle and mutation gate |
-| `U-BOSCH-SWAP-001` | group swap maps finite `psi` to `1/psi`, reverses direction, and extends to the structural map `0 <-> +infinity` with reversed endpoint pairs | `ExactCIs.Unconditional.BoschlooOrdering.groupSwap` | positive group totals; finite real `psi` or one tagged OR endpoint | Boschloo | finite and structural metamorphic checks |
+| `U-BOSCH-SWAP-001` | group swap maps finite `psi` to `1/psi`, reverses direction, carries the actual finite masks by the reciprocal equivalence, and extends to the structural map `0 <-> +infinity` with reversed endpoint pairs | `ExactCIs.Unconditional.BoschlooOrdering.groupSwap` and `.groupSwapFiniteMask` | positive group totals; finite real `psi` or one tagged OR endpoint | Boschloo | finite and structural metamorphic checks |
 | `U-MASK-001` | mask inclusion implies pointwise and supremum probability bounds | `ExactCIs.Unconditional.MaskBounds.sandwich` | normalized finite masses | Boschloo | ambiguity protocol |
 | `U-THRESH-001` | positive-denominator threshold comparison equals the sign of `H` on the full real nuisance interval | `ExactCIs.Unconditional.ThresholdDecision.orEquiv` | decoded rational side level, real `q` | Boschloo | fixed-null decision |
 | `U-BERN-CERT-001` | coefficient hulls and de Casteljau leaves give sound local signs | `ExactCIs.Unconditional.BernsteinSubdivision.signSound` | exact coefficients | Boschloo | fast certificate path |
 | `U-ROOT-CERT-001` | the checker is sound and a checked normalized root/sign certificate exists for every rational polynomial and rational closed interval, including zero polynomials, endpoint/even roots, tangency, and degree drops | `ExactCIs.Unconditional.RootSignCertificate.checkerSound` and `.existsComplete` | canonical polynomial normalization and valid rational interval | Boschloo | completeness path/verifier |
-| `U-EXACT-P-001` | nuisance supremum of inclusive principal ordered p-values is super-uniform | `ExactCIs.Unconditional.ExactPValueValidity.superUniform` | one total preorder or nested inclusive principal family; q-independent masks | Boschloo | coverage claim |
-| `U-COVER-001` | the ideal procedure has coverage at least `1-alpha`; `U-HULL-001` supplies ordinary returned-hull containment and `U-FULL-001` supplies the exact full-domain return, so all certified returns satisfy `P(return and miss)<=alpha`; cross-sectional mixing is split into ideal and returned-event lemmas | `ExactCIs.Unconditional.ExactPValueValidity.centralCoverage` | generic/ordinary alpha domains, `U-EXACT-P-001` twice, `U-XSEC-001`, and (`U-HULL-001` or `U-FULL-001`) plus `U-XSEC-RETURN-001` for the returned-event clause | Boschloo | public calibration |
+| `U-EXACT-P-001` | nuisance supremum of inclusive principal ordered p-values is super-uniform at every finite positive effect | `ExactCIs.Unconditional.ExactPValueValidity.superUniform` | one total preorder or nested inclusive principal family; q-independent masks; real `psi>0` | Boschloo | finite-positive coverage branch |
+| `U-COVER-001` | the ideal procedure has coverage at least `1-alpha` on the complete extended OR domain: `U-EXACT-P-001` supplies the finite-positive branch and `U-STRUCT-OR-VALID-001` supplies the tagged structural branches. `U-HULL-001` supplies ordinary returned-hull containment and `U-FULL-001` supplies the exact full-domain return, so all certified returns satisfy `P(return and miss)<=alpha`; cross-sectional mixing is split into ideal and returned-event lemmas | `ExactCIs.Unconditional.ExactPValueValidity.centralCoverage` | generic/ordinary alpha domains; complete extended-domain case split; `U-EXACT-P-001` twice on finite `psi>0`; `U-STRUCT-OR-VALID-001` at `0,+infinity`; `U-XSEC-001`; and (`U-HULL-001` or `U-FULL-001`) plus `U-XSEC-RETURN-001` for the returned-event clause | Boschloo | public calibration |
 | `U-STRUCT-OR-001` | B.9's OR support predicates, ordered endpoint pairs, inclusive threshold-derived classification, and zero-alpha acceptance hold exactly | `ExactCIs.Unconditional.Structural.orEndpoints` | positive group totals; Boschloo OR only; `alpha_side in [0,1]` | Boschloo | endpoint dispatch |
-| `U-STRUCT-OR-MASK-001` | the zero greater-mask and infinity less-mask endpoint strata satisfy the B.9 support valuations, with `min(x,n0-y) >= min(a,d)` and `min(y,n1-x) >= min(c,b)` respectively | `ExactCIs.Unconditional.BoschlooOrdering.structuralMaskStrata` | positive group totals; inclusive Fisher-tail ordering; nuisance-independent masks | Boschloo | endpoint tail valuation and mask replay |
-| `U-STRUCT-OR-LIMIT-001` | unsupported zero and infinity endpoints have nuisance-uniform directional bounds `p_greater(psi) <= C0*psi^min(a,d)` near zero and `p_less(psi) <= Cinf/psi^min(c,b)` near infinity, so the specified directional limits are zero | `ExactCIs.Unconditional.Structural.orEndpointUniformLimits` | `U-STRUCT-OR-MASK-001`; positive group totals; real nuisance continuum; constants independent of nuisance | Boschloo | complete-domain endpoint composition |
+| `U-STRUCT-OR-VALID-001` | on the zero fibre `p1=0 or p0=1`, `P(a=0 or d=0)=1`; on the infinity fibre `p0=0 or p1=1`, `P(c=0 or b=0)=1`. B.9 therefore makes true structural-endpoint rejection probability zero at positive side level and identically absent at zero side level | `ExactCIs.Unconditional.Structural.orFibreSupportAlmostSure` and `.orFibreTwoSidedValidity` | positive group totals; product-binomial structural fibres; B.9 endpoint contract; `alpha_side in [0,1]` | Boschloo | complete-domain coverage bridge |
+| `U-STRUCT-OR-MASK-001` | for every unsupported observed `TableAt n1 n0` there is one finite endpoint neighbourhood: for all `0<psi<=delta`, every candidate in the actual finite `R_greater(psi)` mask satisfies `min(x,n0-y) >= min(a,d)`; for all `psi>=M`, every candidate in the actual finite `R_less(psi)` mask satisfies `min(y,n1-x) >= min(c,b)` | `ExactCIs.Unconditional.BoschlooOrdering.eventualZeroGreaterMaskStratum` and `.eventualPositiveInfinityLessMaskStratum` | fixed positive margins; unsupported observed endpoint; inclusive finite Fisher-tail ordering; one `delta`/`M` before all finite effects and candidates; nuisance-independent masks | Boschloo | endpoint tail valuation and mask replay |
+| `U-STRUCT-OR-LIMIT-001` | consuming the eventual finite-mask theorems and the OR mass identity, unsupported zero and infinity endpoints have nuisance-uniform event-mass and nuisance-supremum bounds `finiteP(greater,psi) <= C0*psi^min(a,d)` near zero and `finiteP(less,psi) <= Cinf/psi^min(c,b)` near infinity, so the specified directional limits are zero | `ExactCIs.Unconditional.Structural.orEndpointUniformLimits` | `U-STRUCT-OR-MASK-001`, `U-OR-MASS-001`, the defined `finiteMaskMass`, and its real-continuum `finiteP` supremum; positive group totals; constants independent of nuisance | Boschloo | complete-domain endpoint composition |
 | `U-MOVING-USC-001` | each exact nuisance-maximized directional p-value is upper semicontinuous over the complete compact effect domain under inclusive moving-mask ownership, interior USC, and the B.9 endpoint valuations and uniform limits | `ExactCIs.Unconditional.GlobalInversion.movingPUpperSemicontinuous` | exact comparator regions, inclusive ties, maximum attainment, interior-stratum continuity, `U-STRUCT-OR-001`, `U-STRUCT-OR-MASK-001`, `U-STRUCT-OR-LIMIT-001` | Boschloo | global topology and cell classifier |
 | `U-ACCEPTED-CLOSED-001` | the two-sided accepted set `A_s={p_greater>=r} intersect {p_less>=r}` is closed in the compact effect domain | `ExactCIs.Unconditional.GlobalInversion.acceptedSetClosed` | `U-MOVING-USC-001`, exact inclusive threshold, structural composition | Boschloo | ideal hull/topology |
 | `U-EFFECT-MASK-001` | cell lower/upper masks enclose every point mask over every real effect in the cell | `ExactCIs.Unconditional.GlobalInversion.maskCell` | canonical real-effect cell | Boschloo | global classifier |
@@ -1027,15 +1063,27 @@ FIXED-NULL-EVIDENCE = exact witness acceptance
 FIXED-NULL-BASE + FIXED-NULL-EVIDENCE -> fixed-null exact decisions
 
 U-DESIGN-001 + U-BOSCH-ORDER-001 -> U-EXACT-P-001
-U-EXACT-P-001 twice -> fixed-positive-total ideal coverage
+U-EXACT-P-001 twice -> finite-positive ideal coverage
+
+U-DESIGN-001 + U-STRUCT-OR-001
+    -> U-STRUCT-OR-VALID-001 -> zero/infinity ideal coverage
+
+U-EFFECT-001 partitions the complete extended OR domain:
+    finite positive uses finite-positive ideal coverage;
+    zero or positive infinity uses zero/infinity ideal coverage.
+The complete-domain case split -> fixed-positive-total ideal coverage
 fixed-positive-total ideal coverage + U-XSEC-001
     -> ideal branch of U-COVER-001
 
 U-EFFECT-001 -> U-HULL-TRANSPORT-001
 U-BOSCH-ORDER-001 + B.9 endpoint support pairs
-    -> U-STRUCT-OR-001 -> U-STRUCT-OR-MASK-001 -> U-STRUCT-OR-LIMIT-001
+    -> U-STRUCT-OR-001 -> U-STRUCT-OR-MASK-001
+U-STRUCT-OR-MASK-001 + U-OR-MASS-001
+    -> U-STRUCT-OR-LIMIT-001
 U-BOSCH-SWAP-001 + U-STRUCT-OR-001
     -> structural reciprocal/direction-reversal metamorphics
+U-BOSCH-SWAP-001 + U-STRUCT-OR-MASK-001
+    -> reciprocal finite-mask transport for the infinity theorem
 U-BOSCH-REP-001 + U-ATTAIN-001 + U-OR-CORNER-001 + U-STRUCT-OR-001
         + U-STRUCT-OR-LIMIT-001
     -> U-MOVING-USC-001 -> U-ACCEPTED-CLOSED-001
@@ -1051,7 +1099,8 @@ fixed-null exact decisions + U-EFFECT-001 + U-OR-CORNER-001
 
 U-HULL-001 -> U-FLOAT-001
 U-FULL-001 -> exact full tuple + U-FLOAT-001
-(U-HULL-001 OR U-FULL-001) -> fixed-positive-total returned-event bound
+ideal branch of U-COVER-001 + (U-HULL-001 OR U-FULL-001)
+    -> fixed-positive-total returned-event bound
     + U-XSEC-RETURN-001 -> returned-event branch of U-COVER-001
 U-HULL-001 + U-ACCEPTED-CLOSED-001
     -> U-TOPOLOGY-001 (strict strengthening only)
@@ -1073,11 +1122,15 @@ enclosure; returned-event mixing does. `U-TOPOLOGY-001` is not an ancestor of
    real probabilities. Rational arithmetic is a coercion-preserving executable
    specialization, not the statistical domain.
 2. Prove denominator positivity on each closed interior effect stratum. Use real
-   continuity plus compactness of `[0,1]` to obtain maximum attainment. At
-   `psi=0` value the two directed tails by B.9, prove the greater-mask stratum
-   `min(x,n0-y) >= min(a,d)`, and derive a nuisance-uniform `C0*psi^r0`
-   bound. At `psi=+infinity` value the directed tails reciprocally, prove the
-   less-mask stratum `min(y,n1-x) >= min(c,b)`, and derive the nuisance-uniform
+   continuity plus compactness of `[0,1]` to obtain maximum attainment. For an
+   unsupported zero observation, first prove one `delta>0` such that **for every
+   finite** `0<psi<=delta` every candidate in the actual
+   `R_greater(psi; observed)` mask satisfies
+   `min(x,n0-y) >= min(a,d)`; only then derive the nuisance-uniform
+   `C0*psi^r0` bound. Reciprocally, for an unsupported infinity observation,
+   first prove one `M>1` such that **for every** `psi>=M` every candidate in the
+   actual `R_less(psi; observed)` mask satisfies
+   `min(y,n1-x) >= min(c,b)`; only then derive the nuisance-uniform
    `Cinf/psi^rinf` bound. The endpoint value one discharges the
    opposite-direction USC case at each endpoint. Compose those endpoint lemmas
    with interior USC;
@@ -1093,9 +1146,13 @@ enclosure; returned-event mixing does. `U-TOPOLOGY-001` is not an ancestor of
    identities. Prove both checker soundness and existence of a checked complete
    root/sign certificate for zero polynomials, endpoint roots, repeated/even
    roots, degree drops, and exact tangency.
-5. Derive finite ordered-p super-uniformity from nested inclusive principal
-   sets. Apply it separately to both directions and use the union bound; do not
-   infer it from self-inclusion alone.
+5. Derive finite-positive ordered-p super-uniformity from nested inclusive
+   principal sets. Apply it separately to both directions and use the union
+   bound; do not infer it from self-inclusion alone. Separately prove the direct
+   product-binomial support identities on both structural fibres, including the
+   nonidentified all-failure/all-success corners. Join finite and structural
+   validity only through the complete extended-domain case split; never infer
+   endpoint coverage from a finite-effect limit or a Fisher preorder.
 6. Decompose the effect domain into exact ordering regions with inclusive
    breakpoint ownership. Prove each nuisance-maximized directional p-value is
    upper semicontinuous on interior strata, compose it with B.9's directional
@@ -1140,8 +1197,9 @@ statement.
 | disconnected accepted set | assumed connectedness, first crossing, or discarded interior outer cells | `U-ACCEPTED-CLOSED-001`, `U-INNER-OUTER-001`, `U-HULL-001` |
 | denominator corners `(0,1)` and `(1,0)` | an invalid full-square continuity argument | `U-OR-CORNER-001`, `U-STRUCT-OR-001` |
 | exact `n1=n0=1`, `(a,c)=(1,0)` rational-square anchor | reversed `(p_greater,p_less)` order, a false `(0,0)` endpoint pair, or an incorrect reciprocal group swap | `U-STRUCT-OR-001`, `U-BOSCH-SWAP-001` |
-| zero-alpha and support-predicate mutations | level-independent endpoint rejection, `and` in place of the required `or`, or endpoint pairs used outside OR/Boschloo | `U-STRUCT-OR-001` |
-| omitted endpoint mask stratum or nuisance-uniformity | finite sampling substituted for the zero/infinity tail valuation or complete-domain limit | `U-STRUCT-OR-MASK-001`, `U-STRUCT-OR-LIMIT-001`, `U-MOVING-USC-001` |
+| structural-fibre validity mutation | direct endpoint valuation treated as finite ordered-p validity; an `or` fibre/support predicate weakened to `and`; a structural corner assigned one unique true OR | `U-STRUCT-OR-VALID-001`, `U-COVER-001` |
+| zero-alpha and support-predicate mutations | level-independent endpoint rejection, `and` in place of the required `or`, or endpoint pairs used outside OR/Boschloo | `U-STRUCT-OR-001`, `U-STRUCT-OR-VALID-001` |
+| eventual finite-mask, mass-link, or nuisance-uniformity mutation | a tagged endpoint mask or unrelated tail quantity substituted for one `delta`/`M` neighbourhood of actual finite masks and their defined product-binomial event mass; finite sampling substituted for the zero/infinity tail valuation or complete-domain limit | `U-STRUCT-OR-MASK-001`, `U-STRUCT-OR-LIMIT-001`, `U-MOVING-USC-001` |
 | unmatched extreme sliver | matching-as-soundness and unbounded endpoint excess | `U-HULL-001` |
 | unmatched interior outer component | accidental topology claim from a hull certificate | `U-TOPOLOGY-001` |
 | certified empty/full mutations | conflation of mathematical results with unresolved or resource failure | `U-EMPTY-001`, `U-FULL-001` |
@@ -1159,11 +1217,44 @@ the positive-total conditional ideal-miss and return-and-miss probabilities,
 their weighted mixed events, and proof that zero-total observations never
 return. Its ideal theorem consumes only conditional ideal bounds; its returned
 theorem separately consumes conditional return-and-miss bounds.
+`StructuralOREndpoint` has exactly the tagged values `zero` and
+`positiveInfinity`; `Structural.ORFibre endpoint p1 p0` is respectively
+`p1=0 or p0=1` and `p0=0 or p1=1`; and `Structural.supports` is exactly B.9's
+disjunctive observed-table support predicate. `TableAt n1 n0` is the
+fixed-margin candidate type with success coordinates `x<=n1`, `y<=n0`.
+`BoschlooOrdering.finiteMask z dir psi` is exactly B.5's inclusive finite-
+`psi` mask over `TableAt n1 n0`, never an endpoint-tagged auxiliary mask.
+For `0<psi` and `q in [0,1]`, its product-binomial law is the finite OR
+parameterisation
+
+```text
+p0(psi,q) = q;
+p1(psi,q) = psi*q / (1-q+psi*q).
+```
+
+Write `mu[psi,q]` for `ProductBinomial.mass n1 n0 p1(psi,q) p0(psi,q)` and
+freeze the only admissible finite directional probability objects as
+
+```text
+finiteMaskMass(z,dir,psi,q)
+    = mu[psi,q]({candidate in TableAt n1 n0 |
+                   candidate in BoschlooOrdering.finiteMask z dir psi});
+
+finiteP(z,dir,psi)
+    = sup_{q in [0,1]} finiteMaskMass(z,dir,psi,q).
+```
+
+`TableAt.of table` is the exact coordinate-preserving bridge from a valid
+positive-total table to its fixed-margin candidate type. In particular, a
+generic `BoschlooDirectionalTail` name is not an admissible substitute for
+`finiteMaskMass`: the U-STRUCT-OR limit theorems must state bounds on this
+defined finite-mask event mass and then on its real-continuum nuisance
+supremum.
 `MovingMaskModel` contains a finite exact ordering-region cover of the compact
 effect domain, a fixed nuisance-independent mask on every open region, inclusive
 tie ownership on each algebraic boundary, the attained nuisance-maximized
 directional objective, interior-stratum continuity proofs, and separate B.9
-endpoint-pair, mask-stratum, and nuisance-uniform-limit certificates. Its
+endpoint-pair, eventual finite-mask, and nuisance-uniform-limit certificates. Its
 endpoint fields are tagged zero/infinity data, never coercions through the
 finite formula; its `twoSidedAcceptedSet` is exactly the intersection of the
 two inclusive directional superlevel sets.
@@ -1277,33 +1368,22 @@ the formal package may not replace them with opaque propositions.
       Structural.accepts (Structural.directionalP table .positiveInfinity)
         alpha_side)
 
-#check @Structural.zeroUnsupportedUniformBound :
-  ∀ (table : Table), PositiveGroupTotals table → 0 < table.a → 0 < table.d →
-    ∃ C delta : Real, 0 < C ∧ 0 < delta ∧
-      ∀ (psi q : Real), 0 < psi → psi ≤ delta → q ∈ Set.Icc (0 : Real) 1 →
-        BoschlooDirectionalTail table .greater psi q ≤
-          C * psi ^ min table.a table.d
+#check @Structural.orFibreSupportAlmostSure :
+  ∀ {n1 n0 : Nat} {endpoint : StructuralOREndpoint} {p1 p0 : Real},
+    0 < n1 → 0 < n0 →
+    p1 ∈ Set.Icc (0 : Real) 1 → p0 ∈ Set.Icc (0 : Real) 1 →
+    Structural.ORFibre endpoint p1 p0 →
+    (ProductBinomial.mass n1 n0 p1 p0).eventMass
+      {outcome | ¬ Structural.supports endpoint (Outcome.toTable n1 n0 outcome)} = 0
 
-#check @Structural.positiveInfinityUnsupportedUniformBound :
-  ∀ (table : Table), PositiveGroupTotals table → 0 < table.c → 0 < table.b →
-    ∃ C M : Real, 0 < C ∧ 1 < M ∧
-      ∀ (psi q : Real), M ≤ psi → q ∈ Set.Icc (0 : Real) 1 →
-        BoschlooDirectionalTail table .less psi q ≤
-          C / psi ^ min table.c table.b
-
-#check @Structural.orEndpointUniformLimits :
-  ∀ (table : Table), PositiveGroupTotals table →
-    (0 < table.a → 0 < table.d →
-      ∃ C delta : Real, 0 < C ∧ 0 < delta ∧
-        ∀ (psi q : Real), 0 < psi → psi ≤ delta →
-          q ∈ Set.Icc (0 : Real) 1 →
-          BoschlooDirectionalTail table .greater psi q ≤
-            C * psi ^ min table.a table.d) ∧
-    (0 < table.c → 0 < table.b →
-      ∃ C M : Real, 0 < C ∧ 1 < M ∧
-        ∀ (psi q : Real), M ≤ psi → q ∈ Set.Icc (0 : Real) 1 →
-          BoschlooDirectionalTail table .less psi q ≤
-            C / psi ^ min table.c table.b)
+#check @Structural.orFibreTwoSidedValidity :
+  ∀ {n1 n0 : Nat} {endpoint : StructuralOREndpoint} {p1 p0 r : Real},
+    0 < n1 → 0 < n0 →
+    p1 ∈ Set.Icc (0 : Real) 1 → p0 ∈ Set.Icc (0 : Real) 1 →
+    Structural.ORFibre endpoint p1 p0 → 0 ≤ r → r ≤ 1 →
+    (ProductBinomial.mass n1 n0 p1 p0).eventMass
+      {outcome | ¬ Structural.accepts
+        (Structural.directionalP (Outcome.toTable n1 n0 outcome) endpoint) r} = 0
 
 #check @ExactPValueValidity.superUniform :
   ∀ {Omega : Type} [Fintype Omega] [DecidableEq Omega]
@@ -1333,24 +1413,32 @@ the formal package may not replace them with opaque propositions.
   BoschlooOrdering.breakpointNumerator =
     16 * Polynomial.X + 46 * Polynomial.X ^ 2 - 6 * Polynomial.X ^ 4
 
-#check @BoschlooOrdering.zeroGreaterMaskStratum :
-  ∀ (observed candidate : Table),
-    candidate ∈ BoschlooOrdering.structuralMask observed .zero .greater →
-      min candidate.a (candidate.n0 - candidate.c) ≥ min observed.a observed.d
+#check @BoschlooOrdering.eventualZeroGreaterMaskStratum :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.x → 0 < n0 - observed.y →
+    ∃ delta : Real, 0 < delta ∧ delta ≤ 1 ∧
+      ∀ (psi : Real), 0 < psi → psi ≤ delta →
+        ∀ candidate : TableAt n1 n0,
+          candidate ∈ BoschlooOrdering.finiteMask observed .greater psi →
+            min candidate.x (n0 - candidate.y) ≥
+              min observed.x (n0 - observed.y)
 
-#check @BoschlooOrdering.positiveInfinityLessMaskStratum :
-  ∀ (observed candidate : Table),
-    candidate ∈
-        BoschlooOrdering.structuralMask observed .positiveInfinity .less →
-      min candidate.c (candidate.n1 - candidate.a) ≥ min observed.c observed.b
+#check @BoschlooOrdering.eventualPositiveInfinityLessMaskStratum :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.y → 0 < n1 - observed.x →
+    ∃ M : Real, 1 < M ∧
+      ∀ (psi : Real), M ≤ psi →
+        ∀ candidate : TableAt n1 n0,
+          candidate ∈ BoschlooOrdering.finiteMask observed .less psi →
+            min candidate.y (n1 - candidate.x) ≥
+              min observed.y (n1 - observed.x)
 
-#check @BoschlooOrdering.structuralMaskStrata :
-  ∀ (observed candidate : Table),
-    (candidate ∈ BoschlooOrdering.structuralMask observed .zero .greater →
-      min candidate.a (candidate.n0 - candidate.c) ≥ min observed.a observed.d) ∧
-    (candidate ∈
-        BoschlooOrdering.structuralMask observed .positiveInfinity .less →
-      min candidate.c (candidate.n1 - candidate.a) ≥ min observed.c observed.b)
+#check @BoschlooOrdering.groupSwapFiniteMask :
+  ∀ {n1 n0 : Nat} (observed candidate : TableAt n1 n0) (psi : Real),
+    0 < psi →
+    (candidate ∈ BoschlooOrdering.finiteMask observed .less psi ↔
+      TableAt.groupSwap candidate ∈ BoschlooOrdering.finiteMask
+        (TableAt.groupSwap observed) .greater psi⁻¹)
 
 #check @BoschlooOrdering.groupSwapStructural :
   ∀ (table : Table), PositiveGroupTotals table →
@@ -1358,6 +1446,70 @@ the formal package may not replace them with opaque propositions.
       Direction.reversePair (Structural.directionalP table .zero) ∧
     Structural.directionalP (Table.groupSwap table) .zero =
       Direction.reversePair (Structural.directionalP table .positiveInfinity)
+
+-- #48 endpoint continuation: these bounds explicitly consume the preceding
+-- eventual finite-mask theorems plus U-OR-MASS-001; a tagged endpoint mask is
+-- not an admissible replacement premise.
+#check @BoschlooOrdering.finiteMaskMass_eq :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0) (direction : Direction)
+    (psi q : Real), 0 < psi → q ∈ Set.Icc (0 : Real) 1 →
+    BoschlooOrdering.finiteMaskMass observed direction psi q =
+      (ProductBinomial.mass n1 n0
+        (psi * q / (1 - q + psi * q)) q).eventMass
+        {candidate | candidate ∈
+          BoschlooOrdering.finiteMask observed direction psi}
+
+#check @BoschlooOrdering.finiteP_eq :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0) (direction : Direction)
+    (psi : Real), 0 < psi →
+    BoschlooOrdering.finiteP observed direction psi =
+      sSup (BoschlooOrdering.finiteMaskMass observed direction psi ''
+        Set.Icc (0 : Real) 1)
+
+#check @Structural.zeroUnsupportedFiniteMaskMassBound :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.x → 0 < n0 - observed.y →
+    ∃ C delta : Real, 0 < C ∧ 0 < delta ∧ delta ≤ 1 ∧
+      ∀ (psi q : Real), 0 < psi → psi ≤ delta → q ∈ Set.Icc (0 : Real) 1 →
+        BoschlooOrdering.finiteMaskMass observed .greater psi q ≤
+          C * psi ^ min observed.x (n0 - observed.y)
+
+#check @Structural.zeroUnsupportedFinitePBound :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.x → 0 < n0 - observed.y →
+    ∃ C delta : Real, 0 < C ∧ 0 < delta ∧ delta ≤ 1 ∧
+      ∀ (psi : Real), 0 < psi → psi ≤ delta →
+        BoschlooOrdering.finiteP observed .greater psi ≤
+          C * psi ^ min observed.x (n0 - observed.y)
+
+#check @Structural.positiveInfinityUnsupportedFiniteMaskMassBound :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.y → 0 < n1 - observed.x →
+    ∃ C M : Real, 0 < C ∧ 1 < M ∧
+      ∀ (psi q : Real), M ≤ psi → q ∈ Set.Icc (0 : Real) 1 →
+        BoschlooOrdering.finiteMaskMass observed .less psi q ≤
+          C / psi ^ min observed.y (n1 - observed.x)
+
+#check @Structural.positiveInfinityUnsupportedFinitePBound :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    0 < observed.y → 0 < n1 - observed.x →
+    ∃ C M : Real, 0 < C ∧ 1 < M ∧
+      ∀ (psi : Real), M ≤ psi →
+        BoschlooOrdering.finiteP observed .less psi ≤
+          C / psi ^ min observed.y (n1 - observed.x)
+
+#check @Structural.orEndpointUniformLimits :
+  ∀ {n1 n0 : Nat} (observed : TableAt n1 n0),
+    (0 < observed.x → 0 < n0 - observed.y →
+      ∃ C delta : Real, 0 < C ∧ 0 < delta ∧ delta ≤ 1 ∧
+        ∀ (psi : Real), 0 < psi → psi ≤ delta →
+          BoschlooOrdering.finiteP observed .greater psi ≤
+            C * psi ^ min observed.x (n0 - observed.y)) ∧
+    (0 < observed.y → 0 < n1 - observed.x →
+      ∃ C M : Real, 0 < C ∧ 1 < M ∧
+        ∀ (psi : Real), M ≤ psi →
+          BoschlooOrdering.finiteP observed .less psi ≤
+            C / psi ^ min observed.y (n1 - observed.x))
 
 #check @RootSignCertificate.checkerSound :
   ∀ (certificate : RootSignCertificate) (polynomial : Polynomial ℚ)
@@ -1435,7 +1587,8 @@ structural value `s=1` is never coerced through the finite formula `s/(1-s)`.
 | root/sign completeness | normalize every rational polynomial/interval; replay sound checker; require complete root/sign-cell coverage | normalization digest, roots, multiplicities, sign cells, checker result | exact fallback unresolved; refuse |
 | mask sandwich | lower/upper mask digests and subset replay | unresolved comparison count and refinements | refine or refuse |
 | structural OR endpoint pair and threshold | direct `or` support predicate, ordered `(p_greater,p_less)` pair, exact decoded side level, inclusive two-direction comparison, and Boschloo-OR-only dispatch | endpoint tag, support result, pair, `alpha_side`, per-direction comparisons, construction ID | no structural classification; never reuse for RR |
-| structural endpoint mask stratum and uniform limit | replay exact zero/infinity mask strata and the checked nuisance-uniform bound parameters or theorem-linked limit certificate; finite enumeration is supporting evidence only | mask digest, exponent, constant/region certificate, direction, reciprocal-symmetry replay | no complete-domain USC or global result |
+| structural-fibre validity and complete-domain coverage bridge | record `U-STRUCT-OR-VALID-001`, positive-group-total branch, endpoint tag, direct `or` support predicate, B.9 pair, and exact decoded side level; cross-sectional execution retains zero-total no-return | structural-fibre theorem ID, endpoint tag, support result, pair, `alpha_side`, positive-total/no-return branch | no complete-domain calibration claim |
+| eventual finite endpoint mask and uniform limit | replay one `delta`/`M`, actual finite-mask digests for its certified region, the exact `finiteMaskMass` product-binomial event equation, the `finiteP` nuisance-supremum equation, the common exponent, and the theorem-linked nuisance-uniform bound; finite enumeration is supporting evidence only | finite-mask construction ID, mass-law digest, `delta` or `M`, exponent, constant/region certificate, direction, reciprocal finite-mask replay | no complete-domain USC or global result |
 | compact/beta order isomorphism and hull transport | theorem IDs; exact structural tags; rational finite transform and nonempty-hull replay | compact and beta endpoints, membership source, both hulls | no global result |
 | moving-mask upper semicontinuity and closedness | replay exact region cover, inclusive breakpoint ownership, interior continuity hypotheses, B.9 endpoint pairs, and `U-STRUCT-OR-MASK-001`/`U-STRUCT-OR-LIMIT-001` composition | region/root digests, endpoint-limit certificate, boundary owners, directional superlevel and two-sided set records | no complete-topology or hull result |
 | cell quantifiers | cell-wide lower acceptance witnesses and one-direction upper rejection covers | effect cell, direction, witnesses/covers | leaf remains unresolved |
@@ -1455,10 +1608,10 @@ replay obligation bars the associated result.
 
 #### B.16.6 Claim ceiling and approval state
 
-This exact-head candidate proposes the statistical identity, domains,
-quantifiers, assurance states, proof targets, and runtime obligations for owner
-review. Those become U0 authority only after immutable-SHA approval and merge.
-It does not prove the target theorems, validate a Python implementation,
+This document specifies the statistical identity, domains, quantifiers,
+assurance states, proof targets, and runtime obligations. It is U0 authority
+only when introduced to `main` by an explicitly owner-approved immutable-head
+merge. It does not prove the target theorems, validate a Python implementation,
 establish floating-point correctness, coverage in shipped code, performance, or
 release readiness.
 Private or records-only Lean results remain `formalised-only` until ported,
