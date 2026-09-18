@@ -170,6 +170,115 @@ EXPECTED_STRUCTURAL_OR_ENDPOINT: dict[str, Any] = {
     },
 }
 
+EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE: dict[str, Any] = {
+    "schema": "exactcis.unconditional.mathematical_review_provenance.v1",
+    "packet_schema": "exactcis.mathematical_review.packet.v1",
+    "packet_filename": "exactcis_1_2_0_math_packet.zip",
+    "packet_sha256": (
+        # pragma: allowlist nextline secret -- public checksum
+        "b2b0a2ff80c1f744a8535a173316402ed235cbe8e25731d4564f6477de5fee43"
+    ),
+    "packet_hash_note": "public artifact checksum; # pragma: allowlist secret",
+    "review_filename": "MATHEMATICAL_REVIEW_1_2_0.md",
+    "review_file_sha256": (
+        # pragma: allowlist nextline secret -- public checksum
+        "6f282cbaadc3feb3b8e93733f0e4e894cbf7180b4c02f4a6db627eea5c30cae2"
+    ),
+    "review_hash_note": "public artifact checksum; # pragma: allowlist secret",
+    # pragma: allowlist nextline secret -- public revision
+    "reviewed_main_sha": "a308c7452ede2298f883db6926e12ca3891acb98",
+    "main_revision_note": "public Git revision; # pragma: allowlist secret",
+    # pragma: allowlist nextline secret -- public revision
+    "reviewed_u0_sha": "42b3d4e2e16ff2bbe557e77fb52530ce724ae7e6",
+    "u0_revision_note": "public Git revision; # pragma: allowlist secret",
+    "status": "research_proofs_and_executed_checks_not_release_candidate",
+    "scope": "boschloo_or_u0_only",
+    "claim_ceiling": (
+        "research proofs and finite regression evidence only; not Lean verification, "
+        "runtime conformance, release approval, or a U1/U2 fixture source"
+    ),
+}
+
+EXPECTED_MATHEMATICAL_TARGET_ROWS: dict[str, tuple[str, str]] = {
+    "U-BOSCH-FISHER-ENVELOPE-001": (
+        "ExactCIs.Unconditional.BoschlooOrdering.fisherDomination",
+        "unshipped target: cheap rejection envelope and T1-min endpoint separation",
+    ),
+    "U-BOSCH-MASK-STRATUM-001": (
+        "ExactCIs.Unconditional.BoschlooOrdering.effectMaskStratification",
+        "unshipped target: exact mask cells and exceptional-point owner",
+    ),
+    "U-BOSCH-INTERIOR-ROOT-001": (
+        "ExactCIs.Unconditional.ThresholdDecision.nontrivialBoschlooInteriorRoot",
+        "unshipped target: exact fixed-null accept/reject classifier",
+    ),
+    "U-PARAMETRIC-ROOT-001": (
+        "ExactCIs.Unconditional.GlobalInversion.parametricRootStratum",
+        "unshipped target: exact whole-stratum classifier",
+    ),
+    "U-ALGEBRAIC-POINT-001": (
+        "ExactCIs.Unconditional.GlobalInversion.exceptionalAlgebraicPoint",
+        "unshipped target: exceptional-effect verifier and fail-closed scheduler",
+    ),
+}
+
+EXPECTED_REVIEW_CORRESPONDENCE: dict[str, tuple[str, str, str]] = {
+    "U-BOSCH-FISHER-ENVELOPE-001": (
+        "unshipped exclusion scheduler: replay actual-mask Fisher domination "
+        "at finite positive effect; observed-margin coefficients, positive "
+        "rational side level, directional exponents and cutoff inequalities",
+        "theorem target, observed margin, direction, `r`, `C0_fisher`, "
+        "`Cinf_fisher`, `delta_fisher`, `M_fisher`, finite-region certificate",
+        "no envelope-based rejection; continue another checked route or "
+        "refuse; never return a Fisher interval",
+    ),
+    "U-BOSCH-MASK-STRATUM-001": (
+        "unshipped mask partitioner: verify signed cross-products, positive "
+        "denominators, permanent zero-polynomial ties, complete positive "
+        "ordering-root isolation and inclusive point ownership",
+        "theorem target, comparison polynomials, denominator proofs, "
+        "identity-tie records, root isolators, chamber masks, "
+        "exceptional-point owners",
+        "mask unresolved; retain a checked enclosure or refuse; never "
+        "substitute a neighbouring mask",
+    ),
+    "U-BOSCH-INTERIOR-ROOT-001": (
+        "unshipped fixed-null classifier: check finite positive effect, "
+        "positive exact side level, actual mask and observed tail below one; "
+        "verify original endpoint signs, squarefree root-set identities and "
+        "signed PRS/Sturm replay",
+        "theorem target, effect, direction, `r`, mask digest, original `H`, "
+        "squarefree representative, root-set identities, positive-scaling "
+        "checks, endpoint variations, distinct-root count",
+        "no root-based classification without checked evidence; use the "
+        "generic/full-mask branch when applicable or refuse",
+    ),
+    "U-PARAMETRIC-ROOT-001": (
+        "unshipped whole-stratum classifier: verify fixed-mask chamber, "
+        "squarefree correspondence over `Q(psi)`, PRS identities, guarded "
+        "specialisation and endpoint signs at every real effect; preserve "
+        "`for every effect there exists a nuisance`",
+        "theorem target, chamber, direction, rational coefficient data, "
+        "squarefree identities, nonzero guard polynomials, checked zero-entry "
+        "identities, root isolators, degree sequence, endpoint variations, "
+        "constant root count",
+        "retain a checked `BOUNDARY_ENCLOSURE` or refuse; no common-witness "
+        "or sampled replacement",
+    ),
+    "U-ALGEBRAIC-POINT-001": (
+        "unshipped exceptional-point verifier: verify the defining polynomial "
+        "and rational isolator select one real embedding; recompute the "
+        "actual inclusive mask and replay the specialised root/sign "
+        "certificate over that embedding, including generic degenerate "
+        "branches",
+        "theorem target, defining polynomial, rational isolator, selected "
+        "real embedding, exact comparison signs, actual mask digest, "
+        "specialised objective and certificate, directional decisions",
+        "retain a checked `BOUNDARY_ENCLOSURE` or refuse; no classification "
+        "from neighbouring strata",
+    ),
+}
+
 EXPECTED_CONTRACT_IDS = (
     "U-MANIFEST-001",
     "U-DESIGN-001",
@@ -186,12 +295,15 @@ EXPECTED_CONTRACT_IDS = (
     "U-ATTAIN-001",
     "U-BOSCH-ORDER-001",
     "U-BOSCH-REP-001",
+    "U-BOSCH-FISHER-ENVELOPE-001",
+    "U-BOSCH-MASK-STRATUM-001",
     "U-BOSCH-BREAKPOINT-001",
     "U-BOSCH-SWAP-001",
     "U-MASK-001",
     "U-THRESH-001",
     "U-BERN-CERT-001",
     "U-ROOT-CERT-001",
+    "U-BOSCH-INTERIOR-ROOT-001",
     "U-EXACT-P-001",
     "U-COVER-001",
     "U-STRUCT-OR-001",
@@ -202,6 +314,8 @@ EXPECTED_CONTRACT_IDS = (
     "U-ACCEPTED-CLOSED-001",
     "U-EFFECT-MASK-001",
     "U-EFFECT-QUANT-001",
+    "U-PARAMETRIC-ROOT-001",
+    "U-ALGEBRAIC-POINT-001",
     "U-INNER-OUTER-001",
     "U-COMPLETION-001",
     "U-HULL-001",
@@ -705,6 +819,154 @@ def _assert_structural_repair_authority(text: str) -> None:
     assert "BoschlooDirectionalTail" not in limits
 
 
+def _assert_mathematical_review_provenance(payload: dict[str, Any]) -> None:
+    assert (
+        payload["schema"] == "exactcis.unconditional.mathematical_review_provenance.v1"
+    )
+    assert payload["packet_schema"] == "exactcis.mathematical_review.packet.v1"
+    assert payload["packet_filename"] == "exactcis_1_2_0_math_packet.zip"
+    assert (
+        payload["packet_sha256"]
+        == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE["packet_sha256"]
+    )
+    assert (
+        payload["review_filename"]
+        == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE["review_filename"]
+    )
+    assert (
+        payload["review_file_sha256"]
+        == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE["review_file_sha256"]
+    )
+    assert (
+        payload["reviewed_main_sha"]
+        == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE["reviewed_main_sha"]
+    )
+    assert (
+        payload["reviewed_u0_sha"]
+        == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE["reviewed_u0_sha"]
+    )
+    assert (
+        payload["status"] == "research_proofs_and_executed_checks_not_release_candidate"
+    )
+    assert payload["scope"] == "boschloo_or_u0_only"
+    for fragment in (
+        "not Lean verification, runtime conformance, release approval",
+        "or a U1/U2 fixture source",
+    ):
+        assert fragment in payload["claim_ceiling"]
+
+
+def _assert_fisher_envelope_authority(text: str) -> None:
+    section = text.split(
+        "#### B.5.1 Fisher domination and finite endpoint envelope", 1
+    )[1].split("#### B.5.2 Finite algebraic mask strata", 1)[0]
+    normalized = " ".join(section.split())
+    required = (
+        "P[psi,q](R_dir(psi)) <= F_dir(a,c;psi),",
+        "finiteP(observed,dir,psi) <= F_dir(a,c;psi).",
+        "For the observed table `(a,b,c,d)` and its margin `m=a+c`,",
+        "e0 = a-ell = min(a,d),",
+        "C0_fisher = sum[k=a..h] c_k / c_ell,",
+        "finiteP(observed,greater,psi) <= C0_fisher * psi^e0 for 0<psi<=1.",
+        "einf = h-a = min(b,c),",
+        "Cinf_fisher = sum[k=ell..a] c_k / c_h,",
+        "finiteP(observed,less,psi) <= Cinf_fisher / psi^einf for psi>=1.",
+        "delta_fisher = min(1/2, r/(2*C0_fisher)),",
+        "M_fisher = max(2, 2*Cinf_fisher/r)",
+        "Fisher domination is an exclusion theorem only:",
+        "no implementation may return a Fisher interval under the Boschloo name.",
+        "does **not** replace the actual-finite-mask route",
+        "`U-STRUCT-OR-MASK-001` and `U-STRUCT-OR-LIMIT-001`",
+        "`C0_mask` and `Cinf_mask`",
+    )
+    assert all(" ".join(fragment.split()) in normalized for fragment in required)
+
+    structural_heading = "### B.9 Structural decisions and observed point estimates"
+    structural = text.split(structural_heading, 1)[1].split(
+        "For positive group totals", 1
+    )[0]
+    structural_normalized = " ".join(structural.split())
+    assert (
+        "B.5.1 Fisher envelope independently supplies a certified finite-effect "
+        "separation." in structural_normalized
+    )
+    assert "does not assign either structural pair" in structural_normalized
+    assert (
+        "direct support-based authority at the tagged endpoints"
+        in structural_normalized
+    )
+
+
+def _assert_fixed_null_reduction_authority(text: str) -> None:
+    section = text.split("#### B.6.1 Nontrivial Boschloo interior-root reduction", 1)[
+        1
+    ].split("If ordering comparison yields certified masks", 1)[0]
+    normalized = " ".join(section.split())
+    required = (
+        "call the directional case nontrivial when `F_d(a,c;psi)<1`.",
+        "H_d,psi(0) = -r < 0,",
+        "H_d,psi(1) = -r*psi^n1 < 0.",
+        "finiteP(observed,d,psi) >= r\n"
+        "    iff there exists q in (0,1) with H_d,psi(q) = 0.",
+        "its mask is the full sample space and the directional p-value is exactly one",
+        "deliberately outside this endpoint-negative specialisation.",
+        "zero-level, zero-polynomial, constant, degree-drop, and "
+        "endpoint-root branches",
+        "checked squarefree reduction must preserve exactly the real root set",
+        "Squarefree reduction need not preserve the sign of `H`;",
+        "original `H` retains the endpoint signs and accepted-equality semantics.",
+        "Positive scaling is a separate normalisation check",
+        "does not assert that a squarefree representative is a positive "
+        "multiple of `H`.",
+        "A repeated or even-multiplicity interior root still accepts.",
+        "Neither numerical maximisation, an argmax enclosure, "
+        "stationary-point enumeration, nor a rational grid",
+    )
+    assert all(" ".join(fragment.split()) in normalized for fragment in required)
+
+
+def _assert_global_root_strata_authority(text: str) -> None:
+    mask_section = text.split("#### B.5.2 Finite algebraic mask strata", 1)[1].split(
+        "### B.6 Exact fixed-null decision", 1
+    )[0]
+    section = text.split(
+        "#### B.11.1 Exact fixed-mask strata and exceptional effects", 1
+    )[1].split("Let the extended beta domain", 1)[0]
+    normalized = " ".join(section.split())
+    mask_required = (
+        "`z in R_d(psi)` exactly when `G_z(psi)<=0`.",
+        "zero polynomial is a permanent equality tie",
+        "separately owned algebraic comparison points",
+        "recompute the actual inclusive mask",
+    )
+    stratum_required = (
+        "take a squarefree representative over `Q(psi)`",
+        "content and squarefree-specialisation guards",
+        "An identically zero endpoint entry is recorded as a checked zero identity,",
+        "excluded from partition guards, and omitted when counting sign variations.",
+        "Its denominator and squarefree-specialisation guards remain in force.",
+        "Isolate roots only of nonzero guard polynomials;",
+        "an isolated zero of a nonzero entry still owns an exceptional effect",
+        "at **every real effect**.",
+        "for every effect there exists a nuisance",
+        "not assert one nuisance witness for the entire stratum.",
+        "Squarefree reduction occurs before resultants or projection.",
+        "raw resultant with its `q`-derivative vanishes identically",
+        "actual inclusive mask, then specialises the root certificate",
+        "must not evaluate a parameterised chain through a vanishing denominator",
+        "use a neighbouring mask",
+        "retains a `BOUNDARY_ENCLOSURE` or refuses",
+    )
+    assert "G_z(psi) = P_z(psi)*W_o(psi) - P_o(psi)*W_z(psi)" in mask_section
+    assert all(
+        " ".join(fragment.split()) in " ".join(mask_section.split())
+        for fragment in mask_required
+    )
+    assert all(
+        " ".join(fragment.split()) in normalized for fragment in stratum_required
+    )
+
+
 def _contract_ids(text: str) -> list[str]:
     table = text.split("### B.16 Formalisation target table", 1)[1].split(
         "#### B.16.1 Theorem dependency DAG", 1
@@ -730,6 +992,87 @@ def _assert_contract_ids(text: str) -> None:
     assert tuple(identifiers) == EXPECTED_CONTRACT_IDS
 
 
+def _assert_unshipped_mathematical_target_rows(text: str) -> None:
+    table = text.split("### B.16 Formalisation target table", 1)[1].split(
+        "#### B.16.1 Theorem dependency DAG", 1
+    )[0]
+    rows = {
+        row.split("|", 2)[1].strip().strip("`"): row
+        for row in table.splitlines()
+        if row.startswith("| `U-")
+    }
+    for contract_id, (target, consumer) in EXPECTED_MATHEMATICAL_TARGET_ROWS.items():
+        row = rows[contract_id]
+        cells = row.removeprefix("|").removesuffix("|").split("|")
+        assert len(cells) == 6
+        assert cells[2].strip() == f"`{target}`"
+        assert cells[5].strip() == consumer
+        assert cells[5].strip().startswith("unshipped target:")
+
+
+def _assert_adversarial_review_boundary(text: str) -> None:
+    adversarial_heading = "#### B.16.3 Named adversarial attacks and attacked premises"
+    section = text.split(adversarial_heading, 1)[1].split(
+        "#### B.16.4 Lean-ready signatures and coercion boundaries", 1
+    )[0]
+    normalized = " ".join(section.split())
+    required = (
+        "non-dyadic exact-equality tangency and even-multiplicity root",
+        "persistent equality ridge and singleton algebraic acceptance",
+        "inclusive ordering tie",
+        "generic adversarial classes, not promoted fixture authority.",
+        "remain in the ignored local review packet",
+        "U0 neither publishes them nor treats them as U1/U2 fixture inputs.",
+    )
+    assert all(" ".join(fragment.split()) in normalized for fragment in required)
+
+
+def _assert_review_correspondence(text: str) -> None:
+    section = text.split("#### B.16.5 Theorem-to-runtime correspondence", 1)[1].split(
+        "#### B.16.6 Claim ceiling and approval state", 1
+    )[0]
+    records: dict[str, tuple[str, ...]] = {}
+    for row in section.splitlines():
+        if not row.startswith("| `U-"):
+            continue
+        cells = tuple(
+            " ".join(cell.split())
+            for cell in row.removeprefix("|").removesuffix("|").split("|")
+        )
+        assert len(cells) == 4
+        identifier = cells[0].strip("`")
+        assert identifier not in records, "duplicate review correspondence"
+        records[identifier] = cells[1:]
+    assert records == EXPECTED_REVIEW_CORRESPONDENCE
+    assert records.keys() == EXPECTED_MATHEMATICAL_TARGET_ROWS.keys()
+    for target, _ in EXPECTED_MATHEMATICAL_TARGET_ROWS.values():
+        declaration = target.removeprefix("ExactCIs.Unconditional.")
+        assert f"#check @{declaration} :" in text
+
+
+def _assert_review_dependency_edges(text: str) -> None:
+    section = text.split("#### B.16.1 Theorem dependency DAG", 1)[1].split(
+        "#### B.16.2 Hard-proof route and required infrastructure", 1
+    )[0]
+    normalized = " ".join(section.split())
+    required = (
+        "U-BOSCH-ORDER-001 + U-OR-MASS-001 -> U-BOSCH-FISHER-ENVELOPE-001",
+        "|-> U-BOSCH-MASK-STRATUM-001",
+        "U-ROOT-CERT-001 + U-BOSCH-ORDER-001 + U-THRESH-001 + U-ATTAIN-001 "
+        "-> U-BOSCH-INTERIOR-ROOT-001",
+        "U-BOSCH-MASK-STRATUM-001 + U-BOSCH-INTERIOR-ROOT-001 "
+        "+ U-ROOT-CERT-001 -> U-PARAMETRIC-ROOT-001",
+        "U-BOSCH-MASK-STRATUM-001 + U-ROOT-CERT-001 -> U-ALGEBRAIC-POINT-001",
+        "U-PARAMETRIC-ROOT-001 + U-ALGEBRAIC-POINT-001 "
+        "-> exact cell certificates for U-EFFECT-QUANT-001;",
+        "absent exceptional-point evidence -> BOUNDARY_ENCLOSURE or refusal",
+        "U-BOSCH-FISHER-ENVELOPE-001 "
+        "-> certified finite exclusions and T1-min endpoint separation only",
+        "U-STRUCT-OR-MASK-001 + U-OR-MASS-001 -> U-STRUCT-OR-LIMIT-001",
+    )
+    assert all(fragment in normalized for fragment in required)
+
+
 def test_u0_authority_blocks_are_exact() -> None:
     text = _text()
     manifest = _json_block(text, "release-manifest")
@@ -737,18 +1080,329 @@ def test_u0_authority_blocks_are_exact() -> None:
     assurance = _json_block(text, "assurance-contract")
     breakpoint = _json_block(text, "breakpoint-contract")
     structural_endpoint = _json_block(text, "structural-or-endpoint-contract")
+    review_provenance = _json_block(text, "mathematical-review-provenance")
     assert manifest == EXPECTED_MANIFEST
     assert terminal == EXPECTED_TERMINAL
     assert assurance == EXPECTED_ASSURANCE
     assert breakpoint == EXPECTED_BREAKPOINT
     assert structural_endpoint == EXPECTED_STRUCTURAL_OR_ENDPOINT
+    assert review_provenance == EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE
     _assert_manifest_authority(manifest)
     _assert_terminal_authority(terminal)
     _assert_assurance_authority(assurance)
     _assert_breakpoint_authority(breakpoint)
     _assert_structural_or_endpoint_authority(structural_endpoint)
+    _assert_mathematical_review_provenance(review_provenance)
     _assert_binding_text(text)
     _assert_structural_repair_authority(text)
+    _assert_fisher_envelope_authority(text)
+    _assert_fixed_null_reduction_authority(text)
+    _assert_global_root_strata_authority(text)
+    _assert_unshipped_mathematical_target_rows(text)
+    _assert_adversarial_review_boundary(text)
+    _assert_review_correspondence(text)
+    _assert_review_dependency_edges(text)
+
+
+def test_mathematical_review_provenance_mutations_fail() -> None:
+    mutations = (
+        lambda payload: payload.update(
+            {"status": "formal_proof_and_release_candidate"}
+        ),
+        lambda payload: payload.update({"scope": "all_unconditional_methods"}),
+        lambda payload: payload.update({"packet_sha256": "0" * 64}),
+        lambda payload: payload.update({"review_file_sha256": "0" * 64}),
+        lambda payload: payload.update(
+            {"claim_ceiling": "release approval and production conformance"}
+        ),
+    )
+    for mutate in mutations:
+        payload = copy.deepcopy(EXPECTED_MATHEMATICAL_REVIEW_PROVENANCE)
+        mutate(payload)
+        with pytest.raises(AssertionError):
+            _assert_mathematical_review_provenance(payload)
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        ("F_d(a,c;psi)<1", "F_d(a,c;psi)<=1"),
+        ("H_d,psi(1) = -r*psi^n1 < 0.", "H_d,psi(1) = r*psi^n1 > 0."),
+        ("H_d,psi(q) = 0.", "H_d,psi(q) > 0."),
+        (
+            "Squarefree\nreduction need not preserve the sign of `H`;",
+            "Squarefree reduction preserves the sign of `H`;",
+        ),
+        (
+            "the original `H` retains the\n"
+            "endpoint signs and accepted-equality semantics.",
+            "the reduced polynomial replaces the original endpoint signs.",
+        ),
+        (
+            "If the observed tail is\n"
+            "one, its mask is the full sample space and the directional "
+            "p-value is exactly\n"
+            "one; it is deliberately outside this endpoint-negative specialisation.",
+            "The full-mask case uses the endpoint-negative interior-root "
+            "specialisation.",
+        ),
+        (
+            "A repeated\nor even-multiplicity interior root still accepts.",
+            "A repeated interior root rejects.",
+        ),
+        (
+            "Neither numerical\n"
+            "maximisation, an argmax enclosure, stationary-point "
+            "enumeration, nor a rational\n"
+            "grid is a required decision path.",
+            "A numerical maximisation is a required decision path.",
+        ),
+    ),
+)
+def test_fixed_null_reduction_mutations_fail(old: str, new: str) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_fixed_null_reduction_authority(text.replace(old, new, 1))
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "P[psi,q](R_dir(psi)) <= F_dir(a,c;psi),",
+            "P[psi,q](R_dir(psi)) >= F_dir(a,c;psi),",
+        ),
+        (
+            "e0 = a-ell = min(a,d),",
+            "e0 = a-ell = min(b,c),",
+        ),
+        (
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^e0",
+            "finiteP(observed,less,psi) <= C0_fisher * psi^e0",
+        ),
+        (
+            "finiteP(observed,less,psi) <= Cinf_fisher / psi^einf",
+            "finiteP(observed,less,psi) >= Cinf_fisher / psi^einf",
+        ),
+        (
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^e0",
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^einf",
+        ),
+        (
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^e0",
+            "finiteP(observed,greater,psi) <= Cinf_fisher * psi^e0",
+        ),
+        (
+            "einf = h-a = min(b,c),",
+            "einf = h-a = min(a,d),",
+        ),
+        (
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^e0       for 0<psi<=1.",
+            "finiteP(observed,greater,psi) <= C0_fisher * psi^e0       for psi>=1.",
+        ),
+        (
+            "finiteP(observed,less,psi) <= Cinf_fisher / psi^einf      for psi>=1.",
+            "finiteP(observed,less,psi) <= Cinf_fisher / psi^einf      for 0<psi<=1.",
+        ),
+        (
+            "delta_fisher = min(1/2, r/(2*C0_fisher)),",
+            "delta_fisher = max(1/2, r/(2*C0_fisher)),",
+        ),
+        (
+            "M_fisher = max(2, 2*Cinf_fisher/r)",
+            "M_fisher = min(2, 2*Cinf_fisher/r)",
+        ),
+        (
+            "Fisher domination is an\nexclusion theorem only:",
+            "Fisher domination authorizes a Fisher return:",
+        ),
+        (
+            "does **not** replace the actual-finite-mask route",
+            "replaces the actual-finite-mask route",
+        ),
+    ),
+)
+def test_fisher_envelope_mutations_fail(old: str, new: str) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_fisher_envelope_authority(text.replace(old, new, 1))
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "`z in R_d(psi)` exactly when `G_z(psi)<=0`.",
+            "`z in R_d(psi)` exactly when `G_z(psi)<0`.",
+        ),
+        (
+            "take a squarefree\nrepresentative over `Q(psi)`",
+            "take an unreduced representative over `Q(psi)`",
+        ),
+        (
+            "excluded from partition guards, and omitted when counting "
+            "sign variations.",
+            "included in partition guards and assigned a positive sign.",
+        ),
+        (
+            "Its denominator and squarefree-specialisation guards remain in force.",
+            "Its denominator and specialisation guards are discarded.",
+        ),
+        (
+            "roots only of nonzero guard polynomials;",
+            "roots of every guard polynomial including zero;",
+        ),
+        (
+            "an isolated zero of a nonzero entry\nstill owns an exceptional effect",
+            "an isolated zero of a nonzero entry is discarded as an identity",
+        ),
+        (
+            "not assert one nuisance witness for the\nentire stratum.",
+            "assert one nuisance witness for the entire stratum.",
+        ),
+        (
+            "recomputes the actual\n"
+            "inclusive mask, then specialises the root certificate",
+            "uses a neighbouring mask and skips specialisation",
+        ),
+        (
+            "retains a `BOUNDARY_ENCLOSURE` or refuses",
+            "classifies every exceptional point from neighbouring strata",
+        ),
+    ),
+)
+def test_global_root_strata_mutations_fail(old: str, new: str) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_global_root_strata_authority(text.replace(old, new, 1))
+
+
+@pytest.mark.parametrize("psi", (Fraction(1, 4), Fraction(1, 2), Fraction(3, 4)))
+def test_generic_squarefree_sturm_zero_entry_contract(psi: Fraction) -> None:
+    """Generic exact certificate check; no Boschloo or U1/U2 fixture authority."""
+
+    def chain(q: Fraction) -> tuple[Fraction, Fraction, Fraction]:
+        return q * q - psi, 2 * q, psi
+
+    def variations(values: tuple[Fraction, ...]) -> int:
+        nonzero = [value for value in values if value != 0]
+        return sum(left * right < 0 for left, right in zip(nonzero, nonzero[1:]))
+
+    for q in (Fraction(0), Fraction(1, 3), Fraction(2, 3), Fraction(1)):
+        squarefree, derivative, remainder = chain(q)
+        # S = (q/2) S' - psi is the checked negative-remainder identity.
+        assert squarefree == q * derivative / 2 - remainder
+        original = -((q * q - psi) ** 2)
+        assert original == -squarefree * squarefree
+        assert (original == 0) == (squarefree == 0)
+
+    assert chain(Fraction(0)) == (-psi, Fraction(0), psi)
+    assert chain(Fraction(1)) == (1 - psi, Fraction(2), psi)
+    assert variations(chain(Fraction(0))) == 1
+    assert variations(chain(Fraction(1))) == 0
+    assert -(psi**2) < 0 and -((1 - psi) ** 2) < 0
+    # The reduced polynomial is positive at one while the original is negative.
+    assert chain(Fraction(1))[0] > 0
+
+
+@pytest.mark.parametrize("identifier", tuple(EXPECTED_REVIEW_CORRESPONDENCE))
+@pytest.mark.parametrize("column", (1, 2, 3))
+def test_review_correspondence_field_mutations_fail(
+    identifier: str, column: int
+) -> None:
+    text = _text()
+    row = (
+        "| `"
+        + identifier
+        + "` | "
+        + " | ".join(EXPECTED_REVIEW_CORRESPONDENCE[identifier])
+        + " |"
+    )
+    assert text.count(row) == 1
+    cells = row.split("|")
+    cells[column + 1] = " unchecked replacement "
+    with pytest.raises(AssertionError):
+        _assert_review_correspondence(text.replace(row, "|".join(cells), 1))
+
+
+def test_review_correspondence_duplicate_fails() -> None:
+    text = _text()
+    identifier = "U-ALGEBRAIC-POINT-001"
+    row = (
+        "| `"
+        + identifier
+        + "` | "
+        + " | ".join(EXPECTED_REVIEW_CORRESPONDENCE[identifier])
+        + " |"
+    )
+    assert text.count(row) == 1
+    with pytest.raises(AssertionError, match="duplicate review correspondence"):
+        _assert_review_correspondence(text.replace(row, row + "\n" + row, 1))
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "U-THRESH-001 + U-ATTAIN-001\n    -> U-BOSCH-INTERIOR-ROOT-001",
+            "U-THRESH-001 alone\n    -> U-BOSCH-INTERIOR-ROOT-001",
+        ),
+        (
+            "U-BOSCH-MASK-STRATUM-001 + U-BOSCH-INTERIOR-ROOT-001\n"
+            "    + U-ROOT-CERT-001 -> U-PARAMETRIC-ROOT-001",
+            "U-BOSCH-MASK-STRATUM-001 alone -> U-PARAMETRIC-ROOT-001",
+        ),
+        (
+            "U-BOSCH-MASK-STRATUM-001 + U-ROOT-CERT-001\n    -> U-ALGEBRAIC-POINT-001",
+            "U-BOSCH-MASK-STRATUM-001 alone -> U-ALGEBRAIC-POINT-001",
+        ),
+        (
+            "absent exceptional-point evidence -> BOUNDARY_ENCLOSURE or refusal",
+            "absent exceptional-point evidence -> classify from adjacent cells",
+        ),
+        (
+            "U-STRUCT-OR-MASK-001 + U-OR-MASS-001\n    -> U-STRUCT-OR-LIMIT-001",
+            "U-BOSCH-FISHER-ENVELOPE-001 -> U-STRUCT-OR-LIMIT-001",
+        ),
+    ),
+)
+def test_review_dependency_mutations_fail(old: str, new: str) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_review_dependency_edges(text.replace(old, new, 1))
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "ExactCIs.Unconditional.GlobalInversion.parametricRootStratum",
+            "ExactCIs.Unconditional.GlobalInversion.sampledRootStratum",
+        ),
+        (
+            "unshipped target: exceptional-effect verifier and fail-closed scheduler",
+            "shipped runtime: exceptional-effect verifier",
+        ),
+    ),
+)
+def test_unshipped_mathematical_target_row_mutations_fail(old: str, new: str) -> None:
+    text = _text()
+    assert old in text
+    with pytest.raises(AssertionError):
+        _assert_unshipped_mathematical_target_rows(text.replace(old, new, 1))
+
+
+def test_adversarial_review_boundary_mutation_fails() -> None:
+    text = _text()
+    old = "U0 neither publishes them nor treats\nthem as U1/U2 fixture inputs."
+    mutated = text.replace(old, "U0 promotes them as U1/U2 fixture inputs.", 1)
+    assert mutated != text
+    with pytest.raises(AssertionError):
+        _assert_adversarial_review_boundary(mutated)
 
 
 def test_contract_ids_are_stable_unique_and_boschloo_only() -> None:
