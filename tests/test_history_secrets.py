@@ -63,3 +63,11 @@ def test_shallow_repository_is_rejected_before_scanning(
     output = capsys.readouterr().out
     assert "full Git clone" in output
     assert "fetch-depth: 0" in output
+
+
+def test_generated_oracle_allowlist_rejects_changed_content_and_paths() -> None:
+    for path in history_gate.ORACLE_PACKET_LINE_DIGESTS:
+        line = (history_gate.ROOT / path).read_text().rstrip("\n")
+        assert history_gate._allowed_reference_revision(path, line)
+        assert not history_gate._allowed_reference_revision("other.json", line)
+        assert not history_gate._allowed_reference_revision(path, line + "altered")

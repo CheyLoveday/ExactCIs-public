@@ -10,7 +10,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from fractions import Fraction as F
-from functools import cmp_to_key
 from math import gcd, lcm
 from typing import Any
 
@@ -378,7 +377,27 @@ def compare(a: Root, b: Root, work: Work) -> int:
 
 
 def merge_roots(roots: Sequence[Root], work: Work) -> tuple[Root, ...]:
-    ordered = sorted(roots, key=cmp_to_key(lambda a, b: compare(a, b, work)))
+    # Fix the comparison schedule: Python's native sort changes its calls
+    # across versions, which would change bounded-work counters and refusals.
+    ordered = list(roots)
+    width = 1
+    while width < len(ordered):
+        merged = []
+        for start in range(0, len(ordered), 2 * width):
+            left = ordered[start : start + width]
+            right = ordered[start + width : start + 2 * width]
+            i = j = 0
+            while i < len(left) and j < len(right):
+                if compare(left[i], right[j], work) <= 0:
+                    merged.append(left[i])
+                    i += 1
+                else:
+                    merged.append(right[j])
+                    j += 1
+            merged.extend(left[i:])
+            merged.extend(right[j:])
+        ordered = merged
+        width *= 2
     unique = []
     for root in ordered:
         if not unique or compare(unique[-1], root, work):

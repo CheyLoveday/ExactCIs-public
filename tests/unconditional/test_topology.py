@@ -220,12 +220,12 @@ def test_rehashed_scientific_mutations_are_rejected(packet, mutation):
         data["ideal_hull"]["lower_event"] = 0
     elif mutation == "cutoff":
         data["cutoffs"][1][4] += 1
-    target["output_sha256"] = base.digest("exactcis.topology.output.v3", data)
+    target["output_sha256"] = base.digest("exactcis.topology.output.v4", data)
     changed = copy.deepcopy(packet)
     changed["records"] = [target]
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v3",
-        "packet_sha256": base.digest("exactcis.topology.packet.v3", changed),
+        "schema_version": "exactcis.topology_manifest.v4",
+        "packet_sha256": base.digest("exactcis.topology.packet.v4", changed),
         "fixture_ids": [case],
     }
     with pytest.raises(ValueError, match="scientific replay mismatch"):
@@ -281,8 +281,8 @@ def test_topology_generator_runs_and_is_byte_identical(packet_bytes, tmp_path):
 
 def rehash_packet(packet):
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v3",
-        "packet_sha256": base.digest("exactcis.topology.packet.v3", packet),
+        "schema_version": "exactcis.topology_manifest.v4",
+        "packet_sha256": base.digest("exactcis.topology.packet.v4", packet),
         "fixture_ids": [r["fixture_id"] for r in packet["records"]],
     }
     return base.canonical_bytes(packet), base.canonical_bytes(manifest)

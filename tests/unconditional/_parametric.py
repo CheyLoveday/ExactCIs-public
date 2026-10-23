@@ -290,7 +290,9 @@ def projection(a: Sequence[Element]) -> dict[str, Any]:
             guards.update((e.numerator, e.denominator))
     # Guards define zero sets, so nonzero scalar multiples and multiplicities
     # may be removed. The signed original polynomials remain in the packet.
-    guards = tuple(sorted({primitive(g, a[0].work) for g in guards if len(g) > 1}))
+    guards = tuple(
+        sorted({primitive(g, a[0].work) for g in sorted(guards) if len(g) > 1})
+    )
     return {
         "zero": False,
         "guards": guards,

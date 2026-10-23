@@ -68,8 +68,8 @@ def generate(directory):
         "records": records,
     }
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v3",
-        "packet_sha256": replay.base.digest("exactcis.topology.packet.v3", packet),
+        "schema_version": "exactcis.topology_manifest.v4",
+        "packet_sha256": replay.base.digest("exactcis.topology.packet.v4", packet),
         "fixture_ids": [r["fixture_id"] for r in records],
     }
     directory.mkdir(parents=True, exist_ok=True)

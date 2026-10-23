@@ -7,14 +7,14 @@ They do not provide public production methods or close implementation issues
 [#45](https://github.com/CheyLoveday/ExactCIs-public/issues/45).
 
 The fixed-null packet contains 21 exact-rational diagnostic records. The
-version-3 topology packet contains seventeen complete effect topologies and one
+version-4 topology packet contains seventeen complete effect topologies and one
 **event-mask-only** record for the cubic ordering transition. It includes the
 complete `(4,4),(0,2)` example with 93 events and two accepted components, under
 the separately declared expanded diagnostic profile.
 
-Historical v1 and v2 topology packets/manifests remain byte-identical. Replay
+Historical v1, v2 and v3 topology packets/manifests remain byte-identical. Replay
 v1 with `8776f74329ba20bd173d9bf3e6329e5be19dd916` and v2 with
-`b9e49f674e7ca3bdfc25386b20aee99bb255b528`. Current replay selects v3,
+`b9e49f674e7ca3bdfc25386b20aee99bb255b528`. Replay v3 with `17860a0ed84e9b68422377742fadc71a27a97851`. Current replay selects v4,
 binds both named profiles and rejects altered source/version/profile identities.
 The fixed-null packet is unchanged.
 
@@ -120,5 +120,12 @@ release qualification remain later stages.
 The unchanged default profile now completes 41/42 measured cases (all observations
 with positive groups and total at most four). The larger disconnected case
 refuses the default degree limit. The unchanged expanded profile completes all
-42 measured cases; the disconnected case uses 480,468 of 500,000 wrapper calls.
+42 measured cases; the disconnected case uses 475,691 of 500,000 wrapper calls.
 This finite result is not a completeness or latency claim beyond the corpus.
+
+Version 4 fixes the root-comparison schedule with an explicit stable merge sort
+and orders guards before cache-sensitive normalization. This makes exact work
+counters reproducible across Python versions. Its LF checkout attributes retain
+canonical source/specification/fixture bytes on Windows. The disconnected case
+retains 93 events and the same accepted components/hull; one interior isolator
+and its cell witness differ from v3. Historical v3 evidence remains version-bound.

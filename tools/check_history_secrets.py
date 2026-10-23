@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -42,6 +43,27 @@ TIMING_EVIDENCE_WHEEL = re.compile(
 )
 
 
+# Reviewed generated scientific packets, pinned as complete canonical lines.
+# No path, field, entropy pattern, or scanner finding is excluded generally.
+ORACLE_PACKET_LINE_DIGESTS = {
+    "tests/references/unconditional/boschloo_fixed_null_v1.json": (
+        "9a12705c-ae466554-4438194c-0182e3ef-5d93aec0-7fde404c-73258c73-b1814057"
+    ),
+    "tests/references/unconditional/boschloo_topology_v1.json": (
+        "46c05f8a-4f140d3b-c0596e27-2e19ef9e-850b7307-bd62d2fa-971cc69f-1cc87512"
+    ),
+    "tests/references/unconditional/boschloo_topology_v2.json": (
+        "1dd35709-233c2004-75c805a7-281af6f6-0e999c12-d8626e2d-ac72b41d-3d08eab9"
+    ),
+    "tests/references/unconditional/boschloo_topology_v3.json": (
+        "927a6468-db805a3a-2cf5580b-5f29a69d-7f7b37c8-8d49de76-38849f2b-93d7ed20"
+    ),
+    "tests/references/unconditional/boschloo_topology_v4.json": (
+        "de56fa49-6f0defde-faa12731-3f7f703e-5a4b3364-45dcab26-e5778fea-cd98598d"
+    ),
+}
+
+
 def _git(*args: str, text: bool = True) -> str | bytes:
     completed = subprocess.run(
         ["git", *args],
@@ -68,6 +90,11 @@ def _full_history_error() -> str | None:
 
 
 def _allowed_reference_revision(path: str, line: str) -> bool:
+    packet_digest = ORACLE_PACKET_LINE_DIGESTS.get(path)
+    if packet_digest is not None:
+        return hashlib.sha256(line.encode()).hexdigest() == packet_digest.replace(
+            "-", ""
+        )
     if path.startswith("tests/references/") and SOURCE_REVISION.match(line):
         return any(source_sha in line for source_sha in REVIEWED_SOURCE_SHAS)
     allowed_citation_lines = {
@@ -195,8 +222,9 @@ def main() -> int:
         f"path/blob pairs across {revisions} public commits"
     )
     print(
-        "OK: reviewed allowlist is limited to frozen scientific-source SHAs "
-        "and the reviewed timing-evidence wheel checksum/commits"
+        "OK: reviewed allowlist is limited to frozen scientific-source SHAs, "
+        "the reviewed timing-evidence wheel checksum/commits, "
+        "and exact oracle packet lines"
     )
     return 0
 
