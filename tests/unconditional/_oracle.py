@@ -220,3 +220,89 @@ def structural_pair(
     if endpoint == "infinity":
         return Fraction(1), Fraction(int(c == 0 or a == n1))
     raise ValueError("endpoint must be zero or infinity")
+
+
+def subdivide_bernstein(
+    coefficients: Polynomial, split: Fraction = Fraction(1, 2)
+) -> tuple[Polynomial, Polynomial]:
+    """Exact de Casteljau controls on [0,split] and [split,1].
+
+    Each returned vector is parameterised by its own unit interval. This also
+    handles split=0/1: the degenerate child is the constant endpoint value.
+    """
+    _unit(split)
+    if not isinstance(coefficients, (tuple, list)) or not coefficients:
+        raise ValueError("Bernstein coefficients must be a nonempty tuple or list")
+    if any(
+        type(value) is not int and not isinstance(value, Fraction)
+        for value in coefficients
+    ):
+        raise ValueError("Bernstein coefficients must be exact integers or Fractions")
+    row = tuple(Fraction(value) for value in coefficients)
+    left = [row[0]]
+    right = [row[-1]]
+    while len(row) > 1:
+        row = tuple((1 - split) * a + split * b for a, b in zip(row, row[1:]))
+        left.append(row[0])
+        right.append(row[-1])
+    return tuple(left), tuple(reversed(right))
+
+
+def cutoff_vector(
+    n1: int, n0: int, observed: Point, psi: Fraction, direction: Direction
+) -> tuple[int, ...]:
+    """Independently reconstruct an inclusive Fisher cutoff at each total.
+
+    This uses cumulative normalised conditional weights, not rejection_mask's
+    candidate/observed cross products. For ``greater``, accepted x form a
+    suffix, encoded by its first x (hi+1 for empty); for ``less``, they form a
+    prefix, encoded by its last x (lo-1 for empty). Contiguity is checked rather
+    than inferred from the recorded first or last selected value.
+    """
+    threshold = fisher_tail(n1, n0, observed, psi, direction)
+    cutoffs = []
+    for margin in range(n1 + n0 + 1):
+        lo, hi = max(0, margin - n0), min(n1, margin)
+        weights = tuple(
+            comb(n1, x) * comb(n0, margin - x) * psi**x for x in range(lo, hi + 1)
+        )
+        normaliser = sum(weights, Fraction(0))
+        cumulative = Fraction(0)
+        accepted = []
+        for x, weight in zip(range(lo, hi + 1), weights):
+            cumulative += weight
+            numerator = (
+                cumulative if direction == "less" else normaliser - cumulative + weight
+            )
+            if numerator / normaliser <= threshold:
+                accepted.append(x)
+        if direction == "greater":
+            cutoff = accepted[0] if accepted else hi + 1
+            expected = list(range(cutoff, hi + 1))
+        else:
+            cutoff = accepted[-1] if accepted else lo - 1
+            expected = list(range(lo, cutoff + 1))
+        if accepted != expected:
+            raise ArithmeticError("Fisher accepted margin is not a contiguous tail")
+        cutoffs.append(cutoff)
+    return tuple(cutoffs)
+
+
+def expand_cutoffs(
+    n1: int, n0: int, cutoffs: tuple[int, ...], direction: Direction
+) -> Mask:
+    """Expand checked per-margin cutoff integers in sample_space order."""
+    _groups(n1, n0)
+    _direction(direction)
+    if not isinstance(cutoffs, (tuple, list)) or len(cutoffs) != n1 + n0 + 1:
+        raise ValueError("one cutoff is required for every total from 0 through N")
+    for margin, cutoff in enumerate(cutoffs):
+        lo, hi = max(0, margin - n0), min(n1, margin)
+        minimum, maximum = (lo, hi + 1) if direction == "greater" else (lo - 1, hi)
+        if type(cutoff) is not int or not minimum <= cutoff <= maximum:
+            raise ValueError("cutoff lies outside the margin's permitted tail bounds")
+    return tuple(
+        (x, y)
+        for x, y in sample_space(n1, n0)
+        if (x >= cutoffs[x + y] if direction == "greater" else x <= cutoffs[x + y])
+    )
