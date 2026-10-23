@@ -8,9 +8,9 @@ rebuilt over their selected real embedding, never classified by a neighbour.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from fractions import Fraction
-from math import gcd, lcm
+from math import comb, gcd, lcm
 from typing import Any
 
 from . import _polynomial as p
@@ -100,13 +100,20 @@ def exact_divide(a: Sequence[Element], b: Sequence[Element]) -> FieldPolynomial:
 def primitive_part(a: Sequence[Element]) -> tuple[FieldPolynomial, Element]:
     """Clear coefficient denominators/content, returning a = scale * primitive.
 
-    This identity uses rational polynomials before specialization, so it is
-    also valid at the selected embedding. No irreducibility is assumed.
+    Over Q(s), clear rational polynomial content. At a selected embedding,
+    normalize by a nonzero field coefficient; the identity then holds at that
+    embedding, not necessarily as an identity in Q(s). No irreducibility is assumed.
     """
     a = trim(a)
     w, root = a[0].work, a[0].root
     if iszero(a):
         return a, a[0].coerce(1)
+    if root is not None and root.rational is None:
+        # In Q(alpha), polynomial content in the ambient rational variable is
+        # representation-dependent. Normalize by one checked nonzero field
+        # coefficient instead, and retain its sign in the remainder evidence.
+        scale = a[-1]
+        return trim(tuple(c / scale for c in a)), scale
     w.tick("primitive_content")
     denominator = p.ONE
     for c in a:
@@ -153,6 +160,12 @@ def primitive_remainder(a: Sequence[Element], b: Sequence[Element]):
     a, b = trim(a), trim(b)
     if iszero(b):
         raise ValueError("division by zero field polynomial")
+    if a[0].root is not None and a[0].root.rational is None:
+        # Exact field division keeps coefficients reduced at the selected
+        # embedding. The generic Q(s) branch below remains fraction-free.
+        remainder = divide(a, b)[1]
+        result, scale = primitive_part(remainder)
+        return result, (scale,), ()
     numerators, denominators = [], []
     while not iszero(a) and len(a) >= len(b):
         shift = len(a) - len(b)
@@ -303,6 +316,49 @@ def decide(a: Sequence[Element]) -> dict[str, Any]:
             "accepted": True,
             "kind": "endpoint",
             "endpoint_signs": signs,
+            "original": encode_poly(a),
+        }
+    # Exact sufficient checks precede the complete root-count fallback. They
+    # use the original signed H; field normalization never defines acceptance.
+    for point in (Fraction(1, 2), Fraction(1, 4), Fraction(3, 4)):
+        witness = evaluate(a, point)
+        sign = witness.sign()
+        if sign >= 0:
+            return {
+                "accepted": True,
+                "kind": "rational_witness",
+                "point": point,
+                "value": encode_element(witness),
+                "sign": sign,
+                "original": encode_poly(a),
+            }
+    if a[0].root.rational is not None:
+        # Coercion at a rational selected root has already produced constants.
+        # Reuse the independent exact-rational certificate, avoiding repeated
+        # algebraic wrappers around its ordinary rational polynomial arithmetic.
+        coefficients = tuple(c.numerator[0] for c in a)
+        certificate = a[0].work.call("root_certificate", coefficients)
+        return {
+            "accepted": certificate.interior_roots > 0,
+            "kind": "rational_roots",
+            "certificate": asdict(certificate),
+            "original": encode_poly(a),
+        }
+    degree = len(a) - 1
+    controls = tuple(
+        sum(
+            (a[j] * Fraction(comb(k, j), comb(degree, j)) for j in range(k + 1)),
+            a[0].coerce(0),
+        )
+        for k in range(degree + 1)
+    )
+    control_signs = tuple(c.sign() for c in controls)
+    if all(sign < 0 for sign in control_signs):
+        return {
+            "accepted": False,
+            "kind": "negative_controls",
+            "controls": encode_poly(controls),
+            "signs": control_signs,
             "original": encode_poly(a),
         }
     chain = sturm(a)

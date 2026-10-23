@@ -43,7 +43,7 @@ def measure(max_total: int, *, expanded: bool = False) -> dict:
         else:
             row.update(
                 status="complete",
-                output_sha256=replay.base.digest("exactcis.topology.output.v2", result),
+                output_sha256=replay.base.digest("exactcis.topology.output.v3", result),
                 events=len(result["events"]),
                 components=len(result["components"]),
             )
@@ -51,11 +51,11 @@ def measure(max_total: int, *, expanded: bool = False) -> dict:
         results.append(row)
         print(f"{n1},{n0},{observed}: {row['status']}", flush=True)
     return {
-        "schema": "exactcis.topology_measurement.v2",
+        "schema": "exactcis.topology_measurement.v3",
         "domain": {"positive_groups_total_at_most": max_total, "extra": [4, 4, 0, 2]},
         "side_level": Fraction(1, 40),
         "profile": asdict(limits),
-        "profile_name": "expanded_diagnostic" if expanded else replay.PROFILE,
+        "profile_name": replay.EXPANDED_PROFILE if expanded else replay.PROFILE,
         "sources": {
             name: hashlib.sha256((replay.base.ROOT / name).read_bytes()).hexdigest()
             for name in replay.SOURCES

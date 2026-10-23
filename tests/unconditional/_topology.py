@@ -258,7 +258,15 @@ def topology(n1, n0, observed, level, *, work=None):
                 initial.extend(isolate(poly, F(0), F(1), work))
     ordering = separate(initial, work)
     events, projections, strata = list(ordering), [], []
-    projection_cache, guard_cache = {}, {}
+    projection_cache, guard_cache, threshold_cache = {}, {}, {}
+
+    def fixed_threshold(mask):
+        if mask not in threshold_cache:
+            threshold_cache[mask] = threshold(n1, n0, mask, level, work)
+        else:
+            work.tick("coefficient_cache_hit")
+        return threshold_cache[mask]
+
     for left, right in zip(ordering, ordering[1:]):
         sample = between(left, right, work)
         effect = rational_root(sample)
@@ -270,7 +278,7 @@ def topology(n1, n0, observed, level, *, work=None):
                 index = projection_cache[mask]
                 projection = projections[index]["certificate"]
             else:
-                h = threshold(n1, n0, mask, level, work)
+                h = fixed_threshold(mask)
                 projection = qpoly.projection(qpoly.specialize(h, None, work))
                 index = len(projections)
                 projection_cache[mask] = index
@@ -304,9 +312,7 @@ def topology(n1, n0, observed, level, *, work=None):
         else:
             masks = masks_at(n1, n0, comparisons, event, work)
             decisions = tuple(
-                qpoly.decide(
-                    qpoly.specialize(threshold(n1, n0, mask, level, work), event, work)
-                )
+                qpoly.decide(qpoly.specialize(fixed_threshold(mask), event, work))
                 for mask in masks
             )
             leaves.append(

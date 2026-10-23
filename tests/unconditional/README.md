@@ -7,15 +7,16 @@ They do not provide public production methods or close implementation issues
 [#45](https://github.com/CheyLoveday/ExactCIs-public/issues/45).
 
 The fixed-null packet contains 21 exact-rational diagnostic records. The
-version-2 topology packet contains fourteen complete effect topologies on declared small
-inputs and one **event-mask-only** record for the cubic ordering transition
-at groups `(4,4)`, observation `(0,2)`. It does not compute that larger table's
-complete disconnected confidence set.
+version-3 topology packet contains seventeen complete effect topologies and one
+**event-mask-only** record for the cubic ordering transition. It includes the
+complete `(4,4),(0,2)` example with 93 events and two accepted components, under
+the separately declared expanded diagnostic profile.
 
-The earlier `boschloo_topology_v1.json` and `topology_manifest_v1.json` are
-preserved historical bytes. Replay those with commit
-`8776f74329ba20bd173d9bf3e6329e5be19dd916`; the current checker selects v2 and
-rejects historical source/version identities. The fixed-null packet is unchanged.
+Historical v1 and v2 topology packets/manifests remain byte-identical. Replay
+v1 with `8776f74329ba20bd173d9bf3e6329e5be19dd916` and v2 with
+`b9e49f674e7ca3bdfc25386b20aee99bb255b528`. Current replay selects v3,
+binds both named profiles and rejects altered source/version/profile identities.
+The fixed-null packet is unchanged.
 
 ```sh
 python -m tests.unconditional._replay
@@ -69,12 +70,22 @@ expanded diagnostic is not a production capability proposal.
    polynomials may be reducible: arithmetic uses `P(alpha)/D(alpha)` with
    nonzero-denominator checks at the selected root. Modular inversion is used
    only after a Euclidean unit calculation and a verified inverse identity;
-   nonunits at other components retain the rational-function representation.
+   a denominator that vanishes only on other components permits their removal
+   by checked exact division and a reverified selected-root isolator. Existing
+   elements retain their selected embedding. At that embedding, remainders are
+   normalized by a nonzero field coefficient, retaining its signed scale;
+   ambient rational-polynomial content is not used as field normalization.
    Exact caches are scoped to one bounded work context; root-sign keys include
    the selected isolator. Equal roots can use the common defining factor,
    verified refinements are reused, and endpoint factors are removed before
    isolating the remaining roots. Recompute both inclusive masks at that effect. Zero polynomials,
    even-multiplicity tangencies, and degree drops retain equality acceptance.
+   Before a full root decision, exact endpoint/rational witnesses or strictly
+   negative Bernstein controls can settle the original signed threshold.
+   Otherwise the exact root fallback remains mandatory, including at tangencies.
+   Rational effects use the original rational certificate directly. Strict
+   interval signs precede unnecessary gcds; fixed-mask threshold polynomials
+   are cached within the bounded run.
 5. Use U0's separate structural pairs at zero/infinity. Alternate owned points
    and open intervals over the entire compact domain; retain singleton and
    disconnected components, endpoint attainment, and the ideal hull.
@@ -101,7 +112,13 @@ topology. Failures already occur below the grammar limit; these constants
 are diagnostic reference settings, not proposed production capabilities.
 
 Outstanding U1 work includes the full measured corpus through the intended
-scope, larger disconnected topology, and comparisons among generic tensor,
+scope and comparisons among generic tensor,
 cutoff/witness-cover and projected-event lanes. Production certificates and
 checkers, outward binary64 hulls, mathematical prerequisite integration and
 release qualification remain later stages.
+
+The unchanged default profile now completes 41/42 measured cases (all observations
+with positive groups and total at most four). The larger disconnected case
+refuses the default degree limit. The unchanged expanded profile completes all
+42 measured cases; the disconnected case uses 480,468 of 500,000 wrapper calls.
+This finite result is not a completeness or latency claim beyond the corpus.

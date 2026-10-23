@@ -10,15 +10,20 @@ from pathlib import Path
 
 from . import _replay as base
 from . import _topology as topology
-from ._algebraic import Limits
+from ._algebraic import Limits, Work
 from ._polynomial import OracleLimitError
 
-SCHEMA = "exactcis.unconditional.topology_packet.v2"
-PROCEDURE = "boschloo_or_u0_topology_reference_v2"
-RECORD = "exactcis.unconditional.topology_record.v2"
+SCHEMA = "exactcis.unconditional.topology_packet.v3"
+PROCEDURE = "boschloo_or_u0_topology_reference_v3"
+RECORD = "exactcis.unconditional.topology_record.v3"
 PROFILE = "algebraic_reference_v1"
-PACKET = "boschloo_topology_v2.json"
-MANIFEST = "topology_manifest_v2.json"
+EXPANDED_PROFILE = "algebraic_expanded_diagnostic_v1"
+PROFILES = {
+    PROFILE: Limits(),
+    EXPANDED_PROFILE: Limits(max_calls=500_000, max_degree=128),
+}
+PACKET = "boschloo_topology_v3.json"
+MANIFEST = "topology_manifest_v3.json"
 GENERATOR = "tools/unconditional_oracle/generate_topology.py"
 SOURCES = (
     *base.SOURCE_PATHS,
@@ -35,17 +40,22 @@ CLAIMS = {
 
 def derive(inputs):
     base._keys(inputs, {"kind", "n1", "n0", "observed", "level", "resource_profile"})
-    if inputs["resource_profile"] != PROFILE:
+    if (
+        not isinstance(inputs["resource_profile"], str)
+        or inputs["resource_profile"] not in PROFILES
+    ):
         raise ValueError("unknown topology resource profile")
     n1, n0, observed = base._table(inputs)
     level = base._level(inputs["level"])
     if inputs["kind"] == "topology":
-        return topology.topology(n1, n0, observed, level)
+        return topology.topology(
+            n1, n0, observed, level, work=Work(PROFILES[inputs["resource_profile"]])
+        )
     if inputs["kind"] == "ordering_anchor":
         if (n1, n0, observed) != (4, 4, (0, 2)) or level != base.Fraction(1, 40):
             raise ValueError("ordering anchor primitives changed")
         # U0's candidate (1,3), less direction, psi in (29/10,59/20).
-        return topology.ordering_anchor()
+        return topology.ordering_anchor(work=Work(PROFILES[inputs["resource_profile"]]))
     raise ValueError("unknown topology record kind")
 
 
@@ -59,9 +69,9 @@ def record(identity, inputs):
         "orientation": base.ORIENTATION,
         "claim_ceiling": CLAIMS[inputs["kind"]],
         "inputs": inputs,
-        "input_sha256": base.digest("exactcis.topology.input.v2", inputs),
+        "input_sha256": base.digest("exactcis.topology.input.v3", inputs),
         "derived": result,
-        "output_sha256": base.digest("exactcis.topology.output.v2", result),
+        "output_sha256": base.digest("exactcis.topology.output.v3", result),
     }
 
 
@@ -89,12 +99,12 @@ def verify(packet_bytes, manifest_bytes, *, root=base.ROOT):
     base._keys(manifest, {"schema_version", "packet_sha256", "fixture_ids"})
     if packet["schema_version"] != SCHEMA or packet["procedure_version"] != PROCEDURE:
         raise ValueError("unknown topology version")
-    if manifest["schema_version"] != "exactcis.topology_manifest.v2":
+    if manifest["schema_version"] != "exactcis.topology_manifest.v3":
         raise ValueError("unknown topology manifest")
-    if manifest["packet_sha256"] != base.digest("exactcis.topology.packet.v2", packet):
+    if manifest["packet_sha256"] != base.digest("exactcis.topology.packet.v3", packet):
         raise ValueError("topology packet hash mismatch")
     if base.canonical_bytes(packet["profile"]) != base.canonical_bytes(
-        asdict(Limits())
+        {name: asdict(limits) for name, limits in PROFILES.items()}
     ):
         raise ValueError("topology profile differs from the recorded implementation")
     expected_sources = {
@@ -161,10 +171,10 @@ def verify(packet_bytes, manifest_bytes, *, root=base.ROOT):
             raise ValueError("unknown topology record input")
         if item["claim_ceiling"] != CLAIMS[inputs["kind"]]:
             raise ValueError("topology claim ceiling mismatch")
-        if item["input_sha256"] != base.digest("exactcis.topology.input.v2", inputs):
+        if item["input_sha256"] != base.digest("exactcis.topology.input.v3", inputs):
             raise ValueError("topology input hash mismatch")
         if item["output_sha256"] != base.digest(
-            "exactcis.topology.output.v2", item["derived"]
+            "exactcis.topology.output.v3", item["derived"]
         ):
             raise ValueError("topology output hash mismatch")
         if base.canonical_bytes(derive(inputs)) != base.canonical_bytes(

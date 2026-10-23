@@ -142,7 +142,9 @@ def test_two_quadratic_events_include_only_the_interior_tangency():
     h = [(-F(1, 40),), (F(1, 40), F(39, 40)), (0, -1)]
     decisions = [q.decide(q.specialize(h, root, w)) for root in roots]
     assert [d["accepted"] for d in decisions] == [False, True]
-    assert [d["root_count"] for d in decisions] == [0, 1]
+    assert decisions[0]["kind"] == "negative_controls"
+    assert all(sign == -1 for sign in decisions[0]["signs"])
+    assert decisions[1]["root_count"] == 1
 
 
 def test_singleton_acceptance_at_an_irrational_effect():
@@ -296,3 +298,43 @@ def test_root_counter_and_rational_embedding_adverse_inputs():
     zero = q.specialize([(0,)], None, w)
     with pytest.raises(ValueError, match="division by zero"):
         q.primitive_remainder(q.specialize([(1,)], None, w), zero)
+
+
+def test_component_localization_preserves_prior_values_and_other_embeddings():
+    w = Work()
+    # (s-1)(s^2-2); neither quotient ring is assumed to be a field.
+    polynomial = (2, -2, -1, 1)
+    irrational = Root(polynomial, F(7, 5), F(3, 2)).verify(w)
+    rational = Root(polynomial, F(3, 4), F(5, 4)).verify(w)
+    prior = Element(irrational, (0, 1), (1,), w)
+    inverse = Element(irrational, (1,), (-1, 1), w)
+    assert w.components[irrational].polynomial == (-2, 0, 1)
+    assert inverse.denominator == p.ONE
+    assert not (inverse - prior - 1)
+    assert not (prior * prior - 2)
+    # The same input definer selects a different component in another isolator.
+    other = Element(rational, (1,), (-2, 0, 1), w)
+    assert w.components[rational].polynomial == (-1, 1)
+    assert not (other + 1)
+    assert sign_at((-1, 1), irrational, w) > 0
+    assert sign_at((-1, 1), rational, w) == 0
+    with pytest.raises(ValueError, match="zero denominator"):
+        Element(irrational, (1,), (-2, 0, 1), w)
+
+
+def test_sufficient_checks_and_rational_fallback_keep_original_signs():
+    w = Work()
+    root = Root((-2, 0, 1), F(1), F(2)).verify(w)
+    accepted = q.decide(q.specialize([(-F(3, 16),), (1,), (-1,)], root, w))
+    assert accepted["kind"] == "rational_witness"
+    assert accepted["accepted"] and accepted["sign"] == 1
+    rejected = q.decide(q.specialize([(-1,), (0,), (-1,)], root, w))
+    assert rejected["kind"] == "negative_controls"
+    assert not rejected["accepted"]
+    # A small positive region misses all three sufficient rational witnesses.
+    h = (-F(1, 9) + F(1, 1_000_000), F(2, 3), F(-1))
+    point = Root((-1, 2), F(1, 2), F(1, 2))
+    exact = q.decide(q.specialize([(c,) for c in h], point, w))
+    assert exact["kind"] == "rational_roots"
+    assert exact["certificate"]["interior_roots"] == 2
+    assert exact["accepted"] == p.threshold_decision(h)

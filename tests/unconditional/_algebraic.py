@@ -43,6 +43,8 @@ class Work:
     primitives: dict[p.Polynomial, tuple[int, ...]] = field(default_factory=dict)
     chains: dict[p.Polynomial, tuple[p.Polynomial, ...]] = field(default_factory=dict)
 
+    components: dict[Root, Root] = field(default_factory=dict)
+
     def tick(self, category: str) -> None:
         self.counts[category] = self.counts.get(category, 0) + 1
         if sum(self.counts.values()) > self.limits.max_calls:
@@ -304,6 +306,7 @@ def interval(a: Sequence[p.Exact], left: F, right: F) -> tuple[F, F]:
 
 
 def sign_at(a: Sequence[p.Exact], root: Root, work: Work) -> int:
+    root = work.components.get(root, root)
     a = work.call("trim", a)
     if len(a) == 1:
         return (a[0] > 0) - (a[0] < 0)
@@ -316,6 +319,15 @@ def sign_at(a: Sequence[p.Exact], root: Root, work: Work) -> int:
     if root.rational is not None:
         v = work.call("evaluate", a, root.rational)
         result = (v > 0) - (v < 0)
+        work.signs[key] = result
+        return result
+    # A strict rational interval sign already proves nonvanishing; computing
+    # a gcd first can needlessly inflate coefficients at high-degree events.
+    work.tick("sign_interval")
+    lo, hi = interval(a, root.left, root.right)
+    work.call("trim", (lo, hi))
+    if lo > 0 or hi < 0:
+        result = 1 if lo > 0 else -1
         work.signs[key] = result
         return result
     common = work.gcd(a, root.polynomial)
@@ -404,6 +416,8 @@ class Element:
         work: Work,
     ) -> None:
         self.root, self.work = root, work
+        original_root = root
+        root = work.components.get(root, root)
         if root is not None and root.rational is not None:
             num = work.call("evaluate", numerator, root.rational)
             den = work.call("evaluate", denominator, root.rational)
@@ -442,6 +456,20 @@ class Element:
             return
         if root is not None and len(self.denominator) > 1:
             inverse = work.inverse_mod(self.denominator, root.polynomial)
+            if inverse is None:
+                # The denominator is nonzero at the selected root. Remove
+                # components where it vanishes by checked exact division.
+                common = work.gcd(self.denominator, root.polynomial)
+                quotient, remainder = work.call("divide", root.polynomial, common)
+                if remainder != p.ZERO:
+                    raise ArithmeticError("component factor did not divide exactly")
+                root = Root(primitive(quotient, work), root.left, root.right).verify(
+                    work
+                )
+                work.components[original_root] = root
+                inverse = work.inverse_mod(self.denominator, root.polynomial)
+                if inverse is None:
+                    raise ArithmeticError("localized denominator is not a unit")
             if inverse is not None:
                 self.numerator = work.call(
                     "divide",
@@ -449,6 +477,7 @@ class Element:
                     root.polynomial,
                 )[1]
                 self.denominator = p.ONE
+                return
         common = work.gcd(self.numerator, self.denominator)
         self.numerator = work.call("divide", self.numerator, common)[0]
         self.denominator = work.call("divide", self.denominator, common)[0]
@@ -487,6 +516,10 @@ class Element:
         if self.numerator == p.ZERO or b.numerator == p.ZERO:
             w.tick("zero_addition")
             return b if self.numerator == p.ZERO else self
+        if self.denominator == p.ONE and b.denominator == p.ONE:
+            return Element(
+                self.root, w.call("add", self.numerator, b.numerator), p.ONE, w
+            )
         common = (
             w.gcd(self.denominator, b.denominator)
             if len(self.denominator) > 1 and len(b.denominator) > 1
@@ -524,10 +557,10 @@ class Element:
             return self
         # Cancel before multiplication so removable factors do not exhaust
         # intermediate-degree limits. No sign or real-root assumption is used.
-        if len(a) > 1 and len(d) > 1:
+        if self.root is None and len(a) > 1 and len(d) > 1:
             common = w.gcd(a, d)
             a, d = w.call("divide", a, common)[0], w.call("divide", d, common)[0]
-        if len(c) > 1 and len(b) > 1:
+        if self.root is None and len(c) > 1 and len(b) > 1:
             common = w.gcd(c, b)
             c, b = w.call("divide", c, common)[0], w.call("divide", b, common)[0]
         return Element(

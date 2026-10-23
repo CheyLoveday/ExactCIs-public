@@ -12,14 +12,14 @@ from tests.unconditional import _topology_replay as replay
 
 
 def cases():
-    def inputs(n1, n0, point, level, kind="topology"):
+    def inputs(n1, n0, point, level, kind="topology", profile=replay.PROFILE):
         return {
             "kind": kind,
             "n1": n1,
             "n0": n0,
             "observed": point,
             "level": level,
-            "resource_profile": replay.PROFILE,
+            "resource_profile": profile,
         }
 
     exact = {"kind": "exact_side_level", "value": F(1, 40)}
@@ -39,6 +39,12 @@ def cases():
             ("recovered_13", inputs(1, 3, (1, 1), exact)),
             ("recovered_31_11", inputs(3, 1, (1, 1), exact)),
             ("recovered_31_20", inputs(3, 1, (2, 0), exact)),
+            ("recovered_31_10", inputs(3, 1, (1, 0), exact)),
+            ("recovered_31_21", inputs(3, 1, (2, 1), exact)),
+            (
+                "disconnected_44_02",
+                inputs(4, 4, (0, 2), exact, profile=replay.EXPANDED_PROFILE),
+            ),
             ("cubic_ordering_event", inputs(4, 4, (0, 2), exact, "ordering_anchor")),
         ]
     )
@@ -58,12 +64,12 @@ def generate(directory):
             (replay.base.ROOT / replay.base.SPEC_PATH).read_bytes()
         ).hexdigest(),
         "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "profile": asdict(replay.Limits()),
+        "profile": {name: asdict(limits) for name, limits in replay.PROFILES.items()},
         "records": records,
     }
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v2",
-        "packet_sha256": replay.base.digest("exactcis.topology.packet.v2", packet),
+        "schema_version": "exactcis.topology_manifest.v3",
+        "packet_sha256": replay.base.digest("exactcis.topology.packet.v3", packet),
         "fixture_ids": [r["fixture_id"] for r in records],
     }
     directory.mkdir(parents=True, exist_ok=True)
