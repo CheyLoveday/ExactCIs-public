@@ -1,0 +1,6 @@
+# Canonical oracle packets bind LF source/specification bytes on every platform.
+/tests/__init__.py text eol=lf
+/tests/unconditional/** text eol=lf
+/tests/references/unconditional/** text eol=lf
+/tools/unconditional_oracle/** text eol=lf
+/docs_md/unconditional_exact_specification.md text eol=lf

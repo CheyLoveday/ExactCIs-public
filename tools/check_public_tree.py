@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ALLOWED_TOP_LEVEL = {
+    ".gitattributes",
     ".github",
     ".gitignore",
     ".pre-commit-config.yaml",
