@@ -35,6 +35,10 @@ def cases():
         [
             ("unequal_12", inputs(1, 2, (1, 0), exact)),
             ("unequal_21", inputs(2, 1, (0, 1), exact)),
+            ("recovered_21", inputs(2, 1, (1, 0), exact)),
+            ("recovered_13", inputs(1, 3, (1, 1), exact)),
+            ("recovered_31_11", inputs(3, 1, (1, 1), exact)),
+            ("recovered_31_20", inputs(3, 1, (2, 0), exact)),
             ("cubic_ordering_event", inputs(4, 4, (0, 2), exact, "ordering_anchor")),
         ]
     )
@@ -58,8 +62,8 @@ def generate(directory):
         "records": records,
     }
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v1",
-        "packet_sha256": replay.base.digest("exactcis.topology.packet.v1", packet),
+        "schema_version": "exactcis.topology_manifest.v2",
+        "packet_sha256": replay.base.digest("exactcis.topology.packet.v2", packet),
         "fixture_ids": [r["fixture_id"] for r in records],
     }
     directory.mkdir(parents=True, exist_ok=True)

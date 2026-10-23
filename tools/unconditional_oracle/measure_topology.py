@@ -13,11 +13,15 @@ from fractions import Fraction
 from pathlib import Path
 
 from tests.unconditional import _topology_replay as replay
-from tests.unconditional._algebraic import Work
+from tests.unconditional._algebraic import Limits, Work
 from tests.unconditional._polynomial import OracleLimitError
 
 
-def measure(max_total: int) -> dict:
+def measure(max_total: int, *, expanded: bool = False) -> dict:
+    # A separately declared diagnostic profile, not a changed default or a
+    # production capability proposal. Degree 128 permits the observed generic
+    # PRS intermediates; 500k calls tests the measured 100k/250k work cliffs.
+    limits = Limits(max_calls=500_000, max_degree=128) if expanded else Limits()
     cases = [
         (n1, total - n1, (x, y))
         for total in range(2, max_total + 1)
@@ -28,7 +32,7 @@ def measure(max_total: int) -> dict:
     cases.append((4, 4, (0, 2)))
     results = []
     for n1, n0, observed in cases:
-        work = Work()
+        work = Work(limits)
         row = {"n1": n1, "n0": n0, "observed": observed}
         try:
             result = replay.topology.topology(
@@ -39,7 +43,7 @@ def measure(max_total: int) -> dict:
         else:
             row.update(
                 status="complete",
-                output_sha256=replay.base.digest("exactcis.topology.output.v1", result),
+                output_sha256=replay.base.digest("exactcis.topology.output.v2", result),
                 events=len(result["events"]),
                 components=len(result["components"]),
             )
@@ -47,10 +51,11 @@ def measure(max_total: int) -> dict:
         results.append(row)
         print(f"{n1},{n0},{observed}: {row['status']}", flush=True)
     return {
-        "schema": "exactcis.topology_measurement.v1",
+        "schema": "exactcis.topology_measurement.v2",
         "domain": {"positive_groups_total_at_most": max_total, "extra": [4, 4, 0, 2]},
         "side_level": Fraction(1, 40),
-        "profile": asdict(replay.Limits()),
+        "profile": asdict(limits),
+        "profile_name": "expanded_diagnostic" if expanded else replay.PROFILE,
         "sources": {
             name: hashlib.sha256((replay.base.ROOT / name).read_bytes()).hexdigest()
             for name in replay.SOURCES
@@ -69,8 +74,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--max-total", type=int, choices=(2, 3, 4), default=4)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expanded", action="store_true")
     args = parser.parse_args()
-    args.output.write_bytes(replay.base.canonical_bytes(measure(args.max_total)))
+    args.output.write_bytes(
+        replay.base.canonical_bytes(measure(args.max_total, expanded=args.expanded))
+    )
     return 0
 
 

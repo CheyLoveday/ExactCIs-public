@@ -54,7 +54,7 @@ def root(record):
 
 def test_packet_reconstructs_all_scientific_outputs(packet_bytes):
     result = replay.verify(*packet_bytes)
-    assert result["records_replayed"] == 11
+    assert result["records_replayed"] == 15
 
 
 @pytest.mark.parametrize(
@@ -211,12 +211,12 @@ def test_rehashed_scientific_mutations_are_rejected(packet, mutation):
         data["ideal_hull"]["lower_event"] = 0
     elif mutation == "cutoff":
         data["cutoffs"][1][4] += 1
-    target["output_sha256"] = base.digest("exactcis.topology.output.v1", data)
+    target["output_sha256"] = base.digest("exactcis.topology.output.v2", data)
     changed = copy.deepcopy(packet)
     changed["records"] = [target]
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v1",
-        "packet_sha256": base.digest("exactcis.topology.packet.v1", changed),
+        "schema_version": "exactcis.topology_manifest.v2",
+        "packet_sha256": base.digest("exactcis.topology.packet.v2", changed),
         "fixture_ids": [case],
     }
     with pytest.raises(ValueError, match="scientific replay mismatch"):
@@ -261,7 +261,7 @@ def test_topology_generator_runs_and_is_byte_identical(packet_bytes, tmp_path):
         check=True,
         timeout=120,
     )
-    assert "Generated 11" in result.stdout
+    assert "Generated 15" in result.stdout
     assert (tmp_path / replay.PACKET).read_bytes() == packet_bytes[0]
     assert (tmp_path / replay.MANIFEST).read_bytes() == packet_bytes[1]
     assert (
@@ -272,8 +272,8 @@ def test_topology_generator_runs_and_is_byte_identical(packet_bytes, tmp_path):
 
 def rehash_packet(packet):
     manifest = {
-        "schema_version": "exactcis.topology_manifest.v1",
-        "packet_sha256": base.digest("exactcis.topology.packet.v1", packet),
+        "schema_version": "exactcis.topology_manifest.v2",
+        "packet_sha256": base.digest("exactcis.topology.packet.v2", packet),
         "fixture_ids": [r["fixture_id"] for r in packet["records"]],
     }
     return base.canonical_bytes(packet), base.canonical_bytes(manifest)
@@ -374,4 +374,4 @@ def test_replay_cli(packet_bytes, tmp_path, monkeypatch, capsys):
     (tmp_path / replay.MANIFEST).write_bytes(packet_bytes[1])
     monkeypatch.setattr(sys, "argv", ["replay", "--directory", str(tmp_path)])
     assert replay.main() == 0
-    assert json.loads(capsys.readouterr().out)["records_replayed"] == 11
+    assert json.loads(capsys.readouterr().out)["records_replayed"] == 15

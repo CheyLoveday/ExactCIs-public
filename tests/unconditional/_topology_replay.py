@@ -13,12 +13,12 @@ from . import _topology as topology
 from ._algebraic import Limits
 from ._polynomial import OracleLimitError
 
-SCHEMA = "exactcis.unconditional.topology_packet.v1"
-PROCEDURE = "boschloo_or_u0_topology_reference_v1"
-RECORD = "exactcis.unconditional.topology_record.v1"
+SCHEMA = "exactcis.unconditional.topology_packet.v2"
+PROCEDURE = "boschloo_or_u0_topology_reference_v2"
+RECORD = "exactcis.unconditional.topology_record.v2"
 PROFILE = "algebraic_reference_v1"
-PACKET = "boschloo_topology_v1.json"
-MANIFEST = "topology_manifest_v1.json"
+PACKET = "boschloo_topology_v2.json"
+MANIFEST = "topology_manifest_v2.json"
 GENERATOR = "tools/unconditional_oracle/generate_topology.py"
 SOURCES = (
     *base.SOURCE_PATHS,
@@ -59,9 +59,9 @@ def record(identity, inputs):
         "orientation": base.ORIENTATION,
         "claim_ceiling": CLAIMS[inputs["kind"]],
         "inputs": inputs,
-        "input_sha256": base.digest("exactcis.topology.input.v1", inputs),
+        "input_sha256": base.digest("exactcis.topology.input.v2", inputs),
         "derived": result,
-        "output_sha256": base.digest("exactcis.topology.output.v1", result),
+        "output_sha256": base.digest("exactcis.topology.output.v2", result),
     }
 
 
@@ -89,9 +89,9 @@ def verify(packet_bytes, manifest_bytes, *, root=base.ROOT):
     base._keys(manifest, {"schema_version", "packet_sha256", "fixture_ids"})
     if packet["schema_version"] != SCHEMA or packet["procedure_version"] != PROCEDURE:
         raise ValueError("unknown topology version")
-    if manifest["schema_version"] != "exactcis.topology_manifest.v1":
+    if manifest["schema_version"] != "exactcis.topology_manifest.v2":
         raise ValueError("unknown topology manifest")
-    if manifest["packet_sha256"] != base.digest("exactcis.topology.packet.v1", packet):
+    if manifest["packet_sha256"] != base.digest("exactcis.topology.packet.v2", packet):
         raise ValueError("topology packet hash mismatch")
     if base.canonical_bytes(packet["profile"]) != base.canonical_bytes(
         asdict(Limits())
@@ -161,10 +161,10 @@ def verify(packet_bytes, manifest_bytes, *, root=base.ROOT):
             raise ValueError("unknown topology record input")
         if item["claim_ceiling"] != CLAIMS[inputs["kind"]]:
             raise ValueError("topology claim ceiling mismatch")
-        if item["input_sha256"] != base.digest("exactcis.topology.input.v1", inputs):
+        if item["input_sha256"] != base.digest("exactcis.topology.input.v2", inputs):
             raise ValueError("topology input hash mismatch")
         if item["output_sha256"] != base.digest(
-            "exactcis.topology.output.v1", item["derived"]
+            "exactcis.topology.output.v2", item["derived"]
         ):
             raise ValueError("topology output hash mismatch")
         if base.canonical_bytes(derive(inputs)) != base.canonical_bytes(

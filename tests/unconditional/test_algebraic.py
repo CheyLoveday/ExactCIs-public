@@ -209,3 +209,90 @@ def test_field_context_and_resource_boundaries():
         narrow = Work(Limits(max_refinements=1))
         narrow.tick("refinement")
         narrow.tick("refinement")
+
+
+def test_primitive_sturm_matches_independent_rational_counts():
+    from itertools import product
+
+    for coefficients in product((-1, 0, 1), repeat=5):
+        if not any(coefficients):
+            continue
+        w = Work()
+        for left, right in ((F(-2), F(0)), (F(0), F(1)), (F(-2), F(2))):
+            variations, endpoints = w.root_variations(coefficients, left, right)
+            assert variations[0] - variations[1] == p.count_roots(
+                coefficients, left, right
+            )
+            assert variations[0] - variations[1] + sum(endpoints) == p.count_roots(
+                coefficients, left, right, closed=True
+            )
+            assert w.call("count_roots", coefficients, left, right) == p.count_roots(
+                coefficients, left, right
+            )
+            assert w.call(
+                "count_roots", coefficients, left, right, closed=True
+            ) == p.count_roots(coefficients, left, right, closed=True)
+
+
+@pytest.mark.parametrize("selected", [False, True])
+def test_factored_sturm_is_the_exact_signed_recurrence(selected):
+    w = Work()
+    root = isolate((-2, 0, 1), F(1), F(2), w)[0] if selected else None
+    a = q.specialize([(-1, 1), (3, -2), (-1,), (0, -1), (2,)], root, w)
+    chain = q.sturm(a)
+    expanded = []
+    for term in chain:
+        scale = a[0].coerce(1)
+        for numerator in term.scales:
+            scale *= numerator
+        for denominator in term.divisors:
+            scale /= denominator
+        expanded.append(q.trim(tuple(c * scale for c in term.polynomial)))
+    assert q.iszero(q.add(expanded[1], q.neg(q.derivative(expanded[0]))))
+    for prev, current, following in zip(expanded, expanded[1:], expanded[2:]):
+        assert q.iszero(q.add(q.divide(prev, current)[1], following))
+    assert q.iszero(q.divide(expanded[-2], expanded[-1])[1])
+
+
+def test_exact_caches_keep_embeddings_and_work_limits_distinct():
+    from ._algebraic import merge_roots, refine
+
+    w = Work()
+    positive = Root((-2, 0, 1), F(1), F(2)).verify(w)
+    negative = Root((-2, 0, 1), F(-2), F(-1)).verify(w)
+    assert sign_at((0, 1), positive, w) == 1
+    assert sign_at((0, 1), negative, w) == -1
+    assert sign_at((0, 1), positive, w) == 1
+    assert w.counts["sign_cache_hit"]
+    narrowed = refine(positive, w)
+    assert refine(positive, w) == narrowed
+    assert narrowed.left >= positive.left and narrowed.right <= positive.right
+    extended = Root((-6, -2, 3, 1), F(1), F(2)).verify(w)
+    merged = merge_roots((extended, positive), w)
+    assert len(merged) == 1 and merged[0].polynomial == (-2, 0, 1)
+    assert w.inverse_mod((1, 1), (-2, 0, 1)) == (F(-1), F(1))
+    assert w.inverse_mod((1, 1), (-2, 0, 1)) == (F(-1), F(1))
+    assert w.counts["inverse_cache_hit"]
+    limited = Work(Limits(max_calls=2))
+    limited.signs[(positive, (F(0), F(1)))] = 1
+    assert sign_at((0, 1), positive, limited) == 1
+    with pytest.raises(p.OracleLimitError, match="call budget"):
+        sign_at((0, 1), positive, limited)
+
+
+def test_root_counter_and_rational_embedding_adverse_inputs():
+    w = Work()
+    for left, right in ((F(1), F(0)), (0, F(1))):
+        with pytest.raises(ValueError, match="increasing Fractions"):
+            w.root_variations((0, 1), left, right)
+    with pytest.raises(ValueError, match="bool"):
+        w.call("count_roots", (0, 1), F(0), F(1), closed=1)
+    with pytest.raises(ValueError, match="zero polynomial"):
+        w.call("count_roots", (0,), F(0), F(1))
+    point = Root((-1, 2), F(1, 2), F(1, 2)).verify(w)
+    with pytest.raises(ValueError, match="zero denominator"):
+        Element(point, (1,), (-1, 2), w)
+    assert Element(point, (0, 2), (1,), w).numerator == p.ONE
+    zero = q.specialize([(0,)], None, w)
+    with pytest.raises(ValueError, match="division by zero"):
+        q.primitive_remainder(q.specialize([(1,)], None, w), zero)

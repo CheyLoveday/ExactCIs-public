@@ -202,10 +202,8 @@ def root_record(root, work):
     if root.rational is not None:
         data["kind"] = "rational"
     else:
-        cert = work.call("root_certificate", root.polynomial, root.left, root.right)
-        data.update(
-            kind="algebraic", variations=(cert.variations_left, cert.variations_right)
-        )
+        variations, _ = work.root_variations(root.polynomial, root.left, root.right)
+        data.update(kind="algebraic", variations=variations)
     return data
 
 
@@ -260,18 +258,30 @@ def topology(n1, n0, observed, level, *, work=None):
                 initial.extend(isolate(poly, F(0), F(1), work))
     ordering = separate(initial, work)
     events, projections, strata = list(ordering), [], []
+    projection_cache, guard_cache = {}, {}
     for left, right in zip(ordering, ordering[1:]):
         sample = between(left, right, work)
         effect = rational_root(sample)
         masks = masks_at(n1, n0, comparisons, effect, work)
         ids = []
         for mask in masks:
-            h = threshold(n1, n0, mask, level, work)
-            projection = qpoly.projection(qpoly.specialize(h, None, work))
-            ids.append(len(projections))
-            projections.append({"threshold": h, "certificate": projection})
+            if mask in projection_cache:
+                work.tick("projection_cache_hit")
+                index = projection_cache[mask]
+                projection = projections[index]["certificate"]
+            else:
+                h = threshold(n1, n0, mask, level, work)
+                projection = qpoly.projection(qpoly.specialize(h, None, work))
+                index = len(projections)
+                projection_cache[mask] = index
+                projections.append({"threshold": h, "certificate": projection})
+            ids.append(index)
             for guard in projection["guards"]:
-                for root in isolate(guard, F(0), F(1), work):
+                if guard not in guard_cache:
+                    guard_cache[guard] = isolate(guard, F(0), F(1), work)
+                else:
+                    work.tick("guard_cache_hit")
+                for root in guard_cache[guard]:
                     if compare(left, root, work) < 0 and compare(root, right, work) < 0:
                         events.append(root)
         strata.append((left, right, masks, tuple(ids)))

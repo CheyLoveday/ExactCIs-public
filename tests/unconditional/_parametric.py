@@ -8,9 +8,13 @@ rebuilt over their selected real embedding, never classified by a neighbour.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
+from fractions import Fraction
+from math import gcd, lcm
 from typing import Any
 
-from ._algebraic import Element, Root, Work
+from . import _polynomial as p
+from ._algebraic import Element, Root, Work, primitive
 from ._polynomial import Exact
 
 FieldPolynomial = tuple[Element, ...]
@@ -93,30 +97,132 @@ def exact_divide(a: Sequence[Element], b: Sequence[Element]) -> FieldPolynomial:
     return q
 
 
-def monic(a: Sequence[Element]) -> FieldPolynomial:
+def primitive_part(a: Sequence[Element]) -> tuple[FieldPolynomial, Element]:
+    """Clear coefficient denominators/content, returning a = scale * primitive.
+
+    This identity uses rational polynomials before specialization, so it is
+    also valid at the selected embedding. No irreducibility is assumed.
+    """
     a = trim(a)
-    return a if iszero(a) else trim(tuple(v / a[-1] for v in a))
+    w, root = a[0].work, a[0].root
+    if iszero(a):
+        return a, a[0].coerce(1)
+    w.tick("primitive_content")
+    denominator = p.ONE
+    for c in a:
+        if c.denominator == p.ONE or c.denominator == denominator:
+            continue
+        common = w.gcd(denominator, c.denominator)
+        denominator = w.call(
+            "multiply", denominator, w.call("divide", c.denominator, common)[0]
+        )
+    numerators = tuple(
+        c.numerator
+        if denominator == c.denominator
+        else w.call(
+            "multiply", c.numerator, w.call("divide", denominator, c.denominator)[0]
+        )
+        for c in a
+    )
+    common = p.ZERO
+    for poly in numerators:
+        common = w.gcd(common, poly)
+        if common == p.ONE:
+            break
+    if common != p.ONE:
+        numerators = tuple(w.call("divide", poly, common)[0] for poly in numerators)
+    coefficients = tuple(v for poly in numerators for v in poly)
+    den = lcm(*(v.denominator for v in coefficients))
+    content = Fraction(gcd(*(int(v * den) for v in coefficients)), den)
+    result = trim(
+        tuple(
+            Element(root, tuple(v / content for v in poly), p.ONE, w)
+            for poly in numerators
+        )
+    )
+    scale = Element(root, tuple(v * content for v in common), denominator, w)
+    return result, scale
+
+
+def primitive_remainder(a: Sequence[Element], b: Sequence[Element]):
+    """Fraction-free remainder with factored exact rescaling.
+
+    rem(a,b) = product(numerators) / product(denominators) * result.
+    Clearing content at each elimination prevents removable coefficient growth.
+    """
+    a, b = trim(a), trim(b)
+    if iszero(b):
+        raise ValueError("division by zero field polynomial")
+    numerators, denominators = [], []
+    while not iszero(a) and len(a) >= len(b):
+        shift = len(a) - len(b)
+        leading = a[-1]
+        remainder = [b[-1] * c for c in a]
+        for i, c in enumerate(b):
+            remainder[shift + i] = remainder[shift + i] - leading * c
+        a, scale = primitive_part(remainder)
+        numerators.append(scale)
+        denominators.append(b[-1])
+    return a, tuple(numerators), tuple(denominators)
 
 
 def squarefree(a: Sequence[Element]) -> FieldPolynomial:
     if iszero(a):
         raise ValueError("zero polynomial has no finite root set")
-    left, right = a, derivative(a)
+    left, right = primitive_part(a)[0], primitive_part(derivative(a))[0]
     while not iszero(right):
-        left, right = right, divide(left, right)[1]
-    return monic(exact_divide(a, monic(left)))
+        left, right = right, primitive_remainder(left, right)[0]
+    return primitive_part(exact_divide(a, left))[0]
 
 
-def sturm(a: Sequence[Element]) -> tuple[FieldPolynomial, ...]:
-    a = squarefree(trim(a))
+@dataclass(frozen=True)
+class SturmTerm:
+    """A signed Sturm polynomial with factored numerator/denominator scales.
+
+    Keeping scales factored avoids expanding coefficients that do not affect
+    root counts. Their signs and specialization zeros remain part of the proof
+    data; making every remainder monic without these scales would be wrong.
+    """
+
+    polynomial: FieldPolynomial
+    scales: tuple[Element, ...]
+    divisors: tuple[Element, ...] = ()
+
+    def sign_at(self, x: int) -> int:
+        sign = evaluate(self.polynomial, x).sign()
+        for scale in self.scales + self.divisors:
+            sign *= scale.sign()
+        return sign
+
+    def encode(self) -> dict[str, Any]:
+        return {
+            "polynomial": encode_poly(self.polynomial),
+            "scales": tuple(encode_element(c) for c in self.scales),
+            "divisors": tuple(encode_element(c) for c in self.divisors),
+        }
+
+
+def sturm(
+    a: Sequence[Element], *, squarefree_input: bool = False
+) -> tuple[SturmTerm, ...]:
+    a = trim(a) if squarefree_input else squarefree(trim(a))
     if len(a) == 1:
-        return (a,)
-    chain = [a, derivative(a)]
+        return (SturmTerm(a, ()),)
+    da, scale = primitive_part(derivative(a))
+    chain = [SturmTerm(a, ()), SturmTerm(da, (scale,))]
     while True:
-        remainder = divide(chain[-2], chain[-1])[1]
+        remainder, scales, divisors = primitive_remainder(
+            chain[-2].polynomial, chain[-1].polynomial
+        )
         if iszero(remainder):
             return tuple(chain)
-        chain.append(neg(remainder))
+        chain.append(
+            SturmTerm(
+                remainder,
+                chain[-2].scales + scales + (a[0].coerce(-1),),
+                chain[-2].divisors + divisors,
+            )
+        )
 
 
 def evaluate(a: Sequence[Element], x: Element | int) -> Element:
@@ -156,17 +262,22 @@ def projection(a: Sequence[Element]) -> dict[str, Any]:
     # Executable independent algebraic checks of the recorded root-set identities.
     if not iszero(add(mul(s, d), neg(a))) or not iszero(add(mul(a, t), neg(spower))):
         raise ArithmeticError("root-set identity replay failed")
-    chain = sturm(s)
+    chain = sturm(s, squarefree_input=True)
     guards = set()
-    for poly in (a, s, d, t, *chain):
+    for poly in (a, s, d, t, *(term.polynomial for term in chain)):
         for c in poly:
             guards.add(c.denominator)
         guards.add(poly[-1].numerator)
-    for poly in (a, *chain):
+    for term in chain:
+        for c in term.scales + term.divisors:
+            guards.update((c.numerator, c.denominator))
+    for poly in (a, *(term.polynomial for term in chain)):
         for x in (0, 1):
             e = evaluate(poly, x)
             guards.update((e.numerator, e.denominator))
-    guards = tuple(sorted(g for g in guards if len(g) > 1))
+    # Guards define zero sets, so nonzero scalar multiples and multiplicities
+    # may be removed. The signed original polynomials remain in the packet.
+    guards = tuple(sorted({primitive(g, a[0].work) for g in guards if len(g) > 1}))
     return {
         "zero": False,
         "guards": guards,
@@ -175,7 +286,7 @@ def projection(a: Sequence[Element]) -> dict[str, Any]:
         "quotient": encode_poly(d),
         "power_quotient": encode_poly(t),
         "root_set_exponent": exponent,
-        "chain": tuple(encode_poly(c) for c in chain),
+        "chain": tuple(c.encode() for c in chain),
     }
 
 
@@ -195,7 +306,7 @@ def decide(a: Sequence[Element]) -> dict[str, Any]:
             "original": encode_poly(a),
         }
     chain = sturm(a)
-    vectors = tuple(tuple(evaluate(poly, x).sign() for poly in chain) for x in (0, 1))
+    vectors = tuple(tuple(term.sign_at(x) for term in chain) for x in (0, 1))
 
     def changes(vector):
         nonzero = tuple(v for v in vector if v)
@@ -210,7 +321,7 @@ def decide(a: Sequence[Element]) -> dict[str, Any]:
         "kind": "interior_roots",
         "endpoint_signs": signs,
         "original": encode_poly(a),
-        "chain": tuple(encode_poly(c) for c in chain),
+        "chain": tuple(c.encode() for c in chain),
         "sign_vectors": vectors,
         "variations": variations,
         "root_count": count,
