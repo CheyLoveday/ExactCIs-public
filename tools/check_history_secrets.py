@@ -132,13 +132,45 @@ def _allowed_reference_revision(path: str, line: str) -> bool:
     return False
 
 
+def _reviewed_packet_data(path: str, data: bytes) -> bool:
+    """The existing exception, checked before expensive long-line scanning.
+
+    A path alone never excludes anything: one changed byte, extra line or
+    unreviewed path takes the ordinary scanner path. Pins denote complete
+    scientific payloads already reviewed and reconstructed independently.
+    """
+    expected = ORACLE_PACKET_LINE_DIGESTS.get(path)
+    return (
+        expected is not None
+        and data.endswith(b"\n")
+        and data.count(b"\n") == 1
+        and hashlib.sha256(data[:-1]).hexdigest() == expected.replace("-", "")
+    )
+
+
 def _current_tree_errors() -> list[str]:
+    reviewed = [
+        path
+        for path in ORACLE_PACKET_LINE_DIGESTS
+        if (ROOT / path).is_file()
+        and not (ROOT / path).is_symlink()
+        and _reviewed_packet_data(path, (ROOT / path).read_bytes())
+    ]
+    exclusions = (
+        [
+            "--exclude-files",
+            "^(?:" + "|".join(re.escape(path) for path in reviewed) + ")$",
+        ]
+        if reviewed
+        else []
+    )
     completed = subprocess.run(
         [
             sys.executable,
             "-m",
             "detect_secrets",
             "scan",
+            *exclusions,
             ".",
         ],
         cwd=ROOT,
@@ -192,6 +224,8 @@ def _history_errors() -> tuple[list[str], int, int]:
                         continue
                     scanned.add(identity)
                     data = bytes(_git("cat-file", "blob", object_id, text=False))
+                    if _reviewed_packet_data(path, data):
+                        continue
                     materialized = temporary_root.joinpath(*pure.parts)
                     materialized.parent.mkdir(parents=True, exist_ok=True)
                     materialized.write_bytes(data)
@@ -227,13 +261,16 @@ def main() -> int:
             print(f"ERROR: potential secret: {error}")
         return 1
     print(
-        f"OK: detect-secrets scanned the current tree and {blobs} unique "
+        f"OK: checked the current tree and {blobs} unique "
         f"path/blob pairs across {revisions} public commits"
     )
     print(
         "OK: reviewed allowlist is limited to frozen scientific-source SHAs, "
         "the reviewed timing-evidence wheel checksum/commits, "
         "and exact oracle packet lines"
+    )
+    print(
+        "OK: exact reviewed packet bytes are hash-classified; changed bytes are scanned"
     )
     return 0
 
