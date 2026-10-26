@@ -71,3 +71,41 @@ def test_generated_oracle_allowlist_rejects_changed_content_and_paths() -> None:
         assert history_gate._allowed_reference_revision(path, line)
         assert not history_gate._allowed_reference_revision("other.json", line)
         assert not history_gate._allowed_reference_revision(path, line + "altered")
+        data = (history_gate.ROOT / path).read_bytes()
+        assert history_gate._reviewed_packet_data(path, data)
+        assert not history_gate._reviewed_packet_data("other.json", data)
+        assert not history_gate._reviewed_packet_data(path, data + b"\n")
+        assert not history_gate._reviewed_packet_data(path, data[:-1] + b" \n")
+
+
+def test_reviewed_packet_prefilter_scans_changed_bytes_and_unreviewed_paths(
+    tmp_path, monkeypatch
+):
+    import hashlib
+    import json
+    import subprocess
+
+    pytest.importorskip("detect_secrets")
+    # Deliberately synthetic detector input, built at runtime; no credential.
+    value = hashlib.sha256(b"public detector control").hexdigest()
+    data = (json.dumps({"sample": value}) + "\n").encode()
+    reviewed = tmp_path / "reviewed.json"
+    ordinary = tmp_path / "ordinary.json"
+    reviewed.write_bytes(data)
+    ordinary.write_bytes(data)
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(
+        ["git", "add", "reviewed.json", "ordinary.json"], cwd=tmp_path, check=True
+    )
+    monkeypatch.setattr(history_gate, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        history_gate,
+        "ORACLE_PACKET_LINE_DIGESTS",
+        {"reviewed.json": hashlib.sha256(data[:-1]).hexdigest()},
+    )
+    errors = history_gate._current_tree_errors()
+    assert any("ordinary.json" in error for error in errors)
+    assert not any("reviewed.json" in error for error in errors)
+    reviewed.write_bytes(data[:-1] + b" \n")
+    errors = history_gate._current_tree_errors()
+    assert any("reviewed.json" in error for error in errors)

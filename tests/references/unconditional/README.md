@@ -1,5 +1,14 @@
 # Boschloo exact oracle: first U1 tranche
 
+The original packets below retain their bytes. The additional
+`qualification_v1.json` contains 1,440 exact fixed-null comparisons through
+total six, and `capability_measurement_v1.json` retains all 156 whole-cell
+attempts with named refusals/timeouts. `adversarial_manifest_v1.json` binds the
+historical anchors, generic attacks and two strict production failures. See
+[U1 qualification](../../../docs_md/evidence/u1-qualification.md) and
+[U2 capability](../../../docs_md/evidence/u2-capability.md) for exact scope,
+commands, measurements and the unactivated capability proposal.
+
 These fixtures exercise the merged Boschloo-only U0 specification at fixed
 rational effects. They are independent standard-library reference calculations
 under `tests/unconditional/`, with no production-kernel imports. The normative

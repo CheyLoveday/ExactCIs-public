@@ -190,6 +190,12 @@ Every fixture records its function, options, orientation, definition,
 tolerance, generator or derivation, version, and source revision. The release
 workflow also executes this README example against source, wheel, and sdist.
 
+Development of the planned Boschloo construction has separate
+[bounded oracle evidence](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/evidence/u1-qualification.md)
+and an [adversarial bank and capability proposal](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/evidence/u2-capability.md).
+These exact reference calculations retain their refusals and inconclusions;
+they do not add a production method or activate capability limits.
+
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/CheyLoveday/ExactCIs-public/blob/main/CONTRIBUTING.md).

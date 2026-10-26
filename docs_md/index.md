@@ -18,3 +18,9 @@ Use [Supported methods](methods.md) to choose a construction and
 This release is the stable public release. Conditional methods condition
 on both margins; no universal exactness or unconditional coverage claim is
 made. Numerical failure raises explicitly and never selects another method.
+
+The planned Boschloo construction has separate
+[bounded oracle evidence](evidence/u1-qualification.md) and an
+[adversarial bank and capability proposal](evidence/u2-capability.md).
+They document development evidence, with explicit refusals and pending
+production tests.
