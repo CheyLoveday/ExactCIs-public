@@ -40,12 +40,31 @@ def verify_record(row):
         if (
             row["counts"] is not None
             or row["peak_rss_bytes"] is not None
-            or "topology" in row
+            or any(
+                name in row
+                for name in (
+                    "topology",
+                    "topology_sha256",
+                    "cell_comparisons",
+                    "topology_elapsed_ns",
+                    "lanes_elapsed_ns",
+                )
+            )
         ):
             raise ValueError("topology timeout claims an unavailable completed stage")
         return
     if base.canonical_bytes(row["profile"]) != base.canonical_bytes(asdict(profile)):
         raise ValueError("unknown measurement profile")
+    if row["status"] == "resource_refused" and any(
+        name in row
+        for name in (
+            "topology",
+            "topology_sha256",
+            "cell_comparisons",
+            "lanes_elapsed_ns",
+        )
+    ):
+        raise ValueError("resource refusal claims an unavailable completed stage")
     work = Work(profile)
     try:
         result = topology.topology(n1, n0, observed, F(1, 40), work=work)

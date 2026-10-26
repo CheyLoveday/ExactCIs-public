@@ -29,6 +29,25 @@ def reseal(packet):
     return base.canonical_bytes(packet)
 
 
+def timeout_row(packet):
+    row = copy.deepcopy(packet["results"][0])
+    for field in (
+        "topology",
+        "topology_sha256",
+        "cell_comparisons",
+        "topology_elapsed_ns",
+        "lanes_elapsed_ns",
+    ):
+        row.pop(field, None)
+    row.update(
+        status="topology_timeout",
+        counts=None,
+        peak_rss_bytes=None,
+        reason="controlled interruption before the first checkpoint",
+    )
+    return row
+
+
 @pytest.mark.parametrize(
     "mutation", ["topology", "lanes", "counts", "false_refusal", "profile"]
 )
@@ -102,12 +121,20 @@ def test_packet_byte_and_canonical_limits_precede_science(packet):
         replay.verify(b" " + base.canonical_bytes(packet))
 
 
-def test_wall_timeout_never_claims_an_unavailable_scientific_stage(packet):
-    row = copy.deepcopy(
-        next(row for row in packet["results"] if row["status"] == "topology_timeout")
-    )
+@pytest.mark.parametrize(
+    "field",
+    [
+        "topology",
+        "topology_sha256",
+        "cell_comparisons",
+        "topology_elapsed_ns",
+        "lanes_elapsed_ns",
+    ],
+)
+def test_wall_timeout_never_claims_an_unavailable_scientific_stage(packet, field):
+    row = timeout_row(packet)
     replay.verify_record(row)
-    row["topology"] = {}
+    row[field] = []
     with pytest.raises(ValueError, match="unavailable"):
         replay.verify_record(row)
 
@@ -124,4 +151,22 @@ def test_actual_refusal_is_reconstructed_and_cannot_be_relabelled(packet):
     replay.verify_record(row)
     row["reason"] = "forged refusal reason"
     with pytest.raises(ValueError, match="refusal replay"):
+        replay.verify_record(row)
+
+
+def test_rehashed_timeout_cannot_smuggle_unreplayed_cell_output(packet):
+    row = timeout_row(packet)
+    packet["results"][0] = row
+    row["cell_comparisons"] = [{"projected_event": True, "tensor": {"decision": False}}]
+    with pytest.raises(ValueError, match="unavailable"):
+        replay.verify(reseal(packet))
+
+
+@pytest.mark.parametrize(
+    "field", ["topology", "topology_sha256", "cell_comparisons", "lanes_elapsed_ns"]
+)
+def test_refusal_cannot_claim_unreplayed_completed_outputs(packet, field):
+    row = next(row for row in packet["results"] if row["status"] == "resource_refused")
+    row[field] = []
+    with pytest.raises(ValueError, match="unavailable"):
         replay.verify_record(row)

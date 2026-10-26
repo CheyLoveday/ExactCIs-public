@@ -14,6 +14,7 @@ if TOOLS_PRESENT:
         cases,
         checkpoint,
         run_case,
+        timeout_result,
     )
 
 
@@ -59,3 +60,23 @@ def test_declared_attempt_domain_is_complete_and_bounded():
     for value in (True, 1, 7):
         with pytest.raises(ValueError):
             cases(value)
+
+
+@pytest.mark.parametrize(
+    "status", ["complete", "resource_refused", "topology_complete"]
+)
+def test_timeout_preserves_a_terminal_checkpoint_and_marks_only_unfinished_lanes(
+    tmp_path, status
+):
+    path = tmp_path / "stage.json"
+    row = {"status": status, "reason": "retained exact refusal", "counts": {"add": 3}}
+    checkpoint(path, row)
+    result = timeout_result((1, 1, (1, 0)), path)
+    assert result["counts"] == {"add": 3}
+    if status == "topology_complete":
+        assert result["status"] == "lane_timeout"
+        assert "worker_exit_timeout" not in result
+    else:
+        assert result["status"] == status
+        assert result["reason"] == row["reason"]
+        assert result["worker_exit_timeout"] is True

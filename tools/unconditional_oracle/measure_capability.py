@@ -130,6 +130,32 @@ def worker(case, path):
     checkpoint(path, row)
 
 
+def timeout_result(case, path):
+    reason = "diagnostic wall timeout; child killed and waited for"
+    if path.exists():
+        row = json.loads(path.read_bytes())
+        if row["status"] == "topology_complete":
+            row.update(status="lane_timeout", reason=reason)
+        elif row["status"] in ("resource_refused", "complete"):
+            row.update(worker_exit_timeout=True, worker_exit_timeout_reason=reason)
+        else:
+            raise RuntimeError("unknown completed checkpoint stage")
+        return row
+    return {
+        "inputs": {
+            "n1": case[0],
+            "n0": case[1],
+            "observed": case[2],
+            "side_level": base.encode(F(1, 40)),
+            "alpha": base.encode(F(1, 20)),
+        },
+        "counts": None,
+        "peak_rss_bytes": None,
+        "status": "topology_timeout",
+        "reason": reason,
+    }
+
+
 def run_case(case, timeout_seconds):
     start = perf_counter_ns()
     with tempfile.TemporaryDirectory(prefix="exactcis-capability-") as directory:
@@ -152,23 +178,7 @@ def run_case(case, timeout_seconds):
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            row = (
-                json.loads(path.read_bytes())
-                if path.exists()
-                else {
-                    "inputs": {
-                        "n1": case[0],
-                        "n0": case[1],
-                        "observed": case[2],
-                        "side_level": base.encode(F(1, 40)),
-                        "alpha": base.encode(F(1, 20)),
-                    },
-                    "counts": None,
-                    "peak_rss_bytes": None,
-                }
-            )
-            row["status"] = "lane_timeout" if path.exists() else "topology_timeout"
-            row["reason"] = "diagnostic wall timeout; child killed and waited for"
+            row = timeout_result(case, path)
         else:
             if completed.returncode:
                 raise RuntimeError(completed.stderr.decode("utf-8", errors="replace"))

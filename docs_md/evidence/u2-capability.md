@@ -38,12 +38,13 @@ Only the separately named larger-anchor diagnostic uses 500,000 wrapper calls
 and degree 128. The diagnostic wall limit is ten seconds per small case and
 sixty seconds for the larger anchor. Neither limit is a production promise.
 
-The source-frozen local run retained **119 complete comparisons, 35 resource
-refusals and two topology timeouts** out of 156 attempts. Its 2,782 directional
+The source-frozen local run retained **119 complete comparisons, 36 resource
+refusals and one lane timeout** out of 156 attempts. The last case retains its
+completed exact topology. Its 2,782 directional
 whole-cell comparisons certified 2,069 acceptances and 342 rejections in each
 fast lane, retaining 371 inconclusions; every certified answer agreed with
-CAD-lite. Cumulative attempt wall time was 418,092,951,334 ns. The largest
-recorded child lifetime peak RSS was 36,929,536 bytes. These are observations
+CAD-lite. Cumulative attempt wall time was 326,713,388,916 ns. The largest
+recorded child lifetime peak RSS was 67,485,696 bytes. These are observations
 of this run, with scheduling and interpreter overhead included.
 
 The packet retains named algebraic counters, effect/nuisance node counts,
@@ -58,7 +59,11 @@ remain null. No zero or estimated value replaces a missing observation.
 A complete topology checkpoint is replaced atomically before the lane phase.
 If the wall timeout fires, the child is killed and waited for; the last complete
 stage survives. A completed topology plus an unfinished lane remains a named
-`lane_timeout`. Degree/work refusal, topology timeout and lane timeout all count
+`lane_timeout`. A terminal `resource_refused` or `complete` checkpoint retains
+that scientific status if only worker exit times out; the interruption is
+separately recorded as `worker_exit_timeout`. A timeout before topology has no
+completed topology or lane outputs. Replay rejects such attached output even
+after hashes are recomputed. Degree/work refusal, topology timeout and lane timeout all count
 in the denominator. Unexpected errors or lane disagreements stop generation.
 Time/RSS are observations, so reruns can move cases across the diagnostic wall
 limit; scientific identities of successful stages are checked independently.

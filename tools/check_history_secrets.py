@@ -65,12 +65,29 @@ ORACLE_PACKET_LINE_DIGESTS = {
         "79dba146-edb8a0e9-194e3b2d-d7b60068-25c5044d-b5b9b1ea-fe8bcf57-8bed0e79"
     ),
     "tests/references/unconditional/capability_measurement_v1.json": (
-        "6c6d52f3-7509db45-782b9e61-6bf10d96-9d4b7c54-724fdd73-0a2f99dd-6fddb33d"
+        "8a7d7ff3-509dff62-2148950c-1c95bf4a-c2845d3f-730d4ff4-897c4fd8-d32fd486"
     ),
     "tests/references/unconditional/adversarial_manifest_v1.json": (
-        "0689b644-6f7dcb9b-fb7f2e26-d28059fe-93d42add-17766324-c34b6dd8-9aa4f701"
+        "0269d8fb-439d7a4a-64843c15-ac3d35ea-a01487ae-51cc7873-a079a189-408c030a"
     ),
 }
+
+# Earlier reviewed measurements remain reachable as immutable PR commits.
+ORACLE_PACKET_HISTORICAL_LINE_DIGESTS = {
+    "tests/references/unconditional/capability_measurement_v1.json": (
+        "6c6d52f3-7509db45-782b9e61-6bf10d96-9d4b7c54-724fdd73-0a2f99dd-6fddb33d",
+    ),
+    "tests/references/unconditional/adversarial_manifest_v1.json": (
+        "0689b644-6f7dcb9b-fb7f2e26-d28059fe-93d42add-17766324-c34b6dd8-9aa4f701",
+    ),
+}
+
+
+def _packet_line_hashes(path: str) -> tuple[str, ...]:
+    current = ORACLE_PACKET_LINE_DIGESTS.get(path)
+    return (
+        () if current is None else (current,)
+    ) + ORACLE_PACKET_HISTORICAL_LINE_DIGESTS.get(path, ())
 
 
 def _git(*args: str, text: bool = True) -> str | bytes:
@@ -99,11 +116,10 @@ def _full_history_error() -> str | None:
 
 
 def _allowed_reference_revision(path: str, line: str) -> bool:
-    packet_digest = ORACLE_PACKET_LINE_DIGESTS.get(path)
-    if packet_digest is not None:
-        return hashlib.sha256(line.encode()).hexdigest() == packet_digest.replace(
-            "-", ""
-        )
+    packet_digests = _packet_line_hashes(path)
+    if packet_digests:
+        actual = hashlib.sha256(line.encode()).hexdigest()
+        return any(actual == expected.replace("-", "") for expected in packet_digests)
     if path.startswith("tests/references/") and SOURCE_REVISION.match(line):
         return any(source_sha in line for source_sha in REVIEWED_SOURCE_SHAS)
     allowed_citation_lines = {
@@ -139,12 +155,15 @@ def _reviewed_packet_data(path: str, data: bytes) -> bool:
     unreviewed path takes the ordinary scanner path. Pins denote complete
     scientific payloads already reviewed and reconstructed independently.
     """
-    expected = ORACLE_PACKET_LINE_DIGESTS.get(path)
+    expected = _packet_line_hashes(path)
     return (
-        expected is not None
+        bool(expected)
         and data.endswith(b"\n")
         and data.count(b"\n") == 1
-        and hashlib.sha256(data[:-1]).hexdigest() == expected.replace("-", "")
+        and any(
+            hashlib.sha256(data[:-1]).hexdigest() == digest.replace("-", "")
+            for digest in expected
+        )
     )
 
 
