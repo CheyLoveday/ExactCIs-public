@@ -61,6 +61,15 @@ ORACLE_PACKET_LINE_DIGESTS = {
     "tests/references/unconditional/boschloo_topology_v4.json": (
         "de56fa49-6f0defde-faa12731-3f7f703e-5a4b3364-45dcab26-e5778fea-cd98598d"
     ),
+    "tests/references/unconditional/qualification_v1.json": (
+        "79dba146-edb8a0e9-194e3b2d-d7b60068-25c5044d-b5b9b1ea-fe8bcf57-8bed0e79"
+    ),
+    "tests/references/unconditional/capability_measurement_v1.json": (
+        "6c6d52f3-7509db45-782b9e61-6bf10d96-9d4b7c54-724fdd73-0a2f99dd-6fddb33d"
+    ),
+    "tests/references/unconditional/adversarial_manifest_v1.json": (
+        "0689b644-6f7dcb9b-fb7f2e26-d28059fe-93d42add-17766324-c34b6dd8-9aa4f701"
+    ),
 }
 
 
