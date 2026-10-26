@@ -72,7 +72,7 @@ def measure(max_total: int, *, expanded: bool = False) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--max-total", type=int, choices=(2, 3, 4), default=4)
+    parser.add_argument("--max-total", type=int, choices=(2, 3, 4, 5, 6), default=4)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expanded", action="store_true")
     args = parser.parse_args()

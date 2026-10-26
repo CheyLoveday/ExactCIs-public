@@ -111,11 +111,44 @@ An exhausted limit raises `OracleLimitError` without a successful partial
 topology. Failures already occur below the grammar limit; these constants
 are diagnostic reference settings, not proposed production capabilities.
 
-Outstanding U1 work includes the full measured corpus through the intended
-scope and comparisons among generic tensor,
-cutoff/witness-cover and projected-event lanes. Production certificates and
-checkers, outward binary64 hulls, mathematical prerequisite integration and
-release qualification remain later stages.
+The three-lane qualification packet adds **1,440** finite fixed-null comparisons:
+all 155 observations with positive groups and total at most six, plus the
+`(4,4),(0,2)` observation, at three rational effects and both directions. The
+side level is exactly `1/40`; cases through total four and the larger anchor
+also include levels zero and one half. Tensor and projected-event decisions
+agree on all cases (1,341 accepted, 99 rejected). The independent cutoff/witness
+lane certifies 1,337 acceptances and 48 rejections, retaining 55 inconclusions.
+Its finite constant-witness search does not claim complete witness covers.
+These levels are exact mathematical inputs, distinct from decoded binary64
+API arguments. Each record stores exact beta, compact s, alpha, side level,
+mask, coefficients, source identities and domain-tagged hashes.
+
+The packet binds the specification and its complete local source dependency
+set. Replay rejects changed science even after an output digest is recomputed,
+wrong JSON numeric types, missing cases and source drift. Generation writes
+compact sorted-key UTF-8 LF bytes directly. Repository generation and standalone replay are:
+
+```sh
+python -m tools.unconditional_oracle.compare_lanes --output tests/references/unconditional/qualification_v1.json
+python -m tests.unconditional._lane_comparison --verify tests/references/unconditional/qualification_v1.json
+python -m tests.unconditional._capability_replay
+```
+
+Both scientific replay commands also work in an extracted sdist. Tests additionally retain
+generic moving-ridge, irrational tangency and effect-only stall attacks,
+explicitly distinguished from Boschloo table fixtures. A bounded lane's
+inconclusion never becomes rejection; the exact signed-root fallback remains
+necessary.
+
+The all-total-six whole-cell attempts, exact attack bank and capability proposal
+are recorded in [U1 qualification](../../docs_md/evidence/u1-qualification.md)
+and [U2 capability](../../docs_md/evidence/u2-capability.md). They preserve every
+inconclusion, resource refusal and wall timeout. Bounded whole-cell tensor and
+cutoff bands certify rational intervals enclosing exact CAD-lite event cells;
+a sample alone never licenses a cell decision. Generic attacks remain explicitly
+separate from actual Boschloo anchors. Closure of the owning issues requires
+the declared acceptance review; no finite corpus supplies a general producer
+completeness bound or activates a production cap.
 
 The unchanged default profile now completes 41/42 measured cases (all observations
 with positive groups and total at most four). The larger disconnected case

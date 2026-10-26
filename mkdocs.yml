@@ -13,6 +13,9 @@ nav:
   - API contract: api.md
   - Ordered hull specification: ordered_hull_specification.md
   - Unconditional exact specification: unconditional_exact_specification.md
+  - Development evidence:
+      - Boschloo oracle qualification: evidence/u1-qualification.md
+      - Boschloo adversaries and capability: evidence/u2-capability.md
   - Contributing: contributing.md
 
 markdown_extensions:
