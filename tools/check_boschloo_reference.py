@@ -175,12 +175,14 @@ def check(root: Path = ROOT) -> list[str]:
         data = path.read_bytes()
         if digest != {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}:
             errors.append(f"reference source bytes differ: {relative}")
-    if (formal / "lean-toolchain").read_text().strip() != "leanprover/lean4:v4.33.0":
+    if (formal / "lean-toolchain").read_text(
+        encoding="utf-8"
+    ).strip() != "leanprover/lean4:v4.33.0":
         errors.append("original Lean 4.33 source pin differs")
     for relative, digest in PINS.items():
         if hashlib.sha256((formal / relative).read_bytes()).hexdigest() != digest:
             errors.append(f"frozen dependency/schema bytes differ: {relative}")
-    config = tomllib.loads((formal / "lakefile.toml").read_text())
+    config = tomllib.loads((formal / "lakefile.toml").read_text(encoding="utf-8"))
     if config["defaultTargets"] != [ENTRY] or {
         row["name"] for row in config["lean_lib"]
     } != {"ExactCIs", "CarfSpine"}:
@@ -203,10 +205,10 @@ def check(root: Path = ROOT) -> list[str]:
         if module not in modules or not path.is_file():
             errors.append(f"unselected checker import: {module}")
             continue
-        code = lean_code(path.read_text())
+        code = lean_code(path.read_text(encoding="utf-8"))
         if re.search(r"\b(?:sorry|admit|axiom)\b", code):
             errors.append(f"project placeholder/axiom in checker source: {module}")
-        for imported in lean_imports(path.read_text()):
+        for imported in lean_imports(path.read_text(encoding="utf-8")):
             if imported.startswith(("ExactCIs.", "CarfSpine.")):
                 pending.append(imported)
             elif imported.split(".")[0] not in {
@@ -224,7 +226,7 @@ def check(root: Path = ROOT) -> list[str]:
         errors.append("reference Python module selection differs")
     for name in python & RUNTIME:
         for node in ast.walk(
-            ast.parse((formal / "tools" / (name + ".py")).read_text())
+            ast.parse((formal / "tools" / (name + ".py")).read_text(encoding="utf-8"))
         ):
             imports = (
                 [alias.name for alias in node.names]

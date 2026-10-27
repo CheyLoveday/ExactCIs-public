@@ -40,13 +40,15 @@ def manifest(root: Path) -> dict:
 
 def save(root: Path, data: dict) -> None:
     (root / "formal" / gate.MANIFEST).write_text(
-        json.dumps(data, sort_keys=True, separators=(",", ":")) + "\n"
+        json.dumps(data, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
 
 def change(root: Path, relative: str, value: str) -> None:
     path = root / "formal" / relative
-    path.write_text(value)
+    path.write_text(value, encoding="utf-8", newline="\n")
     data = manifest(root)
     raw = path.read_bytes()
     data["files"][relative] = {
@@ -61,6 +63,38 @@ def test_exact_focused_slice() -> None:
     assert "formal" in distribution.DENIED_PARTS
     assert "formal" in tree.ALLOWED_TOP_LEVEL
     assert ".lake" in tree.DENIED_PARTS
+
+
+def test_unicode_source_io_does_not_use_legacy_default_encoding(
+    checkout: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Model the cp1252 default that caused actual Windows CI failures."""
+    original_open = Path.open
+
+    def legacy_open(
+        path: Path,
+        mode: str = "r",
+        buffering: int = -1,
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
+    ):
+        if "b" not in mode and encoding is None:
+            encoding = "cp1252"
+        return original_open(
+            path, mode, buffering, encoding=encoding, errors=errors, newline=newline
+        )
+
+    monkeypatch.setattr(Path, "open", legacy_open)
+    relative = gate.ENTRY.replace(".", "/") + ".lean"
+    source = checkout / "formal" / relative
+    original = source.read_text(encoding="utf-8")
+    change(checkout, relative, original + "\n-- Unicode source: ℐ\n")
+    # U+2110's UTF-8 includes byte 0x90, which cp1252 cannot decode.
+    with pytest.raises(UnicodeDecodeError):
+        source.read_bytes().decode("cp1252")
+    assert source.read_text(encoding="utf-8").endswith("-- Unicode source: ℐ\n")
+    assert gate.check(checkout) == []
 
 
 def test_retained_native_example_custody_and_exact_endpoint_conversion() -> None:
@@ -146,7 +180,7 @@ def test_noncanonical_manifest_and_source_tamper(checkout: Path) -> None:
 
 def test_inventory_and_forbidden_source(checkout: Path) -> None:
     source = checkout / "formal/unreviewed.txt"
-    source.write_text("unreviewed")
+    source.write_text("unreviewed", encoding="utf-8", newline="\n")
     assert "reference source inventory differs" in gate.check(checkout)
     change(checkout, "unreviewed.txt", "unreviewed")
     assert any("outside reference" in error for error in gate.check(checkout))
@@ -200,7 +234,7 @@ def test_pins_and_build_boundary(
 def test_import_and_proof_boundary(checkout: Path, addition: str, message: str) -> None:
     relative = gate.ENTRY.replace(".", "/") + ".lean"
     path = checkout / "formal" / relative
-    change(checkout, relative, path.read_text() + addition)
+    change(checkout, relative, path.read_text(encoding="utf-8") + addition)
     assert any(message in error for error in gate.check(checkout))
 
 
@@ -213,7 +247,11 @@ def test_manifest_selection_and_runtime_import_boundary(checkout: Path) -> None:
     assert "checker module selection differs" in errors
     assert "reference Python module selection differs" in errors
     path = checkout / "formal/tools/boschloo.py"
-    change(checkout, "tools/boschloo.py", path.read_text() + "\nimport numpy\n")
+    change(
+        checkout,
+        "tools/boschloo.py",
+        path.read_text(encoding="utf-8") + "\nimport numpy\n",
+    )
     assert any("Python dependency" in error for error in gate.check(checkout))
 
 
