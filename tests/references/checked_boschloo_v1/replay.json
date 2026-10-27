@@ -1,0 +1,86 @@
+{
+  "alpha": "1/10",
+  "checked_result": {
+    "estimand": "odds_ratio",
+    "kind": "HULL",
+    "lower": {
+      "denominator": "473",
+      "kind": "rational",
+      "numerator": "39"
+    },
+    "method": "boschloo",
+    "upper": {
+      "kind": "infinity"
+    }
+  },
+  "checker_reply": {
+    "counters": [
+      "250700",
+      "1094818",
+      "860",
+      "589103",
+      "444504",
+      "12732",
+      "691",
+      "145",
+      "537",
+      "15",
+      "501400",
+      "1740847",
+      "8390371091",
+      "770",
+      "20"
+    ],
+    "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+    "protocol": "exactcis.boschloo.method.check.v1",
+    "result": {
+      "compact_lower": {
+        "denominator": "512",
+        "numerator": "39"
+      },
+      "compact_upper": {
+        "denominator": "1",
+        "numerator": "1"
+      },
+      "kind": "HULL_CERTIFIED"
+    },
+    "status": "accepted"
+  },
+  "evidence_scope": "One local native byte replay, bound to the exact published source slice; comprehensive independent formal-code assurance INCOMPLETE",
+  "generator": "EXACT_MERGED_FAMILY_REFERENCE_V1",
+  "input_sha256": "24a631ec-7ac8830d-d0e3a702-61dfbf89-347dbf2d-4d8e6d5c-4cbfea3b-835ea420",
+  "non_claims": [
+    "No general producer completeness",
+    "No production capability or latency qualification",
+    "No clean independent Lean or formal-code campaign"
+  ],
+  "payload_sha256": "7f08ccc0-ffefdfd7-878a0253-8f1fb1bd-ee958608-ff5d61c2-f189c9ab-fd3f61f9",
+  "prior_counters": [
+    "0",
+    "0",
+    "18",
+    "469615",
+    "328748",
+    "10081",
+    "354",
+    "21",
+    "512",
+    "7",
+    "501400",
+    "522614",
+    "1455231",
+    "770",
+    "20"
+  ],
+  "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+  "schema": "exactcis.checked_boschloo_reference.local_replay.v1",
+  "source_binding": "Selected checker and runtime files, original Lean pin and dependency lock are byte-identical to the locally executed sources; the public Lake target-only adaptation is recorded in the source manifest",
+  "source_manifest_sha256": "aca31c79-3295403c-64734b59-96d99050-c3a5027e-da8c6daa-f307d0b6-03498df0",
+  "table": [
+    1,
+    0,
+    0,
+    1
+  ],
+  "tolerance": "1/100"
+}
