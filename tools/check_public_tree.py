@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 ALLOWED_TOP_LEVEL = {
     ".gitattributes",
     ".github",
@@ -26,6 +27,7 @@ ALLOWED_TOP_LEVEL = {
     "README.md",
     "docs_md",
     "examples",
+    "formal",
     "mkdocs.yml",
     "pyproject.toml",
     "src",
@@ -47,6 +49,8 @@ DENIED_PARTS = {
     "site",
     "tmp",
     "__pycache__",
+    ".lake",
+    "lake-packages",
 }
 FORBIDDEN_IMPORTS = (
     "exactcis._internal",
@@ -117,8 +121,16 @@ def check_tree() -> list[str]:
             errors.append(f"private pooled-profile implementation is retained: {path}")
         if pure.parts[0] not in ALLOWED_TOP_LEVEL:
             errors.append(f"disallowed top-level path: {path}")
-        if set(pure.parts) & DENIED_PARTS:
+        if (
+            set(pure.parts) & DENIED_PARTS
+            and path != "formal/tools/lean/boschloo_check.lean"
+        ):
             errors.append(f"denied tracked path: {path}")
+        if pure.parts[0] == "formal":
+            from tools.check_boschloo_reference import path_allowed
+
+            if not path_allowed(pure.relative_to("formal").as_posix()):
+                errors.append(f"outside checked-reference boundary: {path}")
         if pure.suffix.lower() in {".docx", ".pdf", ".pyc", ".whl", ".zip"}:
             errors.append(f"denied tracked file type: {path}")
         file_path = ROOT / path

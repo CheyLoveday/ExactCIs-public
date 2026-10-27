@@ -4,3 +4,7 @@
 /tests/references/unconditional/** text eol=lf
 /tools/unconditional_oracle/** text eol=lf
 /docs_md/unconditional_exact_specification.md text eol=lf
+
+# Exact checked-reference source and schema identities use LF on all platforms.
+/formal/** text eol=lf
+/tests/references/checked_boschloo_v1/** text eol=lf

@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:exactcis:resource-profile:v1",
+  "title": "Trusted ExactCIs delegated-primitive resource profile v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "exactcis.resource-profile.v1"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\x00-\\x7f]+$"
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "decoded_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "decoded_items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "sample_states": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "rational_operations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "coefficient_slots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "root_replay_steps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "algebraic_comparisons": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "projection_polynomials": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "projection_roots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "leaf_or_cell_transitions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "certificate_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "integer_operations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "structural_steps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "maximum_operand_bits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "maximum_polynomial_degree": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "decoded_bytes",
+        "decoded_items",
+        "sample_states",
+        "rational_operations",
+        "coefficient_slots",
+        "root_replay_steps",
+        "algebraic_comparisons",
+        "projection_polynomials",
+        "projection_roots",
+        "leaf_or_cell_transitions",
+        "certificate_bytes",
+        "integer_operations",
+        "structural_steps",
+        "maximum_operand_bits",
+        "maximum_polynomial_degree"
+      ],
+      "additionalProperties": false
+    },
+    "shapes": {
+      "type": "object",
+      "properties": {
+        "payload_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "integer_digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "nesting": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "list_items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "object_items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "string_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "sample_grid": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "group_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "exponent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "unique_projection_members": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "refinement_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "bernstein_nodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "emitted_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "trace_events": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "payload_bytes",
+        "integer_digits",
+        "nesting",
+        "list_items",
+        "object_items",
+        "string_length",
+        "sample_grid",
+        "group_total",
+        "exponent",
+        "unique_projection_members",
+        "refinement_depth",
+        "bernstein_nodes",
+        "emitted_bytes",
+        "trace_events"
+      ],
+      "additionalProperties": false
+    },
+    "legacy": {
+      "type": "object",
+      "properties": {
+        "polynomial_ops": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "root_checks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "algebraic_comparisons": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "leaves": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total_work": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": [
+        "polynomial_ops",
+        "root_checks",
+        "algebraic_comparisons",
+        "leaves",
+        "total_work"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema",
+    "name",
+    "limits",
+    "shapes",
+    "legacy"
+  ],
+  "additionalProperties": false
+}

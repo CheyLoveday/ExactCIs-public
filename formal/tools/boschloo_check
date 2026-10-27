@@ -1,0 +1,7 @@
+#!/bin/sh
+# Refresh only the checker dependency closure; never build unfinished producers.
+set -eu
+formal_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$formal_root"
+lake build ExactCIs.Unconditional.MeteredGlobalChecker >&2
+exec lake env lean --run tools/lean/boschloo_check.lean "$@"
