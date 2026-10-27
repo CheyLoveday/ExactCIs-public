@@ -1,0 +1,1189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:exactcis:boschloo:global-checker:v1",
+  "title": "Frozen data-only candidate schema; no checker implementation or soundness theorem yet",
+  "description": "Structural JSON shape only. All semantic obligations in GLOBAL_CHECKER_V1.md must be checked before Success. No producer-supplied proof fields, complete-partition flags, mask-correctness flags, counters, hull-validity flags or topology claims. UNRESOLVED is not a successful leaf state.",
+  "$defs": {
+    "nat": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "int": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$"
+    },
+    "rational": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "$ref": "#/$defs/int"
+        },
+        "denominator": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "additionalProperties": false
+    },
+    "sign": {
+      "enum": [
+        -1,
+        0,
+        1
+      ]
+    },
+    "polynomial": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rational"
+      }
+    },
+    "bivariate": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/polynomial"
+      }
+    },
+    "root_count": {
+      "type": "object",
+      "properties": {
+        "representative": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "quotient": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "powerQuotient": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "exponent": {
+          "$ref": "#/$defs/nat"
+        },
+        "bezoutLeft": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "bezoutRight": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "tail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/polynomial"
+          }
+        },
+        "quotients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/polynomial"
+          }
+        },
+        "last": {
+          "$ref": "#/$defs/rational"
+        }
+      },
+      "required": [
+        "representative",
+        "quotient",
+        "powerQuotient",
+        "exponent",
+        "bezoutLeft",
+        "bezoutRight",
+        "tail",
+        "quotients",
+        "last"
+      ],
+      "additionalProperties": false
+    },
+    "algebraic_root": {
+      "type": "object",
+      "properties": {
+        "definer": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "lower": {
+          "$ref": "#/$defs/rational"
+        },
+        "upper": {
+          "$ref": "#/$defs/rational"
+        },
+        "certificate": {
+          "$ref": "#/$defs/root_count"
+        }
+      },
+      "required": [
+        "definer",
+        "lower",
+        "upper",
+        "certificate"
+      ],
+      "additionalProperties": false
+    },
+    "point": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "rational"
+            },
+            "value": {
+              "$ref": "#/$defs/rational"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "algebraic"
+            },
+            "value": {
+              "$ref": "#/$defs/algebraic_root"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "endpoint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "zero",
+                "one"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "point"
+            },
+            "index": {
+              "$ref": "#/$defs/nat"
+            }
+          },
+          "required": [
+            "kind",
+            "index"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "algebraic_sign": {
+      "type": "object",
+      "properties": {
+        "sign": {
+          "$ref": "#/$defs/sign"
+        },
+        "quotient": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "remainder": {
+          "$ref": "#/$defs/polynomial"
+        }
+      },
+      "required": [
+        "sign",
+        "quotient",
+        "remainder"
+      ],
+      "additionalProperties": false
+    },
+    "point_sign": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "rational"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "algebraic"
+            },
+            "witness": {
+              "$ref": "#/$defs/algebraic_sign"
+            }
+          },
+          "required": [
+            "kind",
+            "witness"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "refinement": {
+      "type": "object",
+      "properties": {
+        "lower": {
+          "$ref": "#/$defs/rational"
+        },
+        "upper": {
+          "$ref": "#/$defs/rational"
+        },
+        "certificate": {
+          "$ref": "#/$defs/root_count"
+        }
+      },
+      "required": [
+        "lower",
+        "upper",
+        "certificate"
+      ],
+      "additionalProperties": false
+    },
+    "root_order": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "less",
+                "greater"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/refinement"
+            },
+            "right": {
+              "$ref": "#/$defs/refinement"
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "equal"
+            },
+            "common": {
+              "$ref": "#/$defs/algebraic_root"
+            },
+            "leftQuotient": {
+              "$ref": "#/$defs/polynomial"
+            },
+            "rightQuotient": {
+              "$ref": "#/$defs/polynomial"
+            }
+          },
+          "required": [
+            "kind",
+            "common",
+            "leftQuotient",
+            "rightQuotient"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "adjacent_order": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "rational_or_disjoint"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "algebraic"
+            },
+            "witness": {
+              "$ref": "#/$defs/root_order"
+            }
+          },
+          "required": [
+            "kind",
+            "witness"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "root_member": {
+      "type": "object",
+      "properties": {
+        "point": {
+          "$ref": "#/$defs/nat"
+        },
+        "zero": {
+          "$ref": "#/$defs/point_sign"
+        }
+      },
+      "required": [
+        "point",
+        "zero"
+      ],
+      "additionalProperties": false
+    },
+    "root_cover": {
+      "type": "object",
+      "properties": {
+        "polynomial": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "certificate": {
+          "$ref": "#/$defs/root_count"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/root_member"
+          }
+        }
+      },
+      "required": [
+        "polynomial",
+        "certificate",
+        "members"
+      ],
+      "additionalProperties": false
+    },
+    "open_sign": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "identity_zero"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "root_free"
+            },
+            "sign": {
+              "enum": [
+                -1,
+                1
+              ]
+            },
+            "certificate": {
+              "$ref": "#/$defs/root_count"
+            },
+            "leftSigns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            },
+            "rightSigns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            },
+            "sample": {
+              "$ref": "#/$defs/rational"
+            }
+          },
+          "required": [
+            "kind",
+            "sign",
+            "certificate",
+            "leftSigns",
+            "rightSigns",
+            "sample"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "parametric_step": {
+      "type": "object",
+      "properties": {
+        "quotient": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "scale": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "guard": {
+          "$ref": "#/$defs/open_sign"
+        }
+      },
+      "required": [
+        "quotient",
+        "scale",
+        "guard"
+      ],
+      "additionalProperties": false
+    },
+    "parametric_root": {
+      "type": "object",
+      "properties": {
+        "representative": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "quotient": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "powerQuotient": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "bezoutLeft": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "bezoutRight": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "rootScale": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "powerScale": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "bezoutScale": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "last": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "rootGuard": {
+          "$ref": "#/$defs/open_sign"
+        },
+        "powerGuard": {
+          "$ref": "#/$defs/open_sign"
+        },
+        "bezoutGuard": {
+          "$ref": "#/$defs/open_sign"
+        },
+        "lastGuard": {
+          "$ref": "#/$defs/open_sign"
+        },
+        "exponent": {
+          "$ref": "#/$defs/nat"
+        },
+        "tail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bivariate"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parametric_step"
+          }
+        }
+      },
+      "required": [
+        "representative",
+        "quotient",
+        "powerQuotient",
+        "bezoutLeft",
+        "bezoutRight",
+        "rootScale",
+        "powerScale",
+        "bezoutScale",
+        "last",
+        "rootGuard",
+        "powerGuard",
+        "bezoutGuard",
+        "lastGuard",
+        "exponent",
+        "tail",
+        "steps"
+      ],
+      "additionalProperties": false
+    },
+    "specialized_root": {
+      "type": "object",
+      "properties": {
+        "representative": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "quotient": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "powerQuotient": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "rootWitness": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "powerWitness": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "bezoutLeft": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "bezoutRight": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "bezoutWitness": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "derivativeWitness": {
+          "$ref": "#/$defs/bivariate"
+        },
+        "last": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "lastInverse": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "lastQuotient": {
+          "$ref": "#/$defs/polynomial"
+        },
+        "exponent": {
+          "$ref": "#/$defs/nat"
+        },
+        "tail": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bivariate"
+          }
+        },
+        "quotients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bivariate"
+          }
+        },
+        "witnesses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bivariate"
+          }
+        }
+      },
+      "required": [
+        "representative",
+        "quotient",
+        "powerQuotient",
+        "rootWitness",
+        "powerWitness",
+        "bezoutLeft",
+        "bezoutRight",
+        "bezoutWitness",
+        "derivativeWitness",
+        "last",
+        "lastInverse",
+        "lastQuotient",
+        "exponent",
+        "tail",
+        "quotients",
+        "witnesses"
+      ],
+      "additionalProperties": false
+    },
+    "direction": {
+      "enum": [
+        "greater",
+        "less"
+      ]
+    },
+    "open_decision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "full_mask",
+                "zero_level"
+              ]
+            },
+            "direction": {
+              "$ref": "#/$defs/direction"
+            },
+            "ordering": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/open_sign"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "direction",
+            "ordering"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "interior_root"
+            },
+            "direction": {
+              "$ref": "#/$defs/direction"
+            },
+            "ordering": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/open_sign"
+              }
+            },
+            "originalLeft": {
+              "$ref": "#/$defs/open_sign"
+            },
+            "originalRight": {
+              "$ref": "#/$defs/open_sign"
+            },
+            "root": {
+              "$ref": "#/$defs/parametric_root"
+            },
+            "left": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/open_sign"
+              }
+            },
+            "right": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/open_sign"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "direction",
+            "ordering",
+            "originalLeft",
+            "originalRight",
+            "root",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "point_decision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "full_mask",
+                "zero_level"
+              ]
+            },
+            "direction": {
+              "$ref": "#/$defs/direction"
+            },
+            "ordering": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "direction",
+            "ordering"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "rational_root"
+            },
+            "direction": {
+              "$ref": "#/$defs/direction"
+            },
+            "ordering": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            },
+            "root": {
+              "$ref": "#/$defs/root_count"
+            }
+          },
+          "required": [
+            "kind",
+            "direction",
+            "ordering",
+            "root"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "algebraic_root"
+            },
+            "direction": {
+              "$ref": "#/$defs/direction"
+            },
+            "ordering": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            },
+            "original": {
+              "$ref": "#/$defs/point_sign"
+            },
+            "root": {
+              "$ref": "#/$defs/specialized_root"
+            },
+            "left": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            },
+            "right": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/point_sign"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "direction",
+            "ordering",
+            "original",
+            "root",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "leaf_state": {
+      "enum": [
+        "ACCEPTED",
+        "REJECTED_GREATER",
+        "REJECTED_LESS",
+        "BOUNDARY_ENCLOSURE"
+      ]
+    },
+    "open_leaf": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/leaf_state"
+        },
+        "greater": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/open_decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "less": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/open_decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "greater",
+        "less"
+      ],
+      "additionalProperties": false
+    },
+    "point_leaf": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/leaf_state"
+        },
+        "greater": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/point_decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "less": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/point_decision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "greater",
+        "less"
+      ],
+      "additionalProperties": false
+    },
+    "anchor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "rational"
+            },
+            "value": {
+              "$ref": "#/$defs/rational"
+            },
+            "openCell": {
+              "$ref": "#/$defs/nat"
+            }
+          },
+          "required": [
+            "kind",
+            "value",
+            "openCell"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "point"
+            },
+            "index": {
+              "$ref": "#/$defs/nat"
+            }
+          },
+          "required": [
+            "kind",
+            "index"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "t1_branch": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "structural"
+            },
+            "endpoint": {
+              "enum": [
+                "zero",
+                "one"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "endpoint"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "finite"
+            },
+            "anchor": {
+              "$ref": "#/$defs/anchor"
+            },
+            "enclosureLower": {
+              "$ref": "#/$defs/rational"
+            },
+            "enclosureUpper": {
+              "$ref": "#/$defs/rational"
+            }
+          },
+          "required": [
+            "kind",
+            "anchor",
+            "enclosureLower",
+            "enclosureUpper"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "terminal": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "HULL_CERTIFIED"
+            },
+            "outerLower": {
+              "$ref": "#/$defs/rational"
+            },
+            "outerUpper": {
+              "$ref": "#/$defs/rational"
+            },
+            "lower": {
+              "$ref": "#/$defs/t1_branch"
+            },
+            "upper": {
+              "$ref": "#/$defs/t1_branch"
+            }
+          },
+          "required": [
+            "kind",
+            "outerLower",
+            "outerUpper",
+            "lower",
+            "upper"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "FULL_CERTIFIED",
+                "EMPTY_CERTIFIED"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "payloadBytes": {
+          "$ref": "#/$defs/nat"
+        },
+        "integerDigits": {
+          "$ref": "#/$defs/nat"
+        },
+        "polynomialDegree": {
+          "$ref": "#/$defs/nat"
+        },
+        "polynomialOps": {
+          "$ref": "#/$defs/nat"
+        },
+        "rootChecks": {
+          "$ref": "#/$defs/nat"
+        },
+        "algebraicComparisons": {
+          "$ref": "#/$defs/nat"
+        },
+        "leaves": {
+          "$ref": "#/$defs/nat"
+        },
+        "totalWork": {
+          "$ref": "#/$defs/nat"
+        }
+      },
+      "required": [
+        "payloadBytes",
+        "integerDigits",
+        "polynomialDegree",
+        "polynomialOps",
+        "rootChecks",
+        "algebraicComparisons",
+        "leaves",
+        "totalWork"
+      ],
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "exactcis.boschloo.global-checker.input.v1"
+        },
+        "method": {
+          "const": "boschloo"
+        },
+        "estimand": {
+          "const": "odds_ratio"
+        },
+        "design": {
+          "const": "independent_groups"
+        },
+        "a": {
+          "$ref": "#/$defs/nat"
+        },
+        "b": {
+          "$ref": "#/$defs/nat"
+        },
+        "c": {
+          "$ref": "#/$defs/nat"
+        },
+        "d": {
+          "$ref": "#/$defs/nat"
+        },
+        "alpha": {
+          "$ref": "#/$defs/rational"
+        },
+        "alphaSide": {
+          "$ref": "#/$defs/rational"
+        },
+        "hullEndpointExcessTolerance": {
+          "$ref": "#/$defs/rational"
+        },
+        "limits": {
+          "$ref": "#/$defs/limits"
+        }
+      },
+      "required": [
+        "schema",
+        "method",
+        "estimand",
+        "design",
+        "a",
+        "b",
+        "c",
+        "d",
+        "alpha",
+        "alphaSide",
+        "hullEndpointExcessTolerance",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "exactcis.boschloo.global-checker.payload.v1"
+        },
+        "coordinate": {
+          "const": "s=psi/(1+psi)"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "adjacentOrder": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/adjacent_order"
+          }
+        },
+        "rootCovers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/root_cover"
+          }
+        },
+        "openLeaves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/open_leaf"
+          }
+        },
+        "pointLeaves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point_leaf"
+          }
+        },
+        "terminal": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "required": [
+        "schema",
+        "coordinate",
+        "points",
+        "adjacentOrder",
+        "rootCovers",
+        "openLeaves",
+        "pointLeaves",
+        "terminal"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "payload": {
+      "$ref": "#/$defs/payload"
+    }
+  },
+  "required": [
+    "input",
+    "payload"
+  ],
+  "additionalProperties": false
+}

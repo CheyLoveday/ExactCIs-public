@@ -42,6 +42,7 @@ Changelog = "https://github.com/CheyLoveday/ExactCIs-public/blob/main/CHANGELOG.
 [project.optional-dependencies]
 dev = [
   "coverage[toml]>=7.10,<8",
+  "jsonschema==4.25.1",
   "mypy==1.19.1",
   "pytest>=9.0.3,<10",
   "pytest-cov>=7.1,<8",

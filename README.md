@@ -196,6 +196,11 @@ and an [adversarial bank and capability proposal](https://github.com/CheyLoveday
 These exact reference calculations retain their refusals and inconclusions;
 they do not add a production method or activate capability limits.
 
+A [callable checked Boschloo reference](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/BOSCHLOO_METHOD.md) is available
+as a repository tool. It returns exact odds-ratio hulls only after actual Lean
+byte-checker acceptance, with explicit bounded refusals. It does not register a
+package method or activate production capability.
+
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/CheyLoveday/ExactCIs-public/blob/main/CONTRIBUTING.md).

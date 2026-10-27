@@ -83,6 +83,18 @@ ORACLE_PACKET_HISTORICAL_LINE_DIGESTS = {
 }
 
 
+# Reviewed dependency/source metadata uses exact complete-file pins. Changed
+# bytes and every unreviewed path still take the ordinary detector path.
+REFERENCE_METADATA_DIGESTS = {
+    "formal/lake-manifest.json": (
+        "f3c5aab5-180ac0fc-247710bf-9ccc06e9-5c120177-64658cc2-a44a63a5-921a6a0e"
+    ),
+    "formal/checked-reference-manifest.json": (
+        "aca31c79-3295403c-64734b59-96d99050-c3a5027e-da8c6daa-f307d0b6-03498df0"
+    ),
+}
+
+
 def _packet_line_hashes(path: str) -> tuple[str, ...]:
     current = ORACLE_PACKET_LINE_DIGESTS.get(path)
     return (
@@ -167,13 +179,24 @@ def _reviewed_packet_data(path: str, data: bytes) -> bool:
     )
 
 
+def _reviewed_metadata_data(path: str, data: bytes) -> bool:
+    expected = REFERENCE_METADATA_DIGESTS.get(path)
+    return expected is not None and hashlib.sha256(
+        data
+    ).hexdigest() == expected.replace("-", "")
+
+
+def _reviewed_custody_data(path: str, data: bytes) -> bool:
+    return _reviewed_packet_data(path, data) or _reviewed_metadata_data(path, data)
+
+
 def _current_tree_errors() -> list[str]:
     reviewed = [
         path
-        for path in ORACLE_PACKET_LINE_DIGESTS
+        for path in {*ORACLE_PACKET_LINE_DIGESTS, *REFERENCE_METADATA_DIGESTS}
         if (ROOT / path).is_file()
         and not (ROOT / path).is_symlink()
-        and _reviewed_packet_data(path, (ROOT / path).read_bytes())
+        and _reviewed_custody_data(path, (ROOT / path).read_bytes())
     ]
     exclusions = (
         [
@@ -243,7 +266,7 @@ def _history_errors() -> tuple[list[str], int, int]:
                         continue
                     scanned.add(identity)
                     data = bytes(_git("cat-file", "blob", object_id, text=False))
-                    if _reviewed_packet_data(path, data):
+                    if _reviewed_custody_data(path, data):
                         continue
                     materialized = temporary_root.joinpath(*pure.parts)
                     materialized.parent.mkdir(parents=True, exist_ok=True)
@@ -286,11 +309,9 @@ def main() -> int:
     print(
         "OK: reviewed allowlist is limited to frozen scientific-source SHAs, "
         "the reviewed timing-evidence wheel checksum/commits, "
-        "and exact oracle packet lines"
+        "exact oracle packet lines and complete reference metadata files"
     )
-    print(
-        "OK: exact reviewed packet bytes are hash-classified; changed bytes are scanned"
-    )
+    print("OK: reviewed custody bytes are hash-classified; changed bytes are scanned")
     return 0
 
 

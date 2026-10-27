@@ -30,3 +30,9 @@ site/
 
 # Local agent skills — not part of public tree (denied by check_public_tree)
 .grok/
+
+# Repository-only Lean checker caches.
+/formal/.lake/
+/formal/lake-packages/
+*.olean
+*.ilean

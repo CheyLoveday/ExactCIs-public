@@ -21,6 +21,7 @@ DENIED_PARTS = {
     "_dev",
     "build",
     "htmlcov",
+    "formal",
     "lean",
     "output",
     "replication",
