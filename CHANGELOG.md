@@ -9,6 +9,31 @@ This file records user-facing changes only.
 - Extend the supported interpreter and clean-artifact validation matrix through
   Python 3.14 while retaining Python 3.11 as the minimum language target.
 
+### Repository development reference
+
+- Add a callable Boschloo OR hull reference under `formal/`, with exact
+  candidate construction, actual Lean literal-byte acceptance and bounded
+  refusal semantics. It is a repository tool; it does not add a stable package
+  method or establish general producer completeness or comprehensive independent
+  formal-code verification.
+
+### Documentation
+
+- Distinguish published 1.1.2, the development source and the checked repository
+  reference. Preserve the Boschloo-only/T1-min 1.2.0 scope and describe proposed
+  later releases for matching tests, directional bounds and likelihood ratios.
+- Correct table-transformation guidance: row swaps reciprocate OR and RR/PR;
+  outcome-column swaps reciprocate OR but compare complementary risks for RR/PR.
+- Align contribution guidance with the manifest-bound repository checker
+  closure and link the current documentation routes.
+
+### Development tooling
+
+- Update the security-tool dependency `msgpack` from 1.2.1 to 1.2.3 for
+  [GHSA-j586-36cw-2gc2](https://github.com/msgpack/msgpack-python/security/advisories/GHSA-j586-36cw-2gc2).
+  This changes the development lockfile; the package retains zero runtime
+  dependencies.
+
 ## [1.1.2] - 2026-08-06
 
 Published corrective release (`exactcis==1.1.2`, tag `v1.1.2`). This release
