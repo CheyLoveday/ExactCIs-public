@@ -16,6 +16,10 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
 - Source tree: Python **3.11–3.14**. Runtime: **standard library only**.
 - Current package version is recorded by `exactcis.__version__`; the current
   release is `exactcis==1.1.2`, whose published metadata supports 3.11–3.13.
+- The agreed 1.2.0 extension is Boschloo OR with a T1-min outward hull. The
+  callable reference under `formal/` is a repository tool, not a stable package
+  method. Production activation and comprehensive independent formal-code
+  verification remain separately gated. See [the roadmap](docs_md/roadmap.md).
 
 ```bash
 pip install exactcis
@@ -33,7 +37,9 @@ exposed -        c           d
 ```
 
 - Counts are finite non-negative integers no larger than `10**12` per cell.
-- Swapping rows or columns reciprocates ratio estimands.
+- Swapping rows reciprocates the OR and risk/prevalence ratio.
+- Swapping outcome columns reciprocates the OR; for RR/PR it compares the
+  complementary outcome probabilities, generally not the reciprocal ratio.
 - **Never relabel cells between related calls.**
 
 ---
@@ -230,4 +236,5 @@ different method. Surface the failure.
 - [docs_md/api.md](docs_md/api.md) — authoritative API contract
 - [docs_md/methods.md](docs_md/methods.md) — constructions and limits
 - [CHANGELOG.md](CHANGELOG.md) — user-facing history
+- [docs_md/roadmap.md](docs_md/roadmap.md) — current scope and proposed releases
 - [CITATION.cff](CITATION.cff) — citation metadata

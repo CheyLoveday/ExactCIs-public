@@ -4,8 +4,22 @@ ExactCIs provides design-aware inference for sparse 2 × 2 tables in Python,
 with explicit sampling assumptions, documented interval constructions, and
 fail-closed numerical behaviour.
 
-This release does not claim universal exactness, unconditional coverage for
-conditional procedures, clinical validation, or formal verification.
+The released package does not claim universal exactness, unconditional coverage
+for conditional procedures, clinical validation, or formal verification.
+
+## Start here
+
+| Route | Current status | Read next |
+|---|---|---|
+| Published package | `exactcis==1.1.2`; Python 3.11–3.13 | [API contract](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/api.md) and the quick start below |
+| Development source | Adds Python 3.14 qualification; the stable method registry remains unchanged | [Supported methods](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/methods.md) |
+| Checked Boschloo reference | Repository tool requiring actual Lean byte-checker acceptance; bounded refusals remain possible | [Build and call the reference](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/BOSCHLOO_METHOD.md) |
+| Release plan | 1.2.0 adds only the agreed Boschloo OR construction with a T1-min outward hull | [Scope and later roadmap](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/roadmap.md) |
+
+The reference is not registered as a stable package method. Public runtime
+activation and comprehensive independent formal-code verification remain
+separate completion gates. Later matching tests, one-sided bounds and
+likelihood-ratio features do not widen the current release scope.
 
 ## Installation
 
@@ -83,8 +97,13 @@ exposed -        c           d
 
 Counts must be finite, non-negative integers no larger than `10**12` per cell.
 Rows identify the two comparison groups; columns identify outcome status.
-Swapping either pair reciprocates the corresponding ratio and transforms finite
-interval endpoints accordingly.
+Swapping rows reciprocates the OR and risk/prevalence ratio where defined.
+For interval constructions with the same symmetry, finite endpoints transform
+to `(1 / upper, 1 / lower)`; an absolute-error outer hull does not automatically
+inherit that numerical symmetry.
+Swapping outcome columns reciprocates the OR. For a risk/prevalence ratio it
+instead compares the complementary outcome probabilities, which is generally a
+different ratio rather than the reciprocal of the original one.
 
 ## Supported designs, estimands, and methods
 
@@ -200,6 +219,11 @@ A [callable checked Boschloo reference](https://github.com/CheyLoveday/ExactCIs-
 as a repository tool. It returns exact odds-ratio hulls only after actual Lean
 byte-checker acceptance, with explicit bounded refusals. It does not register a
 package method or activate production capability.
+
+The [roadmap](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/roadmap.md)
+distinguishes that current work from proposed later releases. Kernel acceptance
+of a retained example, numerical qualification and comprehensive independent
+formal assurance are separate forms of evidence.
 
 ## Contributing
 
