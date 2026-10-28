@@ -27,6 +27,13 @@ This file records user-facing changes only.
 - Align contribution guidance with the manifest-bound repository checker
   closure and link the current documentation routes.
 
+### Development tooling
+
+- Update the security-tool dependency `msgpack` from 1.2.1 to 1.2.3 for
+  [GHSA-j586-36cw-2gc2](https://github.com/msgpack/msgpack-python/security/advisories/GHSA-j586-36cw-2gc2).
+  This changes the development lockfile; the package retains zero runtime
+  dependencies.
+
 ## [1.1.2] - 2026-08-06
 
 Published corrective release (`exactcis==1.1.2`, tag `v1.1.2`). This release
