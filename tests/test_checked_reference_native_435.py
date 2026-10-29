@@ -14,11 +14,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-if not (ROOT / "formal").is_dir():
-    pytest.skip("repository-only checked reference", allow_module_level=True)
-
-sys.path.insert(0, str(ROOT / "formal/tools"))
-import boschloo  # noqa: E402
+pytestmark = pytest.mark.skipif(
+    not (ROOT / "formal").is_dir(), reason="repository-only checked reference"
+)
+if (ROOT / "formal").is_dir():
+    sys.path.insert(0, str(ROOT / "formal/tools"))
+    import boschloo
 
 DIRECTORY = ROOT / "tests/references/checked_boschloo_435_v1"
 RECEIPT = json.loads((DIRECTORY / "replay.json").read_bytes())
