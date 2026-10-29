@@ -14,11 +14,17 @@ This file records user-facing changes only.
 - Add a callable Boschloo OR hull reference under `formal/`, with exact
   candidate construction, actual Lean literal-byte acceptance and bounded
   refusal semantics. It is a repository tool; it does not add a stable package
-  method or establish general producer completeness or comprehensive independent
-  formal-code verification.
+  method or establish general producer completeness or full mathematical
+  assurance. See the completed checker results and remaining gates below.
 
 ### Documentation
 
+- Record the completed 225-module, six-checker Lean 4.35 compatibility-copy run
+  and its exact source/export identities. Make Lean 4.35 and the tested proof
+  bodies/dependency pins canonical for the repository reference; preserve the
+  former 4.33 edition and native receipt as history. Protected comparison now
+  passes for 42 reviewed Boschloo targets, with critical assurance MET at the
+  declared formal scope. Package activation retains separate gates.
 - Distinguish published 1.1.2, the development source and the checked repository
   reference. Preserve the Boschloo-only/T1-min 1.2.0 scope and describe proposed
   later releases for matching tests, directional bounds and likelihood ratios.

@@ -6,6 +6,7 @@ import hashlib
 import json
 import shutil
 import sys
+import tarfile
 from fractions import Fraction
 from pathlib import Path
 
@@ -105,9 +106,26 @@ def test_retained_native_example_custody_and_exact_endpoint_conversion() -> None
         assert hashlib.sha256(
             (directory / f"{name}.json").read_bytes()
         ).hexdigest() == (receipt[f"{name}_sha256"].replace("-", ""))
-    assert hashlib.sha256(
-        (ROOT / "formal" / gate.MANIFEST).read_bytes()
-    ).hexdigest() == (receipt["source_manifest_sha256"].replace("-", ""))
+    # This immutable receipt belongs to the historical 4.33 source edition.
+    # Verify that edition's complete archived custody instead of rebinding the
+    # old execution to the current 4.35 manifest.
+    history = ROOT / "docs_md/evidence/boschloo-reference-433-20261029.json"
+    record = json.loads(history.read_bytes())
+    archive = history.parent / record["archive"]
+    assert hashlib.sha256(archive.read_bytes()).hexdigest() == record["archive_sha256"]
+    with tarfile.open(archive, "r:gz") as stream:
+        original = stream.extractfile("formal/" + gate.MANIFEST).read()
+        assert hashlib.sha256(original).hexdigest() == record["manifest_sha256"]
+        assert record["manifest_sha256"] == receipt["source_manifest_sha256"].replace(
+            "-", ""
+        )
+        for name, expected in json.loads(original)["files"].items():
+            data = stream.extractfile("formal/" + name).read()
+            assert expected == {
+                "bytes": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+            }
+    assert (ROOT / "formal/" / gate.MANIFEST).read_bytes() != original
     payload = json.loads((directory / "payload.json").read_bytes())
     _, result = boschloo._reply(
         json.dumps(receipt["checker_reply"]).encode(),
@@ -207,7 +225,7 @@ def test_source_symlink_is_not_accepted(checkout: Path, tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("relative", "value", "message"),
     [
-        ("lean-toolchain", "leanprover/lean4:v4.35.0\n", "Lean 4.33"),
+        ("lean-toolchain", "leanprover/lean4:v4.33.0\n", "Lean 4.35"),
         ("global-checker-v1.schema.json", "{}\n", "frozen dependency/schema"),
         (
             "lakefile.toml",
@@ -258,7 +276,7 @@ def test_manifest_selection_and_runtime_import_boundary(checkout: Path) -> None:
 def test_guard_cli_reports_custody_ceiling(monkeypatch, capsys) -> None:
     monkeypatch.setattr(gate, "check", lambda root: [])
     assert gate.main() == 0
-    assert "assurance INCOMPLETE" in capsys.readouterr().out
+    assert "proof assurance is recorded separately" in capsys.readouterr().out
     monkeypatch.setattr(gate, "check", lambda root: ["changed source"])
     assert gate.main() == 1
     assert "ERROR: changed source" in capsys.readouterr().out

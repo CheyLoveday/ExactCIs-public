@@ -87,10 +87,21 @@ ORACLE_PACKET_HISTORICAL_LINE_DIGESTS = {
 # bytes and every unreviewed path still take the ordinary detector path.
 REFERENCE_METADATA_DIGESTS = {
     "formal/lake-manifest.json": (
-        "f3c5aab5-180ac0fc-247710bf-9ccc06e9-5c120177-64658cc2-a44a63a5-921a6a0e"
+        "96435c50-9708f258-31936d6f-9ea5bb44-af609ee2-e812bcdd-c5cc98a9-b8ecd9fd"
     ),
     "formal/checked-reference-manifest.json": (
-        "aca31c79-3295403c-64734b59-96d99050-c3a5027e-da8c6daa-f307d0b6-03498df0"
+        "c08a87ea-5de63723-b166f9aa-dd4451ad-dfe4845c-31c35dc8-bc93c88e-e6288a17"
+    ),
+    "docs_md/evidence/boschloo-reference-433-20261029.json": (
+        "b931a37a-dc7e2caa-83c4d392-444ce2a6-94059e8f-7d265a82-b190637e-9a1399d2"
+    ),
+}
+REFERENCE_METADATA_HISTORICAL_DIGESTS = {
+    "formal/lake-manifest.json": (
+        "f3c5aab5-180ac0fc-247710bf-9ccc06e9-5c120177-64658cc2-a44a63a5-921a6a0e",
+    ),
+    "formal/checked-reference-manifest.json": (
+        "aca31c79-3295403c-64734b59-96d99050-c3a5027e-da8c6daa-f307d0b6-03498df0",
     ),
 }
 
@@ -180,10 +191,12 @@ def _reviewed_packet_data(path: str, data: bytes) -> bool:
 
 
 def _reviewed_metadata_data(path: str, data: bytes) -> bool:
-    expected = REFERENCE_METADATA_DIGESTS.get(path)
-    return expected is not None and hashlib.sha256(
-        data
-    ).hexdigest() == expected.replace("-", "")
+    current = REFERENCE_METADATA_DIGESTS.get(path)
+    expected = (() if current is None else (current,)) + (
+        REFERENCE_METADATA_HISTORICAL_DIGESTS.get(path, ())
+    )
+    actual = hashlib.sha256(data).hexdigest()
+    return any(actual == digest.replace("-", "") for digest in expected)
 
 
 def _reviewed_custody_data(path: str, data: bytes) -> bool:

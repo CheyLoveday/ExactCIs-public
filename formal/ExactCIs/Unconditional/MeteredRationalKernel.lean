@@ -138,9 +138,10 @@ theorem ratMul_refines (a b : Rat) : Refines (ratMul a b) (a * b) :=
   bind_refines (observe_refines _) (bind_refines (observe_refines _) (scalar_refines _ _ _))
 
 theorem ratDiv_safe (a b : Rat) : Safe (ratDiv a b) := by
-  apply bind_safe (observe_safe _)
+  unfold ratDiv
+  apply bind_safe (m := observe a) (observe_safe a)
   intro _
-  apply bind_safe (observe_safe _)
+  apply bind_safe (m := observe b) (observe_safe b)
   intro _
   by_cases h : b.num = 0
   · simpa only [h, ↓reduceIte] using fail_safe (α := Rat) .zeroDenominator
@@ -148,8 +149,9 @@ theorem ratDiv_safe (a b : Rat) : Safe (ratDiv a b) := by
       (max (productBits a.num b.den) (productBits a.den b.num)) (fun _ => a / b)
 
 theorem ratDiv_refines (a b : Rat) : Refines (ratDiv a b) (a / b) := by
-  apply bind_refines (observe_refines _)
-  apply bind_refines (observe_refines _)
+  unfold ratDiv
+  apply bind_refines (m := observe a) (observe_refines a)
+  apply bind_refines (m := observe b) (observe_refines b)
   by_cases h : b.num = 0
   · simpa only [h, ↓reduceIte] using fail_refines .zeroDenominator (a / b)
   · simpa only [h, ↓reduceIte] using scalar_refines .ratDiv

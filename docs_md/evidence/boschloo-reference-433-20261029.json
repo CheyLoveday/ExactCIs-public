@@ -1,0 +1,14 @@
+{
+  "schema": "exactcis.checked_boschloo_reference.history.v1",
+  "edition": "Historical Lean4.33reference; not the current canonical edition",
+  "source_repository": "https://github.com/CheyLoveday/ExactCIs-public",
+  "source_revision": "8696663461869c23f298d17db0e3f3a7096fc549",
+  "archive": "boschloo-reference-433-20261029.tar.gz",
+  "archive_bytes": 236502,
+  "archive_sha256": "8d6aee67026aeec1ebae3d49f384f31ed757aaa412fae1b0b64ef66e2755ebaf",
+  "manifest_path": "formal/checked-reference-manifest.json",
+  "manifest_sha256": "aca31c793295403c64734b5996d99050c3a5027eda8c6daaf307d0b603498df0",
+  "file_count": 131,
+  "retained_native_example": "tests/references/checked_boschloo_v1/replay.json",
+  "retained_native_example_scope": "Original4.33source custody and finite native replay; no result transfer to435"
+}

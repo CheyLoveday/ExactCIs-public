@@ -18,8 +18,10 @@ file over inventing APIs. When uncertain, open `docs_md/api.md` or query
   release is `exactcis==1.1.2`, whose published metadata supports 3.11–3.13.
 - The agreed 1.2.0 extension is Boschloo OR with a T1-min outward hull. The
   callable reference under `formal/` is a repository tool, not a stable package
-  method. Production activation and comprehensive independent formal-code
-  verification remain separately gated. See [the roadmap](docs_md/roadmap.md).
+  method. Critical-profile assurance is MET for the selected Boschloo formal
+  scope; production activation retains separate gates. The reference uses Lean 4.35
+  and the tested dependency pins; the earlier 4.33 edition is historical. See
+  [checker results](docs_md/formal-verification.md) and [the roadmap](docs_md/roadmap.md).
 
 ```bash
 pip install exactcis

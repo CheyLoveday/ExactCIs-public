@@ -28,8 +28,13 @@ The agreed 1.2.0 extension is Boschloo OR with the T1-min outward hull contract.
 A [callable checked reference](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/BOSCHLOO_METHOD.md)
 is available as a repository tool. It returns a statistical result only after
 actual Lean byte-checker acceptance and can refuse bounded or unsupported work.
-It does not activate a stable package method. Public runtime integration and
-comprehensive independent formal-code verification remain separate gates.
+It does not activate a stable package method. The full 225-module selection
+completed all six formal-code checkers on 28 October 2026 in a separate Lean
+4.35 environment. The public reference now adopts that Lean 4.35 source edition
+and its exact dependency pins; Lean 4.33 is historical.
+[Formal checking results](formal-verification.md) record critical-profile
+assurance MET for 42 reviewed Boschloo targets, protected comparison and the
+225-module mechanical scope. Public runtime integration retains separate gates.
 
 The planned Boschloo construction has separate
 [bounded oracle evidence](evidence/u1-qualification.md) and an
