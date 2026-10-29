@@ -120,6 +120,42 @@ def test_reference_metadata_allowance_is_whole_file_and_path_exact() -> None:
         assert not history_gate._reviewed_metadata_data(path, data + b" ")
 
 
+def test_reference_metadata_survives_autocrlf_checkout(tmp_path: Path) -> None:
+    """Exercise Git's actual Windows-style checkout without relaxing custody."""
+    import subprocess
+
+    originals = {
+        path: (ROOT / path).read_bytes()
+        for path in history_gate.REFERENCE_METADATA_DIGESTS
+    }
+    (tmp_path / ".gitattributes").write_bytes((ROOT / ".gitattributes").read_bytes())
+    for path, data in originals.items():
+        target = tmp_path / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    commands = [
+        ["git", "init", "-q"],
+        ["git", "-c", "core.autocrlf=true", "add", ".gitattributes", *originals],
+    ]
+    for command in commands:
+        subprocess.run(command, cwd=tmp_path, check=True, capture_output=True)
+    for path in originals:
+        (tmp_path / path).write_bytes(b"changed\n")
+    subprocess.run(
+        ["git", "-c", "core.autocrlf=true", "checkout-index", "--all", "--force"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    for path, expected in originals.items():
+        actual = (tmp_path / path).read_bytes()
+        assert actual == expected
+        assert history_gate._reviewed_metadata_data(path, actual)
+        assert not history_gate._reviewed_metadata_data(
+            path, actual.replace(b"\n", b"\r\n")
+        )
+
+
 def test_metadata_prefilter_preserves_real_detector_on_changed_bytes(
     tmp_path, monkeypatch
 ):

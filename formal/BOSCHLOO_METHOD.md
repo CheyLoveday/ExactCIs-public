@@ -3,12 +3,14 @@
 This is a development reference for a two-sided Boschloo odds-ratio confidence
 hull under independent binomial groups. It constructs a finite candidate and
 returns a statistical result only after the actual Lean literal-byte checker
-accepts that candidate. Production activation, general producer completeness
-and comprehensive independent formal-code verification remain deferred.
+accepts that candidate. Critical-profile assurance covers the selected Boschloo
+formal statements and their protected meanings; the [checking results](../docs_md/formal-verification.md)
+record its exact scope and evidence. Production activation, general producer
+completeness and universal Python implementation refinement are separate claims.
 
 ## Build and run
 
-Use the repository's Python environment and pinned Lean 4.33.0/Mathlib lock.
+Use the repository's Python environment and pinned Lean 4.35.0/Mathlib lock.
 Build the checker dependency closure once, from the repository root:
 
 ```sh

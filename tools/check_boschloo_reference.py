@@ -13,20 +13,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = "checked-reference-manifest.json"
 ENTRY = "ExactCIs.Unconditional.MeteredGlobalChecker"
-SCHEMA = "exactcis.checked_boschloo_reference.slice.v1"
-SCOPE = "Development checked reference; comprehensive formal-code assurance INCOMPLETE"
+LEAN_TOOLCHAIN = "leanprover/lean4:v4.35.0"
+SCHEMA = "exactcis.checked_boschloo_reference.slice.v2"
+SCOPE = "Development checked reference; proof assurance is recorded separately"
 GENERATOR = "EXACT_MERGED_FAMILY_REFERENCE_V1"
 PINS = {
     "lake-manifest.json": "".join(
         (
-            "f3c5aab5",
-            "180ac0fc",
-            "247710bf",
-            "9ccc06e9",
-            "5c120177",
-            "64658cc2",
-            "a44a63a5",
-            "921a6a0e",
+            "a0848819",
+            "0adb50a7",
+            "b14e9293",
+            "24e86d9f",
+            "aa83cdac",
+            "3b282278",
+            "d778cbcc",
+            "50c21090",
         )
     ),
     "global-checker-v1.schema.json": "".join(
@@ -177,11 +178,14 @@ def check(root: Path = ROOT) -> list[str]:
             errors.append(f"reference source bytes differ: {relative}")
     if (formal / "lean-toolchain").read_text(
         encoding="utf-8"
-    ).strip() != "leanprover/lean4:v4.33.0":
-        errors.append("original Lean 4.33 source pin differs")
+    ).strip() != LEAN_TOOLCHAIN or manifest.get("lean_toolchain") != LEAN_TOOLCHAIN:
+        errors.append("current Lean 4.35 source pin differs")
     for relative, digest in PINS.items():
         if hashlib.sha256((formal / relative).read_bytes()).hexdigest() != digest:
             errors.append(f"frozen dependency/schema bytes differ: {relative}")
+    lock = json.loads((formal / "lake-manifest.json").read_bytes())
+    if lock.get("version") != "1.3.0":
+        errors.append("Lake dependency manifest schema differs from pinned Lake 4.35")
     config = tomllib.loads((formal / "lakefile.toml").read_text(encoding="utf-8"))
     if config["defaultTargets"] != [ENTRY] or {
         row["name"] for row in config["lean_lib"]
@@ -248,7 +252,10 @@ def main() -> int:
     for error in errors:
         print(f"ERROR: {error}")
     if not errors:
-        print("OK: checked-reference source custody; assurance INCOMPLETE")
+        print(
+            "OK: checked-reference source custody; "
+            "proof assurance is recorded separately"
+        )
     return int(bool(errors))
 
 

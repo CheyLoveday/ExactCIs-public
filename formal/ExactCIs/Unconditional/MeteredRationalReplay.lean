@@ -268,19 +268,25 @@ def ratSign (a : Rat) : M SignType := do
     ret (if negative then -1 else 0)
 
 theorem ratSign_safe (a : Rat) : Safe (ratSign a) := by
-  apply bind_safe (ratLT_safe _ _)
+  unfold ratSign
+  apply bind_safe (m := ratLT 0 a) (ratLT_safe 0 a)
   intro positive
-  cases positive
-  · exact bind_safe (ratLT_safe _ _) (fun _ => ret_safe _)
+  cases positive <;> simp only [Bool.false_eq_true, ↓reduceIte]
+  · exact bind_safe (m := ratLT a 0)
+      (k := fun negative => ret (if negative then (-1 : SignType) else 0))
+      (ratLT_safe a 0) (fun _ => ret_safe _)
   · exact ret_safe _
 
 theorem ratSign_refines (a : Rat) : Refines (ratSign a) (SignType.sign a) := by
   rw [sign_apply]
-  apply bind_refines (ratLT_refines _ _)
+  unfold ratSign
+  apply bind_refines (m := ratLT 0 a) (ratLT_refines 0 a)
   by_cases positive : 0 < a
   · simp only [positive, decide_true, ↓reduceIte]; exact ret_refines _
   · simp only [positive, decide_false, ↓reduceIte]
-    apply bind_refines (ratLT_refines _ _)
+    apply bind_refines (m := ratLT a 0)
+      (k := fun negative => ret (if negative then (-1 : SignType) else 0))
+      (ratLT_refines a 0)
     by_cases negative : a < 0 <;> simp only [negative, decide_true, decide_false, ↓reduceIte]
     · exact ret_refines _
     · exact ret_refines _
@@ -320,9 +326,12 @@ def rationalVariation (ps : List P) (x : Rat) : M Nat := do
   changes 0 signs
 
 theorem rationalVariation_safe (ps : List P) (x : Rat) : Safe (rationalVariation ps x) := by
-  apply bind_safe (tick_safe _ _ _ _); intro _
-  apply bind_safe (mapM_safe _ _ _ (fun p => bind_safe (polyValue_safe _ _) (ratSign_safe)))
-  intro signs; exact changes_safe _ _
+  unfold rationalVariation
+  apply bind_safe (m := tick .rootStep) (tick_safe .rootStep 1 0 0); intro _
+  apply bind_safe
+    (m := mapM .structural (fun p => do let y ← polyValue p x; ratSign y) ps)
+    (mapM_safe .structural _ ps (fun p => bind_safe (polyValue_safe p x) ratSign_safe))
+  intro signs; exact changes_safe 0 signs
 
 theorem rationalVariation_refines (ps : List P) (x : Rat) :
     Refines (rationalVariation ps x) (RootCountCertificate.rationalVariation ps x) :=
@@ -358,34 +367,37 @@ def signCheck (h : P) (a b : Rat) (c : RootCountCertificate.Certificate) : M (Op
 
 theorem signCheck_safe (h : P) (a b : Rat) (c : RootCountCertificate.Certificate) :
     Safe (signCheck h a b c) := by
-  apply bind_safe (ratLE_safe _ _); intro order
+  unfold signCheck
+  apply bind_safe (m := ratLE a b) (ratLE_safe a b); intro order
   cases order
   · exact ret_safe _
-  · apply bind_safe (polyValue_safe _ _); intro left
-    apply bind_safe (ratLE_safe _ _); intro nonnegative
+  · apply bind_safe (m := polyValue h a) (polyValue_safe h a); intro left
+    apply bind_safe (m := ratLE 0 left) (ratLE_safe 0 left); intro nonnegative
     cases nonnegative
-    · apply bind_safe (rootCheck_safe _ _); intro valid
+    · apply bind_safe (m := rootCheck h c) (rootCheck_safe h c); intro valid
       cases valid
       · exact ret_safe _
-      · exact bind_safe (rootCount_safe _ _ _) (fun _ => metadata_safe _)
+      · exact bind_safe (m := rootCount c a b) (rootCount_safe c a b) (fun _ => metadata_safe _)
     · exact ret_safe _
 
 theorem signCheck_refines (h : P) (a b : Rat) (c : RootCountCertificate.Certificate) :
     Refines (signCheck h a b c) (RootSignCertificate.check h a b c) := by
-  apply bind_refines (ratLE_refines _ _)
+  unfold signCheck
+  apply bind_refines (m := ratLE a b) (ratLE_refines a b)
   by_cases order : a ≤ b
   · simp only [order, decide_true, Bool.not_true, Bool.false_eq_true, ↓reduceIte,
       RootSignCertificate.check]
-    apply bind_refines (polyValue_correct _ _)
-    apply bind_refines (ratLE_refines _ _)
+    apply bind_refines (m := polyValue h a) (polyValue_correct h a)
+    apply bind_refines (m := ratLE 0 (RootCertificate.value h a))
+      (ratLE_refines 0 (RootCertificate.value h a))
     by_cases nonnegative : 0 ≤ RootCertificate.value h a
     · simp only [nonnegative, decide_true, ↓reduceIte]; exact ret_refines _
     · simp only [nonnegative, decide_false, ↓reduceIte]
-      apply bind_refines (rootCheck_refines _ _)
+      apply bind_refines (m := rootCheck h c) (rootCheck_refines h c)
       cases valid : RootCountCertificate.check h c
       · simp only [Bool.not_false, Bool.false_eq_true, ↓reduceIte]; exact ret_refines _
       · simp only [Bool.not_true, Bool.false_eq_true, ↓reduceIte]
-        exact bind_refines (rootCount_refines _ _ _) (metadata_refines _)
+        exact bind_refines (m := rootCount c a b) (rootCount_refines c a b) (metadata_refines _)
   · simp only [order, decide_false, Bool.not_false, ↓reduceIte, RootSignCertificate.check]
     exact ret_refines _
 

@@ -1,6 +1,6 @@
 # Release roadmap
 
-Updated 28 October 2026. The current release keeps its agreed scope. Later
+Updated 29 October 2026. The current release keeps its agreed scope. Later
 versions below are proposed sequencing labels, with no publication dates or
 package-version changes implied.
 
@@ -21,10 +21,15 @@ deferred and nonblocking.
 A [callable checked Boschloo reference](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/BOSCHLOO_METHOD.md)
 is available as a repository tool. Statistical output requires actual Lean
 literal-byte acceptance; resource refusals and inconclusive work do not produce
-a statistical result. This is separate from activation in the stable package
-API and comprehensive independent formal-code verification, which retain their
-existing completion gates. General producer termination and completeness remain
-outside the current release's claims and are not new release blockers.
+a statistical result. The full 225-module selection has now passed six checkers
+in Lean 4.35. The public reference now uses that source edition and its tested
+dependency pins; the former Lean 4.33 edition is historical.
+[Completed results and assurance limits](formal-verification.md)
+record the source correspondence and completed independent protected comparison.
+Critical assurance is MET for that selected formal scope. Stable package
+activation retains its own gate. General producer
+termination and completeness remain outside the current release's claims and
+are not new release blockers.
 
 ## Proposed later releases
 

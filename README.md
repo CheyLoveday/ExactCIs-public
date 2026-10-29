@@ -14,12 +14,15 @@ for conditional procedures, clinical validation, or formal verification.
 | Published package | `exactcis==1.1.2`; Python 3.11–3.13 | [API contract](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/api.md) and the quick start below |
 | Development source | Adds Python 3.14 qualification; the stable method registry remains unchanged | [Supported methods](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/methods.md) |
 | Checked Boschloo reference | Repository tool requiring actual Lean byte-checker acceptance; bounded refusals remain possible | [Build and call the reference](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/BOSCHLOO_METHOD.md) |
+| Formal checking | All 225 selected modules passed six checkers; critical assurance is MET for the selected Boschloo formal scope in Lean 4.35 | [Results and assurance limits](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/formal-verification.md) |
 | Release plan | 1.2.0 adds only the agreed Boschloo OR construction with a T1-min outward hull | [Scope and later roadmap](https://github.com/CheyLoveday/ExactCIs-public/blob/main/docs_md/roadmap.md) |
 
-The reference is not registered as a stable package method. Public runtime
-activation and comprehensive independent formal-code verification remain
-separate completion gates. Later matching tests, one-sided bounds and
-likelihood-ratio features do not widen the current release scope.
+The reference is not registered as a stable package method. Lean 4.35 is now
+the canonical reference environment, using the tested proof bodies and dependency
+pins. The former Lean 4.33 edition is retained as history. Protected comparison
+has passed for 42 reviewed Boschloo statement types and their protected meanings.
+Public runtime activation retains separate qualification gates. Later matching
+tests, one-sided bounds and likelihood-ratio features do not widen the current scope.
 
 ## Installation
 

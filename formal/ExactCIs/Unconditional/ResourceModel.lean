@@ -391,13 +391,21 @@ theorem under_refines {α : Type} (lower : Profile) {body : M α} {value : α}
 theorem under_uses_previous {α : Type} {lower outer : Profile} {body : M α}
     {used : Vector} (admitted : LimitsLE lower outer ∧ Fits lower used) :
     under lower body outer used = body lower used := by
-  rw [under, if_pos admitted.1, if_pos admitted.2]
+  have narrower := admitted.1
+  have fits := admitted.2
+  unfold under
+  split
+  · rfl
+  · contradiction
 
 theorem under_refuses_spent {α : Type} {lower outer : Profile} {body : M α}
     {used : Vector} (narrower : LimitsLE lower outer) (tooMuch : ¬ Fits lower used) :
     under lower body outer used =
       .error (.context "wire_limits" (.resource ⟨.structural, used, zero⟩)) := by
-  rw [under, if_pos narrower, if_neg tooMuch]
+  unfold under
+  split
+  · rfl
+  · contradiction
 
 theorem zero_fits (profile : Profile) : Fits profile zero := by
   simp [Fits, zero, totalWork]
