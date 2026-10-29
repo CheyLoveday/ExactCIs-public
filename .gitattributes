@@ -8,3 +8,7 @@
 # Exact checked-reference source and schema identities use LF on all platforms.
 /formal/** text eol=lf
 /tests/references/checked_boschloo_v1/** text eol=lf
+/tests/references/checked_boschloo_435_v1/** text eol=lf
+
+# Historical custody metadata is hashed byte-for-byte, including line endings.
+/docs_md/evidence/boschloo-reference-433-20261029.json text eol=lf
