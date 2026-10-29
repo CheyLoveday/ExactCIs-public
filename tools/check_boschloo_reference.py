@@ -20,14 +20,14 @@ GENERATOR = "EXACT_MERGED_FAMILY_REFERENCE_V1"
 PINS = {
     "lake-manifest.json": "".join(
         (
-            "96435c50",
-            "9708f258",
-            "31936d6f",
-            "9ea5bb44",
-            "af609ee2",
-            "e812bcdd",
-            "c5cc98a9",
-            "b8ecd9fd",
+            "a0848819",
+            "0adb50a7",
+            "b14e9293",
+            "24e86d9f",
+            "aa83cdac",
+            "3b282278",
+            "d778cbcc",
+            "50c21090",
         )
     ),
     "global-checker-v1.schema.json": "".join(
@@ -183,6 +183,9 @@ def check(root: Path = ROOT) -> list[str]:
     for relative, digest in PINS.items():
         if hashlib.sha256((formal / relative).read_bytes()).hexdigest() != digest:
             errors.append(f"frozen dependency/schema bytes differ: {relative}")
+    lock = json.loads((formal / "lake-manifest.json").read_bytes())
+    if lock.get("version") != "1.3.0":
+        errors.append("Lake dependency manifest schema differs from pinned Lake 4.35")
     config = tomllib.loads((formal / "lakefile.toml").read_text(encoding="utf-8"))
     if config["defaultTargets"] != [ENTRY] or {
         row["name"] for row in config["lean_lib"]

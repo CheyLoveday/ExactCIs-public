@@ -228,6 +228,11 @@ def test_source_symlink_is_not_accepted(checkout: Path, tmp_path: Path) -> None:
         ("lean-toolchain", "leanprover/lean4:v4.33.0\n", "Lean 4.35"),
         ("global-checker-v1.schema.json", "{}\n", "frozen dependency/schema"),
         (
+            "lake-manifest.json",
+            '{"version":"1.2.0"}\n',
+            "Lake dependency manifest schema",
+        ),
+        (
             "lakefile.toml",
             'defaultTargets=["Other"]\n[[lean_lib]]\nname="Other"\n',
             "Lake targets",

@@ -73,6 +73,11 @@ The historical reference used Lean **4.33.0**, source commit
 canonical reference use Lean **4.35.0**, source commit
 `eb6cafb7290e8bd5f2937522d8d804f58f02bafc`. The current package lock is bound by the
 [checked reference manifest](https://github.com/CheyLoveday/ExactCIs-public/blob/main/formal/checked-reference-manifest.json).
+The current lock follows native Lake 4.35 normalization, including its inherited
+package flags and dependency-manifest schema `1.3.0`. All nine selected commit
+revisions remain unchanged by that normalization. The lock's schema version is
+not an ExactCIs package version or release bump.
+
 The dependency revisions differ as follows:
 
 | Package | Historical 4.33 revision | Canonical tested 4.35 revision |
