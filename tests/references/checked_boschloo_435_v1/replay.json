@@ -1,0 +1,313 @@
+{
+  "schema": "exactcis.checked_boschloo_reference.native_435.v1",
+  "date": "2026-10-29",
+  "toolchain": "leanprover/lean4:v4.35.0",
+  "source_manifest_sha256": "2713c740-ebc8657b-2999205a-07305ce9-95ffc0b0-3416ab51-816abbc3-46a817fb",
+  "dependency_lock_sha256": "a0848819-0adb50a7-b14e9293-24e86d9f-aa83cdac-3b282278-d778cbcc-50c21090",
+  "frontend_path": "formal/tools/lean/boschloo_check.lean",
+  "frontend_sha256": "4fc4395f-ac4337d4-efbfc5e4-b221796b-1bcd609d-cdc5311f-14282dc9-b3d60a7a",
+  "evidence_scope": "Four actual Lean4.35 native frontend executions; retained custody/protocol tests do not rerun Lean and do not add six-checker coverage to the CLI.",
+  "source_binding": "All109public Lean source files match the canonical Lean4.35 source; dependency lock, toolchain and typed compiler options match. The local build cache was shared by those exact sources; the public default selection is narrower.",
+  "runtime_environment": {
+    "LEAN_NUM_THREADS": "2"
+  },
+  "non_claims": [
+    "No general producer completeness",
+    "No universal Python or binary64 refinement",
+    "No production capability or latency qualification",
+    "No additional external-checker result for the frontend",
+    "No stable package activation or release"
+  ],
+  "cases": [
+    {
+      "name": "hull",
+      "input": {
+        "path": "../checked_boschloo_v1/input.json",
+        "bytes": 529,
+        "sha256": "24a631ec-7ac8830d-d0e3a702-61dfbf89-347dbf2d-4d8e6d5c-4cbfea3b-835ea420"
+      },
+      "payload": {
+        "path": "../checked_boschloo_v1/payload.json",
+        "bytes": 250171,
+        "sha256": "7f08ccc0-ffefdfd7-878a0253-8f1fb1bd-ee958608-ff5d61c2-f189c9ab-fd3f61f9"
+      },
+      "prior_counters": [
+        "0",
+        "0",
+        "18",
+        "469615",
+        "328748",
+        "10081",
+        "354",
+        "21",
+        "512",
+        "7",
+        "501400",
+        "522614",
+        "1455231",
+        "770",
+        "20"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 126.84530829201685,
+      "reply": {
+        "counters": [
+          "250700",
+          "1094818",
+          "860",
+          "589103",
+          "444504",
+          "12732",
+          "691",
+          "145",
+          "537",
+          "15",
+          "501400",
+          "1740847",
+          "8390371091",
+          "770",
+          "20"
+        ],
+        "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+        "protocol": "exactcis.boschloo.method.check.v1",
+        "result": {
+          "compact_lower": {
+            "denominator": "512",
+            "numerator": "39"
+          },
+          "compact_upper": {
+            "denominator": "1",
+            "numerator": "1"
+          },
+          "kind": "HULL_CERTIFIED"
+        },
+        "status": "accepted"
+      },
+      "stdout": {
+        "path": "hull.stdout.json",
+        "bytes": 383,
+        "sha256": "9615fd13-8ee546b3-cac52f35-40ccb3d3-e3eb4c12-d917e5a7-1886e773-86d74aec"
+      },
+      "stderr_sha256": "f32172e0-2c6fbeb2-2723692c-75cba5b1-a01bcb88-bbe05849-9c34acda-1f858105",
+      "table": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "alpha": "1/10",
+      "tolerance": "1/100"
+    },
+    {
+      "name": "full",
+      "input": {
+        "path": "full.input.json",
+        "bytes": 527,
+        "sha256": "48e6af16-4574e253-6b32a708-529e0e49-7cbb3ac2-d6e5988f-c9bf730d-76cd1fa9"
+      },
+      "payload": {
+        "path": "full.payload.json",
+        "bytes": 3374,
+        "sha256": "ccf75bb4-e5a2e2d9-a4d2d31d-bb85bd5b-2aba13be-476694e8-1a9bc1f5-ed72f63a"
+      },
+      "prior_counters": [
+        "0",
+        "0",
+        "18",
+        "1689",
+        "1517",
+        "39",
+        "0",
+        "2",
+        "4",
+        "1",
+        "7802",
+        "2410",
+        "7833",
+        "7",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 47.97000454104273,
+      "reply": {
+        "counters": [
+          "3901",
+          "6376",
+          "192",
+          "2932",
+          "2981",
+          "53",
+          "0",
+          "10",
+          "4",
+          "3",
+          "7802",
+          "9694",
+          "1750238",
+          "63",
+          "3"
+        ],
+        "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+        "protocol": "exactcis.boschloo.method.check.v1",
+        "result": {
+          "kind": "FULL_CERTIFIED"
+        },
+        "status": "accepted"
+      },
+      "stdout": {
+        "path": "full.stdout.json",
+        "bytes": 248,
+        "sha256": "c708cb70-ecdc846d-b7caabad-9d9d66b9-d3bfa9e2-f5ede7bf-b53f14af-518114e3"
+      },
+      "stderr_sha256": "1158afb8-2f1c6ad4-9c331745-b0ba8b70-dd05ad0a-f8bfa540-5ce13501-ca10c4ef",
+      "table": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "alpha": "1/20",
+      "tolerance": "0"
+    },
+    {
+      "name": "wrong-witness",
+      "input": {
+        "path": "../checked_boschloo_v1/input.json",
+        "bytes": 529,
+        "sha256": "24a631ec-7ac8830d-d0e3a702-61dfbf89-347dbf2d-4d8e6d5c-4cbfea3b-835ea420"
+      },
+      "payload": {
+        "path": "../checked_boschloo_v1/payload.json",
+        "bytes": 250208,
+        "sha256": "7d6eac76-aa6fdd6c-2269c817-ca6efc4d-35008cf7-7945df7e-fde7a5c1-da558e99",
+        "mutation": {
+          "path": [
+            "pointLeaves",
+            0,
+            "greater",
+            "root",
+            "derivativeWitness"
+          ],
+          "value": [
+            [
+              {
+                "numerator": "1",
+                "denominator": "1"
+              }
+            ]
+          ],
+          "encoding": "compact ensure_ascii JSON without trailing newline"
+        }
+      },
+      "prior_counters": [
+        "0",
+        "0",
+        "18",
+        "469615",
+        "328748",
+        "10081",
+        "354",
+        "21",
+        "512",
+        "7",
+        "501400",
+        "522614",
+        "1455231",
+        "770",
+        "20"
+      ],
+      "returncode": 3,
+      "elapsed_seconds": 76.95024791598553,
+      "reply": {
+        "counters": [
+          "250737",
+          "1094857",
+          "178",
+          "498631",
+          "356582",
+          "10655",
+          "431",
+          "21",
+          "512",
+          "9",
+          "501400",
+          "1669208",
+          "8392344542",
+          "770",
+          "20"
+        ],
+        "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+        "protocol": "exactcis.boschloo.method.check.v1",
+        "reason": "ExactCIs.Unconditional.GlobalCheckerDecode.SemanticRefusal.certificate",
+        "status": "rejected"
+      },
+      "stdout": {
+        "path": "wrong-witness.stdout.json",
+        "bytes": 321,
+        "sha256": "6075d8ed-9b0f74ec-dfd73040-03c6d1cb-f848bdd8-8922c6dd-093c7d3c-db780357"
+      },
+      "stderr_sha256": "b3c00963-f1a05254-c0082040-155bdb15-a8c4c06d-cb493e81-57670e7d-e48aaee7"
+    },
+    {
+      "name": "budget-exhausted",
+      "input": {
+        "path": "../checked_boschloo_v1/input.json",
+        "bytes": 529,
+        "sha256": "24a631ec-7ac8830d-d0e3a702-61dfbf89-347dbf2d-4d8e6d5c-4cbfea3b-835ea420"
+      },
+      "payload": {
+        "path": "../checked_boschloo_v1/payload.json",
+        "bytes": 250171,
+        "sha256": "7f08ccc0-ffefdfd7-878a0253-8f1fb1bd-ee958608-ff5d61c2-f189c9ab-fd3f61f9"
+      },
+      "prior_counters": [
+        "4000000",
+        "0",
+        "18",
+        "469615",
+        "328748",
+        "10081",
+        "354",
+        "21",
+        "512",
+        "7",
+        "501400",
+        "522614",
+        "1455231",
+        "770",
+        "20"
+      ],
+      "returncode": 2,
+      "elapsed_seconds": 43.27530899998965,
+      "reply": {
+        "counters": [
+          "4000000",
+          "0",
+          "18",
+          "469615",
+          "328748",
+          "10081",
+          "354",
+          "21",
+          "512",
+          "7",
+          "501400",
+          "522625",
+          "1455231",
+          "770",
+          "20"
+        ],
+        "profile": "BOSCHLOO_CHECKED_REFERENCE_V1",
+        "protocol": "exactcis.boschloo.method.check.v1",
+        "reason": "input: resource limit at ExactCIs.Unconditional.ResourceModel.Event.admitBytes",
+        "status": "refused"
+      },
+      "stdout": {
+        "path": "budget-exhausted.stdout.json",
+        "bytes": 318,
+        "sha256": "fd11015e-58621f15-7defd874-f072a324-7934f90c-f1f6823a-bf8b16a8-9889e40d"
+      },
+      "stderr_sha256": "b3c00963-f1a05254-c0082040-155bdb15-a8c4c06d-cb493e81-57670e7d-e48aaee7"
+    }
+  ]
+}

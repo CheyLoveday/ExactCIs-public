@@ -63,3 +63,13 @@ manifest after byte comparison with the executed source. That original manifest
 and every source file are preserved in the historical archive. The receipt is
 not rebound to the current 4.35 manifest. It is finite local execution evidence;
 the Python custody/protocol tests do not rerun Lean.
+
+The [current Lean 4.35 native receipt](../tests/references/checked_boschloo_435_v1/replay.json)
+records four actual frontend executions on 29 October 2026: the hull above and
+full domain were accepted, a changed derivative witness was rejected, and an
+exhausted byte allowance was refused. The current source manifest, exact inputs,
+payloads, prior/final counters, return codes and emitted replies are bound in
+that separate receipt. The hull input/payload bytes are reused unchanged from
+the historical fixture, without relabelling its old receipt. This is finite
+native functional qualification; the CLI remains outside the 225-module
+six-checker selection. Custody/protocol tests do not rerun Lean.

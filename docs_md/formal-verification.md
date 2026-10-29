@@ -197,9 +197,17 @@ no human peer-review acceptance is asserted. Multiple checkers still share
 exporters, parsers, libraries or infrastructure, so their count is not a
 probability of mathematical correctness.
 
-The public CLI is outside the 225-module checker selection. Its fresh canonical
-4.35 execution qualification is a separate result and is not claimed by this
-profile decision. The stable package registry and published package are unchanged.
+The public CLI is outside the 225-module checker selection. Its separate
+[canonical Lean 4.35 native receipt](https://github.com/CheyLoveday/ExactCIs-public/blob/main/tests/references/checked_boschloo_435_v1/replay.json)
+records four actual frontend executions on 29 October: acceptance of the hull
+`[39/473, infinity]` for `(1,0,0,1)`, `alpha=1/10`, `tolerance=1/100`; acceptance
+of the full domain for `(0,1,0,1)`, `alpha=1/20`, zero tolerance; rejection of a
+changed derivative witness; and refusal with the prior byte allowance exhausted.
+The receipt binds current manifest, dependency lock, frontend source, exact
+input/payload bytes, prior/final counters and stdout replies. These finite native
+checks do not add external-checker coverage, a general runtime proof or a
+production capability claim. The stable registry and published package are
+unchanged. The original 4.33 receipt remains separate and unchanged.
 
 For the Boschloo construction, the claim remains conditional on independent
 binomial groups, the frozen inclusive ordering and structural conventions, and
